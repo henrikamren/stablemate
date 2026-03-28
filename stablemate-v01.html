@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StableMate — Stable Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Lato:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --hay: #c8a96e;
+  --hay-light: #e8d5a3;
+  --hay-dark: #8b6914;
+  --earth: #3d2b1f;
+  --earth-mid: #5c3d2e;
+  --earth-light: #7a5c4a;
+  --bark: #6b4c35;
+  --sage: #7a8c6e;
+  --sage-light: #a8b89a;
+  --cream: #faf6ef;
+  --cream-dark: #f0e8d8;
+  --sand: #e8dcc8;
+  --white: #fdfaf5;
+  --text: #2a1a0e;
+  --text-mid: #5c3d2e;
+  --text-muted: #8c7060;
+  --danger: #c0392b;
+  --success: #2d6a4f;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Lato',sans-serif;background:var(--cream);color:var(--text);overflow:hidden}
+.app{display:grid;grid-template-columns:240px 1fr;grid-template-rows:100vh;height:100vh}
+.sidebar{background:var(--earth);display:flex;flex-direction:column;overflow-y:auto}
+.main{display:flex;flex-direction:column;overflow:hidden}
+.sidebar-logo{padding:28px 24px 20px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.logo-text{font-family:'Playfair Display',serif;font-size:22px;color:var(--white);font-weight:500;letter-spacing:0.02em}
+.logo-text span{color:var(--hay)}
+.logo-sub{font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.12em;text-transform:uppercase;margin-top:3px}
+.user-pill{margin:16px 16px 0;background:rgba(255,255,255,0.06);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--hay);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:var(--earth);flex-shrink:0}
+.user-name{font-size:13px;color:var(--white)}
+.user-role{font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.08em}
+.nav{padding:20px 12px;flex:1}
+.nav-section{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,255,255,0.3);padding:0 12px;margin-bottom:8px;margin-top:20px}
+.nav-section:first-child{margin-top:0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:6px;cursor:pointer;color:rgba(255,255,255,0.65);font-size:13px;transition:all 0.15s;margin-bottom:2px}
+.nav-item:hover{background:rgba(255,255,255,0.06);color:var(--white)}
+.nav-item.active{background:var(--hay);color:var(--earth);font-weight:500}
+.nav-icon{font-size:15px;width:18px;text-align:center}
+.sidebar-footer{padding:16px;border-top:1px solid rgba(255,255,255,0.08)}
+.sidebar-footer-text{font-size:11px;color:rgba(255,255,255,0.25);text-align:center}
+.topbar{background:var(--white);border-bottom:1px solid var(--sand);padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.topbar-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:500;color:var(--earth)}
+.topbar-actions{display:flex;gap:10px;align-items:center}
+.btn{padding:8px 18px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all 0.15s;font-family:'Lato',sans-serif}
+.btn-primary{background:var(--earth);color:var(--white)}
+.btn-primary:hover{background:var(--earth-mid)}
+.btn-secondary{background:transparent;color:var(--earth);border:1px solid var(--sand)}
+.btn-secondary:hover{background:var(--cream-dark)}
+.btn-sm{padding:6px 14px;font-size:12px}
+.content{flex:1;overflow-y:auto;padding:32px}
+.panel{display:none}
+.panel.active{display:block;animation:fadeIn 0.2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.cal-nav{display:flex;align-items:center;gap:12px}
+.cal-nav-btn{width:32px;height:32px;border-radius:6px;border:1px solid var(--sand);background:var(--white);cursor:pointer;font-size:16px;color:var(--earth-light);display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+.cal-nav-btn:hover{background:var(--cream-dark);border-color:var(--hay)}
+.cal-month{font-family:'Playfair Display',serif;font-size:22px;font-weight:500;color:var(--earth)}
+.cal-grid{background:var(--white);border-radius:12px;border:1px solid var(--sand);overflow:hidden}
+.cal-days-header{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--sand)}
+.cal-day-head{padding:12px 8px;text-align:center;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);font-weight:500}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr)}
+.cal-day{min-height:100px;padding:8px;border-right:1px solid var(--cream-dark);border-bottom:1px solid var(--cream-dark);position:relative}
+.cal-day:nth-child(7n){border-right:none}
+.cal-day.today .cal-day-num{background:var(--earth);color:var(--white);border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center}
+.cal-day-num{font-size:13px;color:var(--text-muted);margin-bottom:4px;width:26px;height:26px;display:flex;align-items:center;justify-content:center}
+.cal-day.other-month .cal-day-num{color:var(--sand)}
+.cal-event{font-size:10px;padding:2px 6px;border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.ev-lesson{background:#e8f0e0;color:#3b6d11}
+.ev-arena{background:#e8dcc8;color:#6b4c35}
+.ev-vet{background:#fdecea;color:#8b2020}
+.ev-farrier{background:#e8f4fd;color:#0c447c}
+.ev-competition{background:#faeeda;color:#633806}
+.modal-overlay{position:fixed;inset:0;background:rgba(30,15,5,0.5);z-index:100;align-items:center;justify-content:center;display:none}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:12px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.modal-header{padding:24px 24px 16px;border-bottom:1px solid var(--sand);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-family:'Playfair Display',serif;font-size:18px;color:var(--earth);font-weight:500}
+.modal-close{width:28px;height:28px;border-radius:50%;border:none;background:var(--cream-dark);cursor:pointer;font-size:16px;color:var(--text-muted)}
+.modal-body{padding:24px}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--sand);display:flex;gap:10px;justify-content:flex-end}
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;font-weight:500}
+.form-input,.form-select,.form-textarea{width:100%;padding:10px 12px;border:1px solid var(--sand);border-radius:6px;font-family:'Lato',sans-serif;font-size:14px;color:var(--text);background:var(--white);outline:none;transition:border-color 0.15s}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--hay)}
+.form-textarea{resize:vertical;min-height:80px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.card{background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:20px;transition:border-color 0.15s}
+.card:hover{border-color:var(--hay-light)}
+.card-header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.card-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:500;flex-shrink:0}
+.avatar-horse{background:var(--cream-dark);color:var(--earth)}
+.avatar-owner{background:#e8f0e0;color:#2d6a4f}
+.card-name{font-size:15px;font-weight:500;color:var(--earth)}
+.card-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+.card-field{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--cream-dark);font-size:13px}
+.card-field:last-child{border-bottom:none}
+.card-field-label{color:var(--text-muted)}
+.card-field-val{color:var(--text);text-align:right;font-size:12px}
+.card-actions{display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--cream-dark)}
+.badge{display:inline-block;font-size:10px;padding:3px 8px;border-radius:10px;font-weight:500}
+.badge-independent{background:#e8f0e0;color:#2d6a4f}
+.badge-supervised{background:#faeeda;color:#633806}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+.stat-card{background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:18px 20px}
+.stat-label{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px}
+.stat-value{font-family:'Playfair Display',serif;font-size:28px;color:var(--earth);font-weight:500}
+.stat-sub{font-size:11px;color:var(--text-muted);margin-top:4px}
+.today-list{background:var(--white);border-radius:10px;border:1px solid var(--sand);overflow:hidden}
+.today-item{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--cream-dark)}
+.today-item:last-child{border-bottom:none}
+.today-time{font-size:13px;font-weight:500;color:var(--earth);min-width:50px}
+.today-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.today-info{flex:1}
+.today-title{font-size:14px;color:var(--text)}
+.today-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+.empty{text-align:center;padding:60px 20px;color:var(--text-muted)}
+.empty-icon{font-size:40px;margin-bottom:12px;opacity:0.4}
+.empty-text{font-size:14px}
+.loading{text-align:center;padding:40px;color:var(--text-muted);font-size:14px}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--earth);color:var(--white);padding:12px 20px;border-radius:8px;font-size:13px;z-index:200;transform:translateY(80px);opacity:0;transition:all 0.3s;max-width:320px}
+.toast.show{transform:translateY(0);opacity:1}
+.sync-indicator{font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:6px}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:#2d6a4f}
+.sync-dot.syncing{background:var(--hay);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-text">Stable<span>Mate</span></div>
+      <div class="logo-sub">v0.1 · Barn Manager</div>
+    </div>
+    <div class="user-pill">
+      <div class="user-avatar">SM</div>
+      <div>
+        <div class="user-name">Staff · Manager</div>
+        <div class="user-role">Full Access</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">Main</div>
+      <div class="nav-item active" id="nav-dashboard" onclick="showPanel('dashboard')"><span class="nav-icon">⌂</span> Dashboard</div>
+      <div class="nav-item" id="nav-calendar" onclick="showPanel('calendar')"><span class="nav-icon">◫</span> Calendar</div>
+      <div class="nav-section">Records</div>
+      <div class="nav-item" id="nav-horses" onclick="showPanel('horses')"><span class="nav-icon">◈</span> Horses</div>
+      <div class="nav-item" id="nav-owners" onclick="showPanel('owners')"><span class="nav-icon">◉</span> Owners</div>
+      <div class="nav-section">Admin</div>
+      <div class="nav-item" id="nav-bookings" onclick="showPanel('bookings')"><span class="nav-icon">◷</span> All Bookings</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sync-indicator" style="justify-content:center;margin-bottom:8px">
+        <div class="sync-dot" id="sync-dot"></div>
+        <span id="sync-label">Connected</span>
+      </div>
+      <div class="sidebar-footer-text">StableMate v0.1 · 2026</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-actions">
+        <div class="sync-indicator" id="top-sync" style="margin-right:8px;display:none">
+          <div class="sync-dot syncing"></div><span>Saving...</span>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="openModal('booking')">+ New Booking</button>
+        <button class="btn btn-primary btn-sm" onclick="openModal('horse')">+ Add Horse</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="panel active" id="panel-dashboard">
+        <div class="stats-row">
+          <div class="stat-card"><div class="stat-label">Horses</div><div class="stat-value" id="stat-horses">—</div><div class="stat-sub">in stable</div></div>
+          <div class="stat-card"><div class="stat-label">Owners</div><div class="stat-value" id="stat-owners">—</div><div class="stat-sub">registered</div></div>
+          <div class="stat-card"><div class="stat-label">Today</div><div class="stat-value" id="stat-today">—</div><div class="stat-sub">bookings</div></div>
+          <div class="stat-card"><div class="stat-label">This Week</div><div class="stat-value" id="stat-week">—</div><div class="stat-sub">sessions</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+              <div style="font-family:'Playfair Display',serif;font-size:16px;color:var(--earth)">Today's Schedule</div>
+              <div style="font-size:12px;color:var(--text-muted)" id="today-date"></div>
+            </div>
+            <div class="today-list" id="today-list"><div class="loading">Loading...</div></div>
+          </div>
+          <div>
+            <div style="font-family:'Playfair Display',serif;font-size:16px;color:var(--earth);margin-bottom:14px">Quick Add Booking</div>
+            <div style="background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:20px">
+              <div class="form-group">
+                <label class="form-label">Horse</label>
+                <select class="form-select" id="quick-horse"><option value="">Loading...</option></select>
+              </div>
+              <div class="form-group">
+                <div class="form-row">
+                  <div><label class="form-label">Date</label><input type="date" class="form-input" id="quick-date"></div>
+                  <div><label class="form-label">Time</label>
+                    <select class="form-select" id="quick-time">
+                      <option>07:00</option><option>08:00</option><option>09:00</option><option>10:00</option>
+                      <option>11:00</option><option selected>12:00</option><option>13:00</option><option>14:00</option>
+                      <option>15:00</option><option>16:00</option><option>17:00</option><option>18:00</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Type</label>
+                <select class="form-select" id="quick-type">
+                  <option value="lesson">Riding Lesson</option>
+                  <option value="arena-supervised">Arena Session (Supervised)</option>
+                  <option value="arena-independent">Arena Session (Independent)</option>
+                  <option value="vet">Vet Appointment</option>
+                  <option value="farrier">Farrier Visit</option>
+                  <option value="competition">Competition Day</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Notes</label>
+                <input type="text" class="form-input" id="quick-notes" placeholder="Optional notes...">
+              </div>
+              <button class="btn btn-primary" style="width:100%" onclick="quickAddBooking()">Add Booking</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CALENDAR -->
+      <div class="panel" id="panel-calendar">
+        <div class="cal-header">
+          <div class="cal-nav">
+            <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
+            <div class="cal-month" id="cal-month-label"></div>
+            <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <span class="cal-event ev-lesson">Lesson</span>
+            <span class="cal-event ev-arena">Arena</span>
+            <span class="cal-event ev-vet">Vet</span>
+            <span class="cal-event ev-farrier">Farrier</span>
+            <span class="cal-event ev-competition">Competition</span>
+          </div>
+        </div>
+        <div class="cal-grid">
+          <div class="cal-days-header">
+            <div class="cal-day-head">Sun</div><div class="cal-day-head">Mon</div><div class="cal-day-head">Tue</div>
+            <div class="cal-day-head">Wed</div><div class="cal-day-head">Thu</div><div class="cal-day-head">Fri</div><div class="cal-day-head">Sat</div>
+          </div>
+          <div class="cal-days" id="cal-days"><div class="loading" style="grid-column:span 7">Loading calendar...</div></div>
+        </div>
+      </div>
+
+      <!-- HORSES -->
+      <div class="panel" id="panel-horses">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+          <div style="font-size:14px;color:var(--text-muted)" id="horses-count"></div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('horse')">+ Add Horse</button>
+        </div>
+        <div class="cards-grid" id="horses-grid"><div class="loading">Loading horses...</div></div>
+      </div>
+
+      <!-- OWNERS -->
+      <div class="panel" id="panel-owners">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+          <div style="font-size:14px;color:var(--text-muted)" id="owners-count"></div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('owner')">+ Add Owner</button>
+        </div>
+        <div class="cards-grid" id="owners-grid"><div class="loading">Loading owners...</div></div>
+      </div>
+
+      <!-- BOOKINGS -->
+      <div class="panel" id="panel-bookings">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+          <div style="font-size:14px;color:var(--text-muted)" id="bookings-count"></div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('booking')">+ New Booking</button>
+        </div>
+        <div style="background:var(--white);border-radius:10px;border:1px solid var(--sand);overflow:hidden;overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:600px">
+            <thead>
+              <tr style="background:var(--cream-dark)">
+                <th style="padding:12px 16px;text-align:left;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);font-weight:500">Date & Time</th>
+                <th style="padding:12px 16px;text-align:left;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);font-weight:500">Horse</th>
+                <th style="padding:12px 16px;text-align:left;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);font-weight:500">Type</th>
+                <th style="padding:12px 16px;text-align:left;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);font-weight:500">Owner</th>
+                <th style="padding:12px 16px;text-align:left;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);font-weight:500">Notes</th>
+                <th style="padding:12px 16px"></th>
+              </tr>
+            </thead>
+            <tbody id="bookings-table"><tr><td colspan="6" class="loading">Loading bookings...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- BOOKING MODAL -->
+<div class="modal-overlay" id="modal-booking">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">New Booking</div><button class="modal-close" onclick="closeModal('booking')">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Horse</label><select class="form-select" id="modal-horse"></select></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="modal-date"></div>
+        <div class="form-group"><label class="form-label">Time</label>
+          <select class="form-select" id="modal-time">
+            <option>07:00</option><option>08:00</option><option>09:00</option><option>10:00</option>
+            <option>11:00</option><option selected>12:00</option><option>13:00</option><option>14:00</option>
+            <option>15:00</option><option>16:00</option><option>17:00</option><option>18:00</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Type</label>
+        <select class="form-select" id="modal-type">
+          <option value="lesson">Riding Lesson</option>
+          <option value="arena-supervised">Arena Session (Supervised)</option>
+          <option value="arena-independent">Arena Session (Independent)</option>
+          <option value="vet">Vet Appointment</option>
+          <option value="farrier">Farrier Visit</option>
+          <option value="competition">Competition Day</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="modal-notes" placeholder="Any additional notes..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('booking')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBooking()">Save Booking</button>
+    </div>
+  </div>
+</div>
+
+<!-- HORSE MODAL -->
+<div class="modal-overlay" id="modal-horse">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Add Horse</div><button class="modal-close" onclick="closeModal('horse')">×</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Horse Name</label><input type="text" class="form-input" id="horse-name" placeholder="e.g. Thunder"></div>
+        <div class="form-group"><label class="form-label">Breed</label><input type="text" class="form-input" id="horse-breed" placeholder="e.g. Warmblood"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Age</label><input type="number" class="form-input" id="horse-age" placeholder="e.g. 8"></div>
+        <div class="form-group"><label class="form-label">Owner</label><select class="form-select" id="horse-owner"></select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="horse-notes" placeholder="Health notes, temperament, special requirements..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('horse')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveHorse()">Add Horse</button>
+    </div>
+  </div>
+</div>
+
+<!-- OWNER MODAL -->
+<div class="modal-overlay" id="modal-owner">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Add Owner</div><button class="modal-close" onclick="closeModal('owner')">×</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">First Name</label><input type="text" class="form-input" id="owner-first" placeholder="Jane"></div>
+        <div class="form-group"><label class="form-label">Last Name</label><input type="text" class="form-input" id="owner-last" placeholder="Smith"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="owner-email" placeholder="jane@example.com"></div>
+      <div class="form-group"><label class="form-label">Phone</label><input type="tel" class="form-input" id="owner-phone" placeholder="(555) 000-0000"></div>
+      <div class="form-group"><label class="form-label">Riding Level</label>
+        <select class="form-select" id="owner-level">
+          <option value="independent">Independent — can ride unsupervised</option>
+          <option value="supervised">Supervised — requires staff present</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="owner-notes" placeholder="Experience, certifications, any notes..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('owner')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveOwner()">Add Owner</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://rdyktbwkrcepojkiunwb.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkeWt0YndrcmNlcG9qa2l1bndiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NDk4NzgsImV4cCI6MjA5MDIyNTg3OH0.fkttT72Y9LzwcTPhgu3jZ6nD9dL5Jqc0KOhn9sgU44g';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const today = new Date();
+let currentMonth = today.getMonth();
+let currentYear = today.getFullYear();
+let horses = [], owners = [], bookings = [];
+
+const typeConfig = {
+  'lesson':{label:'Riding Lesson',cls:'ev-lesson',dot:'#3b6d11'},
+  'arena-supervised':{label:'Arena (Supervised)',cls:'ev-arena',dot:'#6b4c35'},
+  'arena-independent':{label:'Arena (Independent)',cls:'ev-arena',dot:'#8b6914'},
+  'vet':{label:'Vet Appointment',cls:'ev-vet',dot:'#8b2020'},
+  'farrier':{label:'Farrier Visit',cls:'ev-farrier',dot:'#0c447c'},
+  'competition':{label:'Competition Day',cls:'ev-competition',dot:'#633806'},
+};
+
+function fmtDate(d){return d.toISOString().split('T')[0]}
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r}
+function getHorse(id){return horses.find(h=>h.id===id)}
+function getOwner(id){return owners.find(o=>o.id===id)}
+function getOwnerByHorse(horseId){const h=getHorse(horseId);return h?getOwner(h.owner_id):null}
+
+function setSyncing(on){
+  document.getElementById('top-sync').style.display=on?'flex':'none';
+  const dot=document.getElementById('sync-dot');
+  const label=document.getElementById('sync-label');
+  if(on){dot.classList.add('syncing');label.textContent='Saving...';}
+  else{dot.classList.remove('syncing');label.textContent='Connected';}
+}
+
+async function loadAll(){
+  try{
+    const [ob,hb,bb]= await Promise.all([
+      sb.from('owners').select('*').order('created_at'),
+      sb.from('horses').select('*').order('created_at'),
+      sb.from('bookings').select('*').order('date').order('time'),
+    ]);
+    if(ob.error)throw ob.error;
+    if(hb.error)throw hb.error;
+    if(bb.error)throw bb.error;
+    owners=ob.data||[];
+    horses=hb.data||[];
+    bookings=bb.data||[];
+    renderDashboard();
+  }catch(e){
+    showToast('Connection error — check your internet');
+    console.error(e);
+  }
+}
+
+function showPanel(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  const titles={dashboard:'Dashboard',calendar:'Calendar',horses:'Horses',owners:'Owners',bookings:'All Bookings'};
+  document.getElementById('topbar-title').textContent=titles[name]||name;
+  if(name==='calendar')renderCalendar();
+  if(name==='horses')renderHorses();
+  if(name==='owners')renderOwners();
+  if(name==='bookings')renderBookings();
+  if(name==='dashboard')renderDashboard();
+}
+
+function renderDashboard(){
+  document.getElementById('stat-horses').textContent=horses.length;
+  document.getElementById('stat-owners').textContent=owners.length;
+  const todayStr=fmtDate(today);
+  const todayB=bookings.filter(b=>b.date===todayStr);
+  document.getElementById('stat-today').textContent=todayB.length;
+  const weekEnd=fmtDate(addDays(today,7));
+  document.getElementById('stat-week').textContent=bookings.filter(b=>b.date>=todayStr&&b.date<=weekEnd).length;
+  document.getElementById('today-date').textContent=today.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  const list=document.getElementById('today-list');
+  if(todayB.length===0){
+    list.innerHTML='<div class="empty"><div class="empty-icon">◫</div><div class="empty-text">No bookings today</div></div>';
+  }else{
+    const sorted=[...todayB].sort((a,b)=>a.time.localeCompare(b.time));
+    list.innerHTML=sorted.map(b=>{
+      const h=getHorse(b.horse_id);const o=getOwnerByHorse(b.horse_id);const t=typeConfig[b.type]||{label:b.type,cls:'ev-arena',dot:'#888'};
+      return `<div class="today-item">
+        <div class="today-time">${b.time}</div>
+        <div class="today-dot" style="background:${t.dot}"></div>
+        <div class="today-info">
+          <div class="today-title">${h?h.name:'Unknown'} — ${t.label}</div>
+          <div class="today-sub">${o?o.first+' '+o.last:'No owner'}${b.notes?' · '+b.notes:''}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  populateHorseSelects();
+  const qd=document.getElementById('quick-date');
+  if(!qd.value)qd.value=fmtDate(today);
+}
+
+function renderCalendar(){
+  document.getElementById('cal-month-label').textContent=new Date(currentYear,currentMonth,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  const firstDay=new Date(currentYear,currentMonth,1).getDay();
+  const daysInMonth=new Date(currentYear,currentMonth+1,0).getDate();
+  const daysInPrev=new Date(currentYear,currentMonth,0).getDate();
+  const todayStr=fmtDate(today);
+  let html='';
+  for(let i=0;i<firstDay;i++) html+=`<div class="cal-day other-month"><div class="cal-day-num">${daysInPrev-firstDay+1+i}</div></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday=ds===todayStr;
+    const dayB=bookings.filter(b=>b.date===ds).sort((a,b)=>a.time.localeCompare(b.time));
+    const evHtml=dayB.slice(0,3).map(b=>{
+      const h=getHorse(b.horse_id);const t=typeConfig[b.type]||{label:b.type,cls:'ev-arena'};
+      return `<div class="cal-event ${t.cls}">${b.time} ${h?h.name:''}</div>`;
+    }).join('');
+    const more=dayB.length>3?`<div style="font-size:10px;color:var(--text-muted);padding:1px 4px">+${dayB.length-3} more</div>`:'';
+    html+=`<div class="cal-day${isToday?' today':''}"><div class="cal-day-num">${d}</div>${evHtml}${more}</div>`;
+  }
+  const rem=(7-(firstDay+daysInMonth)%7)%7;
+  for(let i=1;i<=rem;i++) html+=`<div class="cal-day other-month"><div class="cal-day-num">${i}</div></div>`;
+  document.getElementById('cal-days').innerHTML=html;
+}
+
+function changeMonth(dir){
+  currentMonth+=dir;
+  if(currentMonth>11){currentMonth=0;currentYear++;}
+  if(currentMonth<0){currentMonth=11;currentYear--;}
+  renderCalendar();
+}
+
+function renderHorses(){
+  document.getElementById('horses-count').textContent=`${horses.length} horse${horses.length!==1?'s':''} registered`;
+  populateOwnerSelect('horse-owner');
+  if(horses.length===0){document.getElementById('horses-grid').innerHTML='<div class="empty"><div class="empty-icon">◈</div><div class="empty-text">No horses yet — add your first horse</div></div>';return;}
+  document.getElementById('horses-grid').innerHTML=horses.map(h=>{
+    const o=getOwner(h.owner_id);
+    return `<div class="card">
+      <div class="card-header">
+        <div class="card-avatar avatar-horse">${h.name.substring(0,2).toUpperCase()}</div>
+        <div><div class="card-name">${h.name}</div><div class="card-sub">${h.breed||'Unknown breed'} · ${h.age||'?'} yrs</div></div>
+      </div>
+      <div class="card-field"><span class="card-field-label">Owner</span><span class="card-field-val">${o?o.first+' '+o.last:'—'}</span></div>
+      <div class="card-field"><span class="card-field-label">Access</span><span class="card-field-val"><span class="badge ${o&&o.level==='independent'?'badge-independent':'badge-supervised'}">${o&&o.level==='independent'?'Independent':'Supervised'}</span></span></div>
+      ${h.notes?`<div class="card-field"><span class="card-field-label">Notes</span><span class="card-field-val">${h.notes}</span></div>`:''}
+      <div class="card-actions">
+        <button class="btn btn-secondary btn-sm" onclick="quickBookHorse(${h.id})">+ Book</button>
+        <button class="btn btn-secondary btn-sm" style="color:var(--danger);border-color:var(--danger)" onclick="deleteHorse(${h.id})">Remove</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderOwners(){
+  document.getElementById('owners-count').textContent=`${owners.length} owner${owners.length!==1?'s':''} registered`;
+  if(owners.length===0){document.getElementById('owners-grid').innerHTML='<div class="empty"><div class="empty-icon">◉</div><div class="empty-text">No owners yet</div></div>';return;}
+  document.getElementById('owners-grid').innerHTML=owners.map(o=>{
+    const myHorses=horses.filter(h=>h.owner_id===o.id);
+    return `<div class="card">
+      <div class="card-header">
+        <div class="card-avatar avatar-owner">${(o.first[0]+o.last[0]).toUpperCase()}</div>
+        <div><div class="card-name">${o.first} ${o.last}</div><div class="card-sub">${myHorses.map(h=>h.name).join(', ')||'No horse assigned'}</div></div>
+      </div>
+      <div class="card-field"><span class="card-field-label">Email</span><span class="card-field-val">${o.email||'—'}</span></div>
+      <div class="card-field"><span class="card-field-label">Phone</span><span class="card-field-val">${o.phone||'—'}</span></div>
+      <div class="card-field"><span class="card-field-label">Access</span><span class="card-field-val"><span class="badge ${o.level==='independent'?'badge-independent':'badge-supervised'}">${o.level==='independent'?'Independent':'Supervised'}</span></span></div>
+      ${o.notes?`<div class="card-field"><span class="card-field-label">Notes</span><span class="card-field-val">${o.notes}</span></div>`:''}
+      <div class="card-actions">
+        <button class="btn btn-secondary btn-sm" style="color:var(--danger);border-color:var(--danger)" onclick="deleteOwner(${o.id})">Remove</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderBookings(){
+  const sorted=[...bookings].sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date));
+  document.getElementById('bookings-count').textContent=`${bookings.length} booking${bookings.length!==1?'s':''} total`;
+  if(bookings.length===0){document.getElementById('bookings-table').innerHTML='<tr><td colspan="6" style="padding:40px;text-align:center;color:var(--text-muted)">No bookings yet</td></tr>';return;}
+  document.getElementById('bookings-table').innerHTML=sorted.map(b=>{
+    const h=getHorse(b.horse_id);const o=getOwnerByHorse(b.horse_id);const t=typeConfig[b.type]||{label:b.type,cls:'ev-arena'};
+    const d=new Date(b.date+'T12:00:00');
+    return `<tr style="border-bottom:1px solid var(--cream-dark)">
+      <td style="padding:12px 16px;color:var(--text)">${d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})} · ${b.time}</td>
+      <td style="padding:12px 16px;font-weight:500;color:var(--earth)">${h?h.name:'—'}</td>
+      <td style="padding:12px 16px"><span class="cal-event ${t.cls}">${t.label}</span></td>
+      <td style="padding:12px 16px;color:var(--text-mid)">${o?o.first+' '+o.last:'—'}</td>
+      <td style="padding:12px 16px;color:var(--text-muted);font-size:12px">${b.notes||'—'}</td>
+      <td style="padding:12px 16px"><button class="btn btn-secondary btn-sm" style="color:var(--danger);border-color:var(--danger)" onclick="deleteBooking(${b.id})">Remove</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function populateHorseSelects(){
+  const opts=horses.length?horses.map(h=>`<option value="${h.id}">${h.name}</option>`).join(''):'<option value="">No horses yet</option>';
+  ['quick-horse','modal-horse'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+}
+
+function populateOwnerSelect(id){
+  const el=document.getElementById(id);if(!el)return;
+  el.innerHTML='<option value="">No owner</option>'+owners.map(o=>`<option value="${o.id}">${o.first} ${o.last}</option>`).join('');
+}
+
+function openModal(type){
+  populateHorseSelects();
+  populateOwnerSelect('horse-owner');
+  const md=document.getElementById('modal-date');if(md)md.value=fmtDate(today);
+  document.getElementById('modal-'+type).classList.add('open');
+}
+
+function closeModal(type){document.getElementById('modal-'+type).classList.remove('open');}
+
+async function quickAddBooking(){
+  const horseId=parseInt(document.getElementById('quick-horse').value);
+  const date=document.getElementById('quick-date').value;
+  const time=document.getElementById('quick-time').value;
+  const type=document.getElementById('quick-type').value;
+  const notes=document.getElementById('quick-notes').value;
+  if(!horseId||!date){showToast('Please select a horse and date');return;}
+  setSyncing(true);
+  const {data,error}=await sb.from('bookings').insert({horse_id:horseId,date,time,type,notes}).select().single();
+  setSyncing(false);
+  if(error){showToast('Error saving booking');console.error(error);return;}
+  bookings.push(data);
+  document.getElementById('quick-notes').value='';
+  renderDashboard();
+  showToast('Booking saved — '+getHorse(horseId)?.name+' at '+time);
+}
+
+async function saveBooking(){
+  const horseId=parseInt(document.getElementById('modal-horse').value);
+  const date=document.getElementById('modal-date').value;
+  const time=document.getElementById('modal-time').value;
+  const type=document.getElementById('modal-type').value;
+  const notes=document.getElementById('modal-notes').value;
+  if(!horseId||!date){showToast('Please select a horse and date');return;}
+  setSyncing(true);
+  const {data,error}=await sb.from('bookings').insert({horse_id:horseId,date,time,type,notes}).select().single();
+  setSyncing(false);
+  if(error){showToast('Error saving booking');console.error(error);return;}
+  bookings.push(data);
+  closeModal('booking');
+  document.getElementById('modal-notes').value='';
+  renderDashboard();
+  showToast('Booking saved to database');
+}
+
+async function saveHorse(){
+  const name=document.getElementById('horse-name').value.trim();
+  const breed=document.getElementById('horse-breed').value.trim();
+  const age=parseInt(document.getElementById('horse-age').value)||null;
+  const owner_id=parseInt(document.getElementById('horse-owner').value)||null;
+  const notes=document.getElementById('horse-notes').value.trim();
+  if(!name){showToast('Please enter a horse name');return;}
+  setSyncing(true);
+  const {data,error}=await sb.from('horses').insert({name,breed,age,owner_id,notes}).select().single();
+  setSyncing(false);
+  if(error){showToast('Error saving horse');console.error(error);return;}
+  horses.push(data);
+  closeModal('horse');
+  ['horse-name','horse-breed','horse-age','horse-notes'].forEach(id=>document.getElementById(id).value='');
+  renderHorses();renderDashboard();
+  showToast(name+' added to the stable');
+}
+
+async function saveOwner(){
+  const first=document.getElementById('owner-first').value.trim();
+  const last=document.getElementById('owner-last').value.trim();
+  const email=document.getElementById('owner-email').value.trim();
+  const phone=document.getElementById('owner-phone').value.trim();
+  const level=document.getElementById('owner-level').value;
+  const notes=document.getElementById('owner-notes').value.trim();
+  if(!first||!last){showToast('Please enter first and last name');return;}
+  setSyncing(true);
+  const {data,error}=await sb.from('owners').insert({first,last,email,phone,level,notes}).select().single();
+  setSyncing(false);
+  if(error){showToast('Error saving owner');console.error(error);return;}
+  owners.push(data);
+  closeModal('owner');
+  ['owner-first','owner-last','owner-email','owner-phone','owner-notes'].forEach(id=>document.getElementById(id).value='');
+  renderOwners();renderDashboard();
+  showToast(first+' '+last+' added');
+}
+
+async function deleteHorse(id){
+  if(!confirm('Remove this horse?'))return;
+  setSyncing(true);
+  const {error}=await sb.from('horses').delete().eq('id',id);
+  setSyncing(false);
+  if(error){showToast('Error removing horse');return;}
+  horses=horses.filter(h=>h.id!==id);
+  renderHorses();renderDashboard();
+  showToast('Horse removed');
+}
+
+async function deleteOwner(id){
+  if(!confirm('Remove this owner?'))return;
+  setSyncing(true);
+  const {error}=await sb.from('owners').delete().eq('id',id);
+  setSyncing(false);
+  if(error){showToast('Error removing owner');return;}
+  owners=owners.filter(o=>o.id!==id);
+  renderOwners();renderDashboard();
+  showToast('Owner removed');
+}
+
+async function deleteBooking(id){
+  if(!confirm('Remove this booking?'))return;
+  setSyncing(true);
+  const {error}=await sb.from('bookings').delete().eq('id',id);
+  setSyncing(false);
+  if(error){showToast('Error removing booking');return;}
+  bookings=bookings.filter(b=>b.id!==id);
+  renderBookings();renderDashboard();
+  showToast('Booking removed');
+}
+
+function quickBookHorse(horseId){
+  populateHorseSelects();
+  document.getElementById('modal-horse').value=horseId;
+  const md=document.getElementById('modal-date');if(md)md.value=fmtDate(today);
+  document.getElementById('modal-booking').classList.add('open');
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+document.querySelectorAll('.modal-overlay').forEach(m=>{
+  m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});
+});
+
+loadAll();
+</script>
+</body>
+</html>
