@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>StableMate</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --earth:#2c1810;--earth-mid:#4a2c1e;--earth-light:#6b4c35;
+  --hay:#c8a96e;--hay-light:#e8d5a3;--hay-dark:#8b6914;
+  --cream:#faf6ef;--cream-dark:#f0e8d8;--sand:#e8dcc8;
+  --white:#fdfaf5;--text:#2a1a0e;--text-mid:#5c3d2e;--text-muted:#8c7060;
+  --danger:#c0392b;--success:#2d6a4f;
+  --nav-h:72px;--safe-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);color:var(--text);overflow:hidden;position:fixed;width:100%}
+
+/* ── SCREENS ── */
+.screen{position:fixed;inset:0;display:none;flex-direction:column;background:var(--cream)}
+.screen.active{display:flex}
+
+/* ── SPLASH ── */
+#screen-splash{background:var(--earth);align-items:center;justify-content:flex-end}
+.splash-bg{position:absolute;inset:0;background-image:url('splash.jpeg');background-size:cover;background-position:center top;opacity:0.55}
+.splash-grain{position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");opacity:0.4}
+.splash-overlay{position:absolute;inset:0;background:linear-gradient(to top, rgba(20,8,4,0.95) 0%, rgba(20,8,4,0.6) 50%, rgba(20,8,4,0.2) 100%)}
+.splash-content{position:relative;z-index:2;padding:0 32px calc(56px + var(--safe-bottom));width:100%;text-align:left}
+.splash-eyebrow{font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:var(--hay);margin-bottom:12px;font-weight:400;opacity:0;animation:fadeUp 0.8s ease 0.3s forwards}
+.splash-title{font-family:'Cormorant Garamond',serif;font-size:64px;font-weight:300;color:var(--white);line-height:1;margin-bottom:8px;opacity:0;animation:fadeUp 0.8s ease 0.5s forwards}
+.splash-title span{color:var(--hay);font-style:italic}
+.splash-sub{font-size:14px;color:rgba(255,255,255,0.6);font-weight:300;margin-bottom:40px;opacity:0;animation:fadeUp 0.8s ease 0.7s forwards}
+.splash-btn{display:block;width:100%;padding:18px;background:var(--hay);color:var(--earth);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;border:none;cursor:pointer;border-radius:4px;opacity:0;animation:fadeUp 0.8s ease 0.9s forwards;transition:background 0.2s}
+.splash-btn:active{background:var(--hay-light)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── LOGIN ── */
+#screen-login{background:var(--cream);justify-content:center;align-items:center;padding:32px}
+.login-card{width:100%;max-width:380px;text-align:center}
+.login-logo{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;color:var(--earth);margin-bottom:4px}
+.login-logo span{color:var(--hay);font-style:italic}
+.login-sub{font-size:13px;color:var(--text-muted);margin-bottom:40px}
+.login-label{display:block;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;text-align:left}
+.login-input{width:100%;padding:14px 16px;border:1px solid var(--sand);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:16px;color:var(--text);background:var(--white);outline:none;transition:border-color 0.2s;margin-bottom:16px}
+.login-input:focus{border-color:var(--hay)}
+.login-btn{width:100%;padding:16px;background:var(--earth);color:var(--white);border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:background 0.2s;margin-bottom:12px}
+.login-btn:active{background:var(--earth-mid)}
+.login-btn:disabled{background:var(--sand);color:var(--text-muted)}
+.login-note{font-size:12px;color:var(--text-muted);line-height:1.6}
+.login-success{background:#e8f4ed;border-radius:8px;padding:16px;font-size:13px;color:var(--success);line-height:1.6;display:none}
+.login-success.show{display:block}
+
+/* ── MAIN APP ── */
+#screen-app{background:var(--cream)}
+
+/* TOPBAR */
+.topbar{background:var(--white);border-bottom:1px solid var(--sand);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding-top:env(safe-area-inset-top,0)}
+.topbar-logo{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--earth);font-weight:400}
+.topbar-logo span{color:var(--hay);font-style:italic}
+.topbar-user{display:flex;align-items:center;gap:8px}
+.topbar-avatar{width:30px;height:30px;border-radius:50%;background:var(--hay);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--earth)}
+.topbar-role{font-size:11px;color:var(--text-muted)}
+.logout-btn{font-size:11px;color:var(--text-muted);background:none;border:none;cursor:pointer;padding:4px 8px}
+
+/* PANELS */
+.panels{flex:1;overflow:hidden;position:relative}
+.panel{position:absolute;inset:0;overflow-y:auto;padding:20px 16px calc(var(--nav-h) + var(--safe-bottom) + 20px);display:none;-webkit-overflow-scrolling:touch}
+.panel.active{display:block}
+
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + var(--safe-bottom));background:var(--white);border-top:1px solid var(--sand);display:flex;align-items:flex-start;padding-top:10px;padding-bottom:var(--safe-bottom);z-index:50}
+.nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:4px 0;border:none;background:none;color:var(--text-muted);transition:color 0.15s}
+.nav-tab.active{color:var(--earth)}
+.nav-tab-icon{font-size:20px;line-height:1}
+.nav-tab-label{font-size:10px;letter-spacing:0.06em;font-weight:400}
+.nav-tab.active .nav-tab-label{font-weight:500}
+.nav-indicator{width:4px;height:4px;border-radius:50%;background:var(--hay);opacity:0;transition:opacity 0.15s;margin-top:2px}
+.nav-tab.active .nav-indicator{opacity:1}
+
+/* SECTION HEADERS */
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.section-title{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--earth);font-weight:400}
+.section-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+
+/* STAT CARDS */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.stat-card{background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:14px 16px}
+.stat-label{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px}
+.stat-value{font-family:'Cormorant Garamond',serif;font-size:32px;color:var(--earth);line-height:1}
+.stat-hint{font-size:11px;color:var(--text-muted);margin-top:3px}
+
+/* TODAY LIST */
+.today-card{background:var(--white);border-radius:10px;border:1px solid var(--sand);overflow:hidden;margin-bottom:20px}
+.today-header{padding:12px 16px;border-bottom:1px solid var(--cream-dark);display:flex;align-items:center;justify-content:space-between}
+.today-title-text{font-size:13px;font-weight:500;color:var(--earth)}
+.today-date-text{font-size:11px;color:var(--text-muted)}
+.today-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--cream-dark);position:relative}
+.today-item:last-child{border-bottom:none}
+.today-time{font-size:12px;font-weight:500;color:var(--earth);min-width:44px}
+.today-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.today-info{flex:1;min-width:0}
+.today-horse{font-size:14px;color:var(--text);font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.today-detail{font-size:11px;color:var(--text-muted);margin-top:1px}
+.swipe-hint{font-size:10px;color:var(--text-muted);opacity:0.5;flex-shrink:0}
+
+/* EVENT BADGES */
+.ev-badge{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:500;white-space:nowrap}
+.ev-lesson{background:#e8f0e0;color:#3b6d11}
+.ev-arena{background:#e8dcc8;color:#6b4c35}
+.ev-vet{background:#fdecea;color:#8b2020}
+.ev-farrier{background:#e8f4fd;color:#0c447c}
+.ev-competition{background:#faeeda;color:#633806}
+
+/* QUICK BOOK */
+.quick-book{background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:16px;margin-bottom:20px}
+.form-label{display:block;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;font-weight:500}
+.form-input,.form-select{width:100%;padding:12px 14px;border:1px solid var(--sand);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:16px;color:var(--text);background:var(--white);outline:none;transition:border-color 0.2s;appearance:none;-webkit-appearance:none}
+.form-input:focus,.form-select:focus{border-color:var(--hay)}
+.form-group{margin-bottom:12px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-textarea{width:100%;padding:12px 14px;border:1px solid var(--sand);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:16px;color:var(--text);background:var(--white);outline:none;resize:none;min-height:72px;transition:border-color 0.2s}
+.form-textarea:focus{border-color:var(--hay)}
+
+/* BUTTONS */
+.btn{padding:14px 20px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all 0.15s;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn-primary{background:var(--earth);color:var(--white);width:100%}
+.btn-primary:active{background:var(--earth-mid)}
+.btn-secondary{background:var(--cream-dark);color:var(--earth)}
+.btn-sm{padding:8px 14px;font-size:12px}
+.btn-danger-sm{background:#fdecea;color:var(--danger);padding:8px 14px;font-size:12px;border-radius:6px;border:none;font-family:'DM Sans',sans-serif;cursor:pointer}
+
+/* HORSE CARDS */
+.horse-card{background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;position:relative;overflow:hidden;transition:transform 0.2s}
+.horse-avatar{width:44px;height:44px;border-radius:50%;background:var(--cream-dark);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--earth);flex-shrink:0}
+.horse-name{font-size:15px;font-weight:500;color:var(--earth)}
+.horse-detail{font-size:12px;color:var(--text-muted);margin-top:2px}
+.horse-badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:10px;margin-top:4px}
+.badge-ind{background:#e8f0e0;color:#2d6a4f}
+.badge-sup{background:#faeeda;color:#633806}
+.horse-actions{margin-left:auto;display:flex;gap:6px;flex-shrink:0}
+
+/* OWNER CARDS */
+.owner-card{background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:16px;margin-bottom:10px}
+.owner-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.owner-avatar{width:40px;height:40px;border-radius:50%;background:#e8f0e0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;color:#2d6a4f;flex-shrink:0}
+.owner-name{font-size:14px;font-weight:500;color:var(--earth)}
+.owner-sub{font-size:12px;color:var(--text-muted)}
+.owner-field{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--cream-dark);font-size:12px}
+.owner-field:last-child{border-bottom:none}
+.owner-field-label{color:var(--text-muted)}
+.owner-field-val{color:var(--text);text-align:right}
+
+/* BOOKINGS TABLE */
+.booking-row{background:var(--white);border-radius:8px;border:1px solid var(--sand);padding:12px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;position:relative;overflow:hidden}
+.booking-left{flex:1;min-width:0}
+.booking-horse{font-size:14px;font-weight:500;color:var(--earth)}
+.booking-meta{font-size:12px;color:var(--text-muted);margin-top:2px}
+.booking-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+
+/* SWIPE TO DELETE */
+.swipeable{position:relative;overflow:hidden;border-radius:10px;margin-bottom:10px}
+.swipe-action{position:absolute;right:0;top:0;bottom:0;width:80px;background:var(--danger);display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:500;transform:translateX(100%);transition:transform 0.2s}
+.swipe-content{position:relative;z-index:1;background:var(--white);transition:transform 0.2s;border-radius:10px;border:1px solid var(--sand)}
+
+/* CALENDAR */
+.cal-nav-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.cal-nav-btn{width:36px;height:36px;border-radius:8px;border:1px solid var(--sand);background:var(--white);font-size:18px;color:var(--earth-light);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.cal-month-label{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--earth)}
+.cal-grid{background:var(--white);border-radius:10px;border:1px solid var(--sand);overflow:hidden}
+.cal-days-head{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--sand)}
+.cal-day-head{padding:8px 4px;text-align:center;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted)}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr)}
+.cal-day{min-height:52px;padding:4px;border-right:1px solid var(--cream-dark);border-bottom:1px solid var(--cream-dark)}
+.cal-day:nth-child(7n){border-right:none}
+.cal-day-num{font-size:12px;color:var(--text-muted);width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:50%;margin-bottom:2px}
+.cal-day.today .cal-day-num{background:var(--earth);color:var(--white)}
+.cal-day.other-month .cal-day-num{color:var(--sand)}
+.cal-dot-row{display:flex;gap:2px;flex-wrap:wrap;padding:0 2px}
+.cal-dot{width:5px;height:5px;border-radius:50%}
+
+/* MODAL / SHEET */
+.sheet-overlay{position:fixed;inset:0;background:rgba(20,8,4,0.5);z-index:100;display:none;align-items:flex-end}
+.sheet-overlay.open{display:flex}
+.sheet{background:var(--white);border-radius:20px 20px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding:20px 20px calc(20px + var(--safe-bottom));animation:slideUp 0.3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet-handle{width:36px;height:4px;background:var(--sand);border-radius:2px;margin:0 auto 20px}
+.sheet-title{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--earth);margin-bottom:20px}
+
+/* TRAINER WARNING */
+.trainer-warning{background:#faeeda;border-radius:8px;padding:12px 14px;font-size:13px;color:#633806;margin-bottom:12px;display:none;line-height:1.5}
+.trainer-warning.show{display:block}
+
+/* EMPTY */
+.empty{text-align:center;padding:48px 20px;color:var(--text-muted)}
+.empty-icon{font-size:36px;opacity:0.3;margin-bottom:10px}
+.empty-text{font-size:14px}
+
+/* TOAST */
+.toast{position:fixed;bottom:calc(var(--nav-h) + var(--safe-bottom) + 12px);left:16px;right:16px;background:var(--earth);color:var(--white);padding:14px 18px;border-radius:10px;font-size:13px;z-index:200;transform:translateY(20px);opacity:0;transition:all 0.3s;text-align:center}
+.toast.show{transform:translateY(0);opacity:1}
+
+/* LOADING */
+.loading-screen{position:fixed;inset:0;background:var(--cream);display:flex;align-items:center;justify-content:center;z-index:300;transition:opacity 0.4s}
+.loading-screen.hidden{opacity:0;pointer-events:none}
+.loading-logo{font-family:'Cormorant Garamond',serif;font-size:32px;color:var(--earth)}
+.loading-logo span{color:var(--hay);font-style:italic}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-screen" id="loading-screen">
+  <div class="loading-logo">Stable<span>Mate</span></div>
+</div>
+
+<!-- SPLASH -->
+<div class="screen" id="screen-splash">
+  <div class="splash-bg"></div>
+  <div class="splash-grain"></div>
+  <div class="splash-overlay"></div>
+  <div class="splash-content">
+    <div class="splash-eyebrow">Stable Management</div>
+    <div class="splash-title">Stable<span>Mate</span></div>
+    <div class="splash-sub">Your barn, organized.</div>
+    <button class="splash-btn" onclick="showScreen('login')">Get Started</button>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div class="screen" id="screen-login">
+  <div class="login-card">
+    <div class="login-logo">Stable<span>Mate</span></div>
+    <div class="login-sub">Enter your email to sign in</div>
+    <label class="login-label">Email address</label>
+    <input type="email" class="login-input" id="login-email" placeholder="you@example.com" autocomplete="email">
+    <button class="login-btn" id="login-btn" onclick="sendMagicLink()">Send Magic Link</button>
+    <div class="login-success" id="login-success">
+      Magic link sent! Check your email and tap the link to sign in. You can close this tab.
+    </div>
+    <div class="login-note" id="login-note">We'll send you a secure link — no password needed.</div>
+    <button style="margin-top:24px;background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;text-decoration:underline" onclick="showScreen('splash')">← Back</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="screen" id="screen-app">
+  <div class="topbar">
+    <div class="topbar-logo">Stable<span>Mate</span></div>
+    <div class="topbar-user">
+      <div class="topbar-avatar" id="topbar-avatar">?</div>
+      <div class="topbar-role" id="topbar-role"></div>
+      <button class="logout-btn" onclick="signOut()">Sign out</button>
+    </div>
+  </div>
+
+  <div class="panels">
+    <!-- DASHBOARD -->
+    <div class="panel active" id="panel-home">
+      <div class="section-head">
+        <div>
+          <div class="section-title">Today</div>
+          <div class="section-sub" id="dash-date"></div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="openSheet('booking')">+ Book</button>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Horses</div><div class="stat-value" id="stat-horses">—</div><div class="stat-hint">in stable</div></div>
+        <div class="stat-card"><div class="stat-label">Today</div><div class="stat-value" id="stat-today">—</div><div class="stat-hint">sessions</div></div>
+        <div class="stat-card"><div class="stat-label">This Week</div><div class="stat-value" id="stat-week">—</div><div class="stat-hint">bookings</div></div>
+        <div class="stat-card"><div class="stat-label">Owners</div><div class="stat-value" id="stat-owners">—</div><div class="stat-hint">registered</div></div>
+      </div>
+      <div class="today-card">
+        <div class="today-header">
+          <div class="today-title-text">Schedule</div>
+          <div class="today-date-text" id="today-trainer-status"></div>
+        </div>
+        <div id="today-list"><div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px">Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div class="panel" id="panel-calendar">
+      <div class="cal-nav-row">
+        <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
+        <div class="cal-month-label" id="cal-label"></div>
+        <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
+      </div>
+      <div class="cal-grid">
+        <div class="cal-days-head">
+          <div class="cal-day-head">S</div><div class="cal-day-head">M</div><div class="cal-day-head">T</div>
+          <div class="cal-day-head">W</div><div class="cal-day-head">T</div><div class="cal-day-head">F</div><div class="cal-day-head">S</div>
+        </div>
+        <div class="cal-days" id="cal-days"></div>
+      </div>
+      <div style="margin-top:16px" id="cal-day-detail"></div>
+    </div>
+
+    <!-- HORSES -->
+    <div class="panel" id="panel-horses">
+      <div class="section-head">
+        <div><div class="section-title">Horses</div><div class="section-sub" id="horses-sub"></div></div>
+        <button class="btn btn-secondary btn-sm" id="add-horse-btn" onclick="openSheet('horse')">+ Add</button>
+      </div>
+      <div id="horses-list"></div>
+    </div>
+
+    <!-- OWNERS -->
+    <div class="panel" id="panel-owners">
+      <div class="section-head">
+        <div><div class="section-title">Owners</div><div class="section-sub" id="owners-sub"></div></div>
+        <button class="btn btn-secondary btn-sm" onclick="openSheet('owner')">+ Add</button>
+      </div>
+      <div id="owners-list"></div>
+    </div>
+
+    <!-- BOOKINGS -->
+    <div class="panel" id="panel-bookings">
+      <div class="section-head">
+        <div><div class="section-title">All Bookings</div><div class="section-sub" id="bookings-sub"></div></div>
+        <button class="btn btn-secondary btn-sm" onclick="openSheet('booking')">+ New</button>
+      </div>
+      <div id="bookings-list"></div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <button class="nav-tab active" id="nav-home" onclick="showPanel('home')">
+      <div class="nav-tab-icon">⌂</div>
+      <div class="nav-tab-label">Home</div>
+      <div class="nav-indicator"></div>
+    </button>
+    <button class="nav-tab" id="nav-calendar" onclick="showPanel('calendar')">
+      <div class="nav-tab-icon">◫</div>
+      <div class="nav-tab-label">Calendar</div>
+      <div class="nav-indicator"></div>
+    </button>
+    <button class="nav-tab" id="nav-horses" onclick="showPanel('horses')">
+      <div class="nav-tab-icon">◈</div>
+      <div class="nav-tab-label">Horses</div>
+      <div class="nav-indicator"></div>
+    </button>
+    <button class="nav-tab" id="nav-owners" onclick="showPanel('owners')" id="owners-tab">
+      <div class="nav-tab-icon">◉</div>
+      <div class="nav-tab-label">Owners</div>
+      <div class="nav-indicator"></div>
+    </button>
+    <button class="nav-tab" id="nav-bookings" onclick="showPanel('bookings')">
+      <div class="nav-tab-icon">◷</div>
+      <div class="nav-tab-label">Bookings</div>
+      <div class="nav-indicator"></div>
+    </button>
+  </div>
+</div>
+
+<!-- BOOKING SHEET -->
+<div class="sheet-overlay" id="sheet-booking">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">New Booking</div>
+    <div class="trainer-warning" id="trainer-warning"></div>
+    <div class="form-group"><label class="form-label">Horse</label><select class="form-select" id="b-horse" onchange="checkTrainer()"></select></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="b-date" onchange="checkTrainer()"></div>
+      <div class="form-group"><label class="form-label">Time</label>
+        <select class="form-select" id="b-time" onchange="checkTrainer()">
+          <option>07:00</option><option>08:00</option><option>09:00</option><option>10:00</option>
+          <option>11:00</option><option selected>12:00</option><option>13:00</option><option>14:00</option>
+          <option>15:00</option><option>16:00</option><option>17:00</option><option>18:00</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Type</label>
+      <select class="form-select" id="b-type" onchange="checkTrainer()">
+        <option value="lesson">Riding Lesson</option>
+        <option value="arena-supervised">Arena Session (Supervised)</option>
+        <option value="arena-independent">Arena Session (Independent)</option>
+        <option value="vet">Vet Appointment</option>
+        <option value="farrier">Farrier Visit</option>
+        <option value="competition">Competition Day</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="b-notes" placeholder="Optional notes..."></textarea></div>
+    <button class="btn btn-primary" onclick="saveBooking()">Save Booking</button>
+    <button class="btn btn-secondary" style="width:100%;margin-top:10px" onclick="closeSheet('booking')">Cancel</button>
+  </div>
+</div>
+
+<!-- HORSE SHEET -->
+<div class="sheet-overlay" id="sheet-horse">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Add Horse</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Name</label><input type="text" class="form-input" id="h-name" placeholder="Thunder"></div>
+      <div class="form-group"><label class="form-label">Breed</label><input type="text" class="form-input" id="h-breed" placeholder="Warmblood"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Age</label><input type="number" class="form-input" id="h-age" placeholder="8"></div>
+      <div class="form-group"><label class="form-label">Owner</label><select class="form-select" id="h-owner"></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="h-notes" placeholder="Health, temperament..."></textarea></div>
+    <button class="btn btn-primary" onclick="saveHorse()">Add Horse</button>
+    <button class="btn btn-secondary" style="width:100%;margin-top:10px" onclick="closeSheet('horse')">Cancel</button>
+  </div>
+</div>
+
+<!-- OWNER SHEET -->
+<div class="sheet-overlay" id="sheet-owner">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Add Owner</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">First Name</label><input type="text" class="form-input" id="o-first" placeholder="Jane"></div>
+      <div class="form-group"><label class="form-label">Last Name</label><input type="text" class="form-input" id="o-last" placeholder="Smith"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="o-email" placeholder="jane@example.com"></div>
+    <div class="form-group"><label class="form-label">Phone</label><input type="tel" class="form-input" id="o-phone" placeholder="(555) 000-0000"></div>
+    <div class="form-group"><label class="form-label">Riding Level</label>
+      <select class="form-select" id="o-level">
+        <option value="independent">Independent — can ride unsupervised</option>
+        <option value="supervised">Supervised — requires trainer present</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="o-notes" placeholder="Experience, certifications..."></textarea></div>
+    <button class="btn btn-primary" onclick="saveOwner()">Add Owner</button>
+    <button class="btn btn-secondary" style="width:100%;margin-top:10px" onclick="closeSheet('owner')">Cancel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL='https://rdyktbwkrcepojkiunwb.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkeWt0YndrcmNlcG9qa2l1bndiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NDk4NzgsImV4cCI6MjA5MDIyNTg3OH0.fkttT72Y9LzwcTPhgu3jZ6nD9dL5Jqc0KOhn9sgU44g';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+const today=new Date();
+let calMonth=today.getMonth(),calYear=today.getFullYear();
+let horses=[],owners=[],bookings=[],schedules=[],currentUser=null,currentRole='owner';
+
+const typeConfig={
+  'lesson':{label:'Riding Lesson',cls:'ev-lesson',dot:'#3b6d11',supervised:true},
+  'arena-supervised':{label:'Arena (Supervised)',cls:'ev-arena',dot:'#6b4c35',supervised:true},
+  'arena-independent':{label:'Arena (Independent)',cls:'ev-arena',dot:'#8b6914',supervised:false},
+  'vet':{label:'Vet Appt',cls:'ev-vet',dot:'#8b2020',supervised:false},
+  'farrier':{label:'Farrier',cls:'ev-farrier',dot:'#0c447c',supervised:false},
+  'competition':{label:'Competition',cls:'ev-competition',dot:'#633806',supervised:false},
+};
+
+const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+function fmtDate(d){return d.toISOString().split('T')[0]}
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r}
+function getHorse(id){return horses.find(h=>h.id===id)}
+function getOwner(id){return owners.find(o=>o.id===id)}
+function getOwnerByHorse(hid){const h=getHorse(hid);return h?getOwner(h.owner_id):null}
+
+// ── SCREENS ──
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.getElementById('loading-screen').classList.add('hidden');
+}
+
+// ── AUTH ──
+async function initAuth(){
+  try{
+    sb.auth.onAuthStateChange(async(event, session)=>{
+      if(event==='SIGNED_IN' && session){
+        currentUser=session.user;
+        await loadUserRole();
+        await loadAll();
+        showScreen('app');
+        window.history.replaceState(null,'',window.location.pathname);
+      }
+    });
+    const{data:{session}}=await sb.auth.getSession();
+    if(session){
+      currentUser=session.user;
+      await loadUserRole();
+      await loadAll();
+      showScreen('app');
+    } else {
+      showScreen('splash');
+    }
+  } catch(e){
+    console.error('Auth error:',e);
+    showScreen('splash');
+  }
+  document.getElementById('loading-screen').classList.add('hidden');
+}
+
+async function loadUserRole(){
+  if(!currentUser)return;
+  const{data}=await sb.from('user_profiles').select('role').eq('id',currentUser.id).single();
+  currentRole=data?.role||'owner';
+  const email=currentUser.email||'';
+  const initials=email.substring(0,2).toUpperCase();
+  document.getElementById('topbar-avatar').textContent=initials;
+  document.getElementById('topbar-role').textContent=currentRole==='staff'?'Staff':'Owner';
+  if(currentRole!=='staff'){
+    document.getElementById('add-horse-btn').style.display='none';
+    document.getElementById('nav-owners').style.display='none';
+  }
+}
+
+async function sendMagicLink(){
+  const email=document.getElementById('login-email').value.trim();
+  if(!email||!email.includes('@')){showToast('Please enter a valid email');return;}
+  const btn=document.getElementById('login-btn');
+  btn.disabled=true;btn.textContent='Sending...';
+  const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin+window.location.pathname}});
+  btn.disabled=false;btn.textContent='Send Magic Link';
+  if(error){showToast('Error sending link — try again');return;}
+  document.getElementById('login-success').classList.add('show');
+  document.getElementById('login-note').style.display='none';
+}
+
+async function signOut(){
+  await sb.auth.signOut();
+  currentUser=null;currentRole='owner';
+  horses=[];owners=[];bookings=[];
+  showScreen('splash');
+}
+
+// ── DATA ──
+async function loadAll(){
+  try{
+    const[ob,hb,bb,sc]=await Promise.all([
+      sb.from('owners').select('*').order('first'),
+      sb.from('horses').select('*').order('name'),
+      sb.from('bookings').select('*').order('date').order('time'),
+      sb.from('trainer_schedules').select('*'),
+    ]);
+    owners=ob.data||[];horses=hb.data||[];bookings=bb.data||[];schedules=sc.data||[];
+    renderDash();
+  }catch(e){showToast('Connection error');console.error(e);}
+}
+
+// ── TRAINER SCHEDULE CHECK ──
+function isTrainerAvailable(dateStr,timeStr){
+  if(!dateStr||!timeStr)return{available:false,trainers:[]};
+  const d=new Date(dateStr+'T12:00:00');
+  const dayName=days[d.getDay()];
+  const available=schedules.filter(s=>{
+    if(s.day_of_week!==dayName)return false;
+    return timeStr>=s.start_time&&timeStr<s.end_time;
+  });
+  return{available:available.length>0,trainers:[...new Set(available.map(s=>s.trainer_name))]};
+}
+
+function checkTrainer(){
+  const type=document.getElementById('b-type')?.value;
+  const date=document.getElementById('b-date')?.value;
+  const time=document.getElementById('b-time')?.value;
+  const warn=document.getElementById('trainer-warning');
+  if(!warn)return;
+  const t=typeConfig[type];
+  if(t&&t.supervised&&date&&time){
+    const{available,trainers}=isTrainerAvailable(date,time);
+    if(!available){
+      warn.textContent='⚠️ No trainer is scheduled at this time. This booking requires a trainer present.';
+      warn.classList.add('show');
+    } else {
+      warn.textContent='✓ '+trainers.join(' & ')+' will be available at this time.';
+      warn.style.background='#e8f4ed';warn.style.color='#2d6a4f';
+      warn.classList.add('show');
+    }
+  } else {
+    warn.classList.remove('show');
+    warn.style.background='#faeeda';warn.style.color='#633806';
+  }
+}
+
+// ── RENDER DASHBOARD ──
+function renderDash(){
+  const todayStr=fmtDate(today);
+  const todayB=bookings.filter(b=>b.date===todayStr);
+  const weekEnd=fmtDate(addDays(today,7));
+  document.getElementById('stat-horses').textContent=horses.length;
+  document.getElementById('stat-today').textContent=todayB.length;
+  document.getElementById('stat-week').textContent=bookings.filter(b=>b.date>=todayStr&&b.date<=weekEnd).length;
+  document.getElementById('stat-owners').textContent=owners.length;
+  document.getElementById('dash-date').textContent=today.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  const dayName=days[today.getDay()];
+  const{available,trainers}=isTrainerAvailable(todayStr,'13:00');
+  document.getElementById('today-trainer-status').textContent=available?'Trainer: '+trainers.join(', '):'No trainer today';
+  const list=document.getElementById('today-list');
+  if(todayB.length===0){
+    list.innerHTML='<div class="empty"><div class="empty-icon">◫</div><div class="empty-text">No bookings today</div></div>';
+  }else{
+    const sorted=[...todayB].sort((a,b)=>a.time.localeCompare(b.time));
+    list.innerHTML=sorted.map(b=>{
+      const h=getHorse(b.horse_id);const o=getOwnerByHorse(b.horse_id);const t=typeConfig[b.type]||{label:b.type,cls:'ev-arena',dot:'#888'};
+      return `<div class="today-item">
+        <div class="today-time">${b.time}</div>
+        <div class="today-dot" style="background:${t.dot}"></div>
+        <div class="today-info">
+          <div class="today-horse">${h?h.name:'Unknown'}</div>
+          <div class="today-detail">${t.label}${o?' · '+o.first+' '+o.last:''}${b.notes?' · '+b.notes:''}</div>
+        </div>
+        ${currentRole==='staff'?`<button class="btn-danger-sm" onclick="deleteBooking(${b.id})">✕</button>`:''}
+      </div>`;
+    }).join('');
+  }
+  populateHorseSelect();
+}
+
+// ── CALENDAR ──
+function renderCalendar(){
+  document.getElementById('cal-label').textContent=new Date(calYear,calMonth,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  const firstDay=new Date(calYear,calMonth,1).getDay();
+  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  const daysInPrev=new Date(calYear,calMonth,0).getDate();
+  const todayStr=fmtDate(today);
+  let html='';
+  for(let i=0;i<firstDay;i++) html+=`<div class="cal-day other-month"><div class="cal-day-num">${daysInPrev-firstDay+1+i}</div></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday=ds===todayStr;
+    const dayB=bookings.filter(b=>b.date===ds);
+    const dots=dayB.slice(0,4).map(b=>{const t=typeConfig[b.type]||{dot:'#888'};return`<div class="cal-dot" style="background:${t.dot}"></div>`;}).join('');
+    html+=`<div class="cal-day${isToday?' today':''}" onclick="showCalDay('${ds}')">
+      <div class="cal-day-num">${d}</div>
+      <div class="cal-dot-row">${dots}</div>
+    </div>`;
+  }
+  const rem=(7-(firstDay+daysInMonth)%7)%7;
+  for(let i=1;i<=rem;i++) html+=`<div class="cal-day other-month"><div class="cal-day-num">${i}</div></div>`;
+  document.getElementById('cal-days').innerHTML=html;
+  document.getElementById('cal-day-detail').innerHTML='';
+}
+
+function showCalDay(dateStr){
+  const dayB=bookings.filter(b=>b.date===dateStr).sort((a,b)=>a.time.localeCompare(b.time));
+  const d=new Date(dateStr+'T12:00:00');
+  const label=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  if(dayB.length===0){
+    document.getElementById('cal-day-detail').innerHTML=`<div style="font-size:13px;color:var(--text-muted);text-align:center;padding:16px">${label} — no bookings</div>`;
+    return;
+  }
+  document.getElementById('cal-day-detail').innerHTML=`
+    <div style="font-size:13px;font-weight:500;color:var(--earth);margin-bottom:10px">${label}</div>
+    ${dayB.map(b=>{
+      const h=getHorse(b.horse_id);const t=typeConfig[b.type]||{label:b.type,cls:'ev-arena'};
+      return`<div class="booking-row">
+        <div class="booking-left">
+          <div class="booking-horse">${h?h.name:'Unknown'}</div>
+          <div class="booking-meta">${b.time} · ${t.label}${b.notes?' · '+b.notes:''}</div>
+        </div>
+        <span class="ev-badge ${t.cls}">${t.label}</span>
+      </div>`;
+    }).join('')}`;
+}
+
+function changeMonth(dir){
+  calMonth+=dir;
+  if(calMonth>11){calMonth=0;calYear++;}
+  if(calMonth<0){calMonth=11;calYear--;}
+  renderCalendar();
+}
+
+// ── HORSES ──
+function renderHorses(){
+  document.getElementById('horses-sub').textContent=`${horses.length} horse${horses.length!==1?'s':''} registered`;
+  populateOwnerSelect('h-owner');
+  if(horses.length===0){document.getElementById('horses-list').innerHTML='<div class="empty"><div class="empty-icon">◈</div><div class="empty-text">No horses yet</div></div>';return;}
+  document.getElementById('horses-list').innerHTML=horses.map(h=>{
+    const o=getOwner(h.owner_id);
+    return`<div class="horse-card">
+      <div class="horse-avatar">${h.name[0]}</div>
+      <div style="flex:1;min-width:0">
+        <div class="horse-name">${h.name}</div>
+        <div class="horse-detail">${h.breed||'Unknown breed'}${h.age?' · '+h.age+' yrs':''}</div>
+        <div class="horse-detail">${o?o.first+' '+o.last:'No owner'}</div>
+        <span class="horse-badge ${o&&o.level==='independent'?'badge-ind':'badge-sup'}">${o&&o.level==='independent'?'Independent':'Supervised'}</span>
+      </div>
+      ${currentRole==='staff'?`<div class="horse-actions">
+        <button class="btn btn-secondary btn-sm" onclick="quickBook(${h.id})">Book</button>
+        <button class="btn-danger-sm" onclick="deleteHorse(${h.id})">✕</button>
+      </div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ── OWNERS ──
+function renderOwners(){
+  document.getElementById('owners-sub').textContent=`${owners.length} owner${owners.length!==1?'s':''} registered`;
+  if(owners.length===0){document.getElementById('owners-list').innerHTML='<div class="empty"><div class="empty-icon">◉</div><div class="empty-text">No owners yet</div></div>';return;}
+  document.getElementById('owners-list').innerHTML=owners.map(o=>{
+    const myH=horses.filter(h=>h.owner_id===o.id);
+    return`<div class="owner-card">
+      <div class="owner-header">
+        <div class="owner-avatar">${(o.first[0]+o.last[0]).toUpperCase()}</div>
+        <div>
+          <div class="owner-name">${o.first} ${o.last}</div>
+          <div class="owner-sub">${myH.map(h=>h.name).join(', ')||'No horse assigned'}</div>
+        </div>
+        <button class="btn-danger-sm" style="margin-left:auto" onclick="deleteOwner(${o.id})">✕</button>
+      </div>
+      <div class="owner-field"><span class="owner-field-label">Email</span><span class="owner-field-val">${o.email||'—'}</span></div>
+      <div class="owner-field"><span class="owner-field-label">Phone</span><span class="owner-field-val">${o.phone||'—'}</span></div>
+      <div class="owner-field"><span class="owner-field-label">Access</span><span class="owner-field-val"><span class="horse-badge ${o.level==='independent'?'badge-ind':'badge-sup'}">${o.level==='independent'?'Independent':'Supervised'}</span></span></div>
+    </div>`;
+  }).join('');
+}
+
+// ── BOOKINGS ──
+function renderBookings(){
+  const sorted=[...bookings].sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date));
+  document.getElementById('bookings-sub').textContent=`${bookings.length} total`;
+  if(bookings.length===0){document.getElementById('bookings-list').innerHTML='<div class="empty"><div class="empty-icon">◷</div><div class="empty-text">No bookings yet</div></div>';return;}
+  document.getElementById('bookings-list').innerHTML=sorted.map(b=>{
+    const h=getHorse(b.horse_id);const o=getOwnerByHorse(b.horse_id);const t=typeConfig[b.type]||{label:b.type,cls:'ev-arena'};
+    const d=new Date(b.date+'T12:00:00');
+    const dateStr=d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    return`<div class="booking-row">
+      <div class="booking-left">
+        <div class="booking-horse">${h?h.name:'Unknown'}</div>
+        <div class="booking-meta">${dateStr} · ${b.time}${o?' · '+o.first:''}${b.notes?' · '+b.notes:''}</div>
+      </div>
+      <div class="booking-right">
+        <span class="ev-badge ${t.cls}">${t.label}</span>
+        ${currentRole==='staff'?`<button class="btn-danger-sm" onclick="deleteBooking(${b.id})">Remove</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── PANELS ──
+function showPanel(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  if(name==='calendar')renderCalendar();
+  if(name==='horses')renderHorses();
+  if(name==='owners')renderOwners();
+  if(name==='bookings')renderBookings();
+  if(name==='home')renderDash();
+}
+
+// ── SHEETS ──
+function openSheet(name){
+  populateHorseSelect();
+  populateOwnerSelect('h-owner');
+  const bd=document.getElementById('b-date');if(bd)bd.value=fmtDate(today);
+  document.getElementById('sheet-'+name).classList.add('open');
+  document.getElementById('trainer-warning')?.classList.remove('show');
+}
+function closeSheet(name){document.getElementById('sheet-'+name).classList.remove('open');}
+
+document.querySelectorAll('.sheet-overlay').forEach(s=>{
+  s.addEventListener('click',e=>{if(e.target===s)s.classList.remove('open');});
+});
+
+// ── SAVE OPERATIONS ──
+async function saveBooking(){
+  const horseId=parseInt(document.getElementById('b-horse').value);
+  const date=document.getElementById('b-date').value;
+  const time=document.getElementById('b-time').value;
+  const type=document.getElementById('b-type').value;
+  const notes=document.getElementById('b-notes').value;
+  if(!horseId||!date){showToast('Please select a horse and date');return;}
+  const{data,error}=await sb.from('bookings').insert({horse_id:horseId,date,time,type,notes}).select().single();
+  if(error){showToast('Error saving booking');console.error(error);return;}
+  bookings.push(data);
+  closeSheet('booking');
+  document.getElementById('b-notes').value='';
+  renderDash();
+  showToast('Booking saved');
+}
+
+async function saveHorse(){
+  const name=document.getElementById('h-name').value.trim();
+  const breed=document.getElementById('h-breed').value.trim();
+  const age=parseInt(document.getElementById('h-age').value)||null;
+  const owner_id=parseInt(document.getElementById('h-owner').value)||null;
+  const notes=document.getElementById('h-notes').value.trim();
+  if(!name){showToast('Please enter a horse name');return;}
+  const{data,error}=await sb.from('horses').insert({name,breed,age,owner_id,notes}).select().single();
+  if(error){showToast('Error saving horse');console.error(error);return;}
+  horses.push(data);
+  closeSheet('horse');
+  ['h-name','h-breed','h-age','h-notes'].forEach(id=>document.getElementById(id).value='');
+  renderHorses();renderDash();
+  showToast(name+' added');
+}
+
+async function saveOwner(){
+  const first=document.getElementById('o-first').value.trim();
+  const last=document.getElementById('o-last').value.trim();
+  const email=document.getElementById('o-email').value.trim();
+  const phone=document.getElementById('o-phone').value.trim();
+  const level=document.getElementById('o-level').value;
+  const notes=document.getElementById('o-notes').value.trim();
+  if(!first||!last){showToast('Please enter a name');return;}
+  const{data,error}=await sb.from('owners').insert({first,last,email,phone,level,notes}).select().single();
+  if(error){showToast('Error saving owner');console.error(error);return;}
+  owners.push(data);
+  closeSheet('owner');
+  ['o-first','o-last','o-email','o-phone','o-notes'].forEach(id=>document.getElementById(id).value='');
+  renderOwners();renderDash();
+  showToast(first+' '+last+' added');
+}
+
+async function deleteBooking(id){
+  if(!confirm('Remove this booking?'))return;
+  const{error}=await sb.from('bookings').delete().eq('id',id);
+  if(error){showToast('Error');return;}
+  bookings=bookings.filter(b=>b.id!==id);
+  renderDash();renderBookings();
+  showToast('Booking removed');
+}
+
+async function deleteHorse(id){
+  if(!confirm('Remove this horse?'))return;
+  const{error}=await sb.from('horses').delete().eq('id',id);
+  if(error){showToast('Error');return;}
+  horses=horses.filter(h=>h.id!==id);
+  renderHorses();renderDash();
+  showToast('Horse removed');
+}
+
+async function deleteOwner(id){
+  if(!confirm('Remove this owner?'))return;
+  const{error}=await sb.from('owners').delete().eq('id',id);
+  if(error){showToast('Error');return;}
+  owners=owners.filter(o=>o.id!==id);
+  renderOwners();renderDash();
+  showToast('Owner removed');
+}
+
+function quickBook(horseId){
+  populateHorseSelect();
+  document.getElementById('b-horse').value=horseId;
+  const bd=document.getElementById('b-date');if(bd)bd.value=fmtDate(today);
+  document.getElementById('sheet-booking').classList.add('open');
+}
+
+// ── HELPERS ──
+function populateHorseSelect(){
+  const opts=horses.length?horses.map(h=>`<option value="${h.id}">${h.name}</option>`).join(''):'<option>No horses yet</option>';
+  ['b-horse'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+}
+
+function populateOwnerSelect(id){
+  const el=document.getElementById(id);if(!el)return;
+  el.innerHTML='<option value="">No owner</option>'+owners.map(o=>`<option value="${o.id}">${o.first} ${o.last}</option>`).join('');
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+initAuth();
+</script>
+</body>
+</html>
