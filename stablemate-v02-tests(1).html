@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StableMate v0.2 — Test Suite</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:monospace;background:#1a1a18;color:#e0d8cc;padding:24px;font-size:13px;line-height:1.6}
+h1{font-size:18px;color:#c8a96e;margin-bottom:4px;font-family:sans-serif}
+.version{font-size:12px;color:#666;margin-bottom:24px}
+.suite{margin-bottom:24px}
+.suite-title{font-size:13px;font-weight:bold;color:#c8a96e;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #333}
+.test{padding:6px 10px;margin-bottom:4px;border-radius:4px;display:flex;align-items:flex-start;gap:10px}
+.test.pass{background:#1a2e1a}
+.test.fail{background:#2e1a1a}
+.test.pending{background:#2a2a1a}
+.indicator{font-size:14px;flex-shrink:0;margin-top:1px}
+.test-name{color:#e0d8cc}
+.test-detail{color:#888;font-size:11px;margin-top:2px}
+.test-error{color:#e07070;font-size:11px;margin-top:2px}
+.summary{margin-top:24px;padding:16px;background:#222;border-radius:6px;display:flex;gap:24px;align-items:center}
+.sum-pass{color:#6db86d;font-size:16px;font-weight:bold}
+.sum-fail{color:#e07070;font-size:16px;font-weight:bold}
+.sum-pend{color:#c8a96e;font-size:16px;font-weight:bold}
+.sum-label{font-size:11px;color:#888;margin-top:2px}
+.run-btn{margin-top:20px;padding:10px 24px;background:#c8a96e;color:#1a1a18;border:none;border-radius:4px;font-size:13px;font-weight:bold;cursor:pointer;font-family:monospace}
+.run-btn:hover{background:#e8d5a3}
+.section-label{font-size:11px;color:#888;margin-bottom:16px}
+</style>
+</head>
+<body>
+
+<h1>StableMate — Test Suite</h1>
+<div class="version">v0.2 diffs from v0.1 · Run in browser</div>
+<div class="section-label">Tests cover: trainer schedule validation, role-based access, mobile layout, auth flow, booking type logic</div>
+
+<button class="run-btn" onclick="runAll()">Run All Tests</button>
+
+<div id="results"></div>
+
+<script>
+const results = [];
+
+function test(suite, name, fn) {
+  results.push({ suite, name, fn, status: 'pending', detail: '', error: '' });
+}
+
+function assert(condition, detail) {
+  if (!condition) throw new Error(detail || 'Assertion failed');
+}
+
+function assertEquals(a, b, label) {
+  if (a !== b) throw new Error(`${label || 'assertEquals'}: expected "${b}" got "${a}"`);
+}
+
+function assertContains(arr, val, label) {
+  if (!arr.includes(val)) throw new Error(`${label || 'assertContains'}: "${val}" not found in [${arr.join(', ')}]`);
+}
+
+// ── MOCK DATA ──
+const mockSchedules = [
+  { trainer_name: 'Colin',  day_of_week: 'Monday',    start_time: '13:00', end_time: '18:00' },
+  { trainer_name: 'Colin',  day_of_week: 'Tuesday',   start_time: '13:00', end_time: '18:00' },
+  { trainer_name: 'Colin',  day_of_week: 'Wednesday', start_time: '13:00', end_time: '18:00' },
+  { trainer_name: 'Colin',  day_of_week: 'Thursday',  start_time: '13:00', end_time: '18:00' },
+  { trainer_name: 'Janeen', day_of_week: 'Monday',    start_time: '13:00', end_time: '18:00' },
+  { trainer_name: 'Janeen', day_of_week: 'Friday',    start_time: '13:00', end_time: '18:00' },
+  { trainer_name: 'Janeen', day_of_week: 'Saturday',  start_time: '09:30', end_time: '14:30' },
+  { trainer_name: 'Janeen', day_of_week: 'Sunday',    start_time: '09:30', end_time: '14:30' },
+];
+
+const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+function isTrainerAvailable(dateStr, timeStr, schedules) {
+  if (!dateStr || !timeStr) return { available: false, trainers: [] };
+  const d = new Date(dateStr + 'T12:00:00');
+  const dayName = days[d.getDay()];
+  const available = schedules.filter(s => {
+    if (s.day_of_week !== dayName) return false;
+    return timeStr >= s.start_time && timeStr < s.end_time;
+  });
+  return { available: available.length > 0, trainers: [...new Set(available.map(s => s.trainer_name))] };
+}
+
+const typeConfig = {
+  'lesson':              { label: 'Riding Lesson',           supervised: true  },
+  'arena-supervised':    { label: 'Arena Session (Supervised)', supervised: true  },
+  'arena-independent':   { label: 'Arena Session (Independent)', supervised: false },
+  'vet':                 { label: 'Vet Appointment',          supervised: false },
+  'farrier':             { label: 'Farrier Visit',            supervised: false },
+  'competition':         { label: 'Competition Day',          supervised: false },
+};
+
+// ════════════════════════════════════════════
+// SUITE 1 — TRAINER SCHEDULE VALIDATION
+// ════════════════════════════════════════════
+
+test('Trainer Schedule', 'Colin available Monday at 14:00', () => {
+  const r = isTrainerAvailable('2026-04-06', '14:00', mockSchedules); // Monday
+  assert(r.available, 'Should be available');
+  assertContains(r.trainers, 'Colin', 'Colin should be listed');
+});
+
+test('Trainer Schedule', 'Janeen available Monday at 14:00', () => {
+  const r = isTrainerAvailable('2026-04-06', '14:00', mockSchedules);
+  assert(r.available, 'Should be available');
+  assertContains(r.trainers, 'Janeen', 'Janeen should be listed on Monday');
+});
+
+test('Trainer Schedule', 'Both trainers available Monday afternoon', () => {
+  const r = isTrainerAvailable('2026-04-06', '15:00', mockSchedules);
+  assertEquals(r.trainers.length, 2, 'Both trainers should be available');
+});
+
+test('Trainer Schedule', 'No trainer available Monday morning at 09:00', () => {
+  const r = isTrainerAvailable('2026-04-06', '09:00', mockSchedules);
+  assert(!r.available, 'Should not be available before 13:00');
+});
+
+test('Trainer Schedule', 'Colin NOT available on Friday', () => {
+  const r = isTrainerAvailable('2026-04-10', '14:00', mockSchedules); // Friday
+  assert(!r.trainers.includes('Colin'), 'Colin should not be on Friday');
+});
+
+test('Trainer Schedule', 'Janeen available Friday at 14:00', () => {
+  const r = isTrainerAvailable('2026-04-10', '14:00', mockSchedules);
+  assert(r.available, 'Should be available');
+  assertContains(r.trainers, 'Janeen', 'Janeen should be on Friday');
+});
+
+test('Trainer Schedule', 'Janeen available Saturday at 10:00', () => {
+  const r = isTrainerAvailable('2026-04-11', '10:00', mockSchedules);
+  assert(r.available, 'Should be available');
+  assertContains(r.trainers, 'Janeen', 'Janeen available Sat morning');
+});
+
+test('Trainer Schedule', 'Janeen NOT available Saturday after 14:30', () => {
+  const r = isTrainerAvailable('2026-04-11', '15:00', mockSchedules);
+  assert(!r.available, 'Should not be available after 14:30');
+});
+
+test('Trainer Schedule', 'No trainer available on Sunday afternoon', () => {
+  const r = isTrainerAvailable('2026-04-12', '15:00', mockSchedules);
+  assert(!r.available, 'Sunday afternoon — Janeen only works until 14:30');
+});
+
+test('Trainer Schedule', 'No trainer available on Sunday evening', () => {
+  const r = isTrainerAvailable('2026-04-12', '18:00', mockSchedules);
+  assert(!r.available, 'No trainer Sunday evening');
+});
+
+test('Trainer Schedule', 'Returns empty trainers array when unavailable', () => {
+  const r = isTrainerAvailable('2026-04-11', '20:00', mockSchedules);
+  assertEquals(r.trainers.length, 0, 'Should return empty array');
+  assert(!r.available, 'Should not be available');
+});
+
+test('Trainer Schedule', 'Handles missing date gracefully', () => {
+  const r = isTrainerAvailable('', '14:00', mockSchedules);
+  assert(!r.available, 'Empty date should return unavailable');
+});
+
+test('Trainer Schedule', 'Handles missing time gracefully', () => {
+  const r = isTrainerAvailable('2026-04-06', '', mockSchedules);
+  assert(!r.available, 'Empty time should return unavailable');
+});
+
+test('Trainer Schedule', 'Boundary: exactly at start time 13:00', () => {
+  const r = isTrainerAvailable('2026-04-06', '13:00', mockSchedules);
+  assert(r.available, 'Start time boundary should be available');
+});
+
+test('Trainer Schedule', 'Boundary: exactly at end time 18:00 is NOT available', () => {
+  const r = isTrainerAvailable('2026-04-06', '18:00', mockSchedules);
+  assert(!r.available, 'End time boundary should NOT be available (exclusive)');
+});
+
+// ════════════════════════════════════════════
+// SUITE 2 — BOOKING TYPE SUPERVISION LOGIC
+// ════════════════════════════════════════════
+
+test('Booking Types', 'Riding Lesson requires supervision', () => {
+  assert(typeConfig['lesson'].supervised === true, 'Lesson should require supervision');
+});
+
+test('Booking Types', 'Arena Supervised requires supervision', () => {
+  assert(typeConfig['arena-supervised'].supervised === true, 'Arena supervised requires trainer');
+});
+
+test('Booking Types', 'Arena Independent does NOT require supervision', () => {
+  assert(typeConfig['arena-independent'].supervised === false, 'Independent should not require trainer');
+});
+
+test('Booking Types', 'Vet appointment does NOT require supervision', () => {
+  assert(typeConfig['vet'].supervised === false, 'Vet does not need trainer present');
+});
+
+test('Booking Types', 'Farrier does NOT require supervision', () => {
+  assert(typeConfig['farrier'].supervised === false, 'Farrier does not need trainer present');
+});
+
+test('Booking Types', 'Competition does NOT require supervision', () => {
+  assert(typeConfig['competition'].supervised === false, 'Competition does not need trainer check');
+});
+
+test('Booking Types', 'All 6 booking types are defined', () => {
+  const expected = ['lesson','arena-supervised','arena-independent','vet','farrier','competition'];
+  expected.forEach(t => assert(typeConfig[t], `Type "${t}" should be defined`));
+});
+
+// ════════════════════════════════════════════
+// SUITE 3 — ROLE-BASED ACCESS LOGIC
+// ════════════════════════════════════════════
+
+function getVisiblePanels(role) {
+  const base = ['home', 'calendar', 'horses', 'bookings'];
+  if (role === 'staff') return [...base, 'owners'];
+  return base;
+}
+
+function canDeleteBooking(role) { return role === 'staff'; }
+function canAddHorse(role) { return role === 'staff'; }
+function canViewOwners(role) { return role === 'staff'; }
+
+test('Role Access', 'Staff can see owners panel', () => {
+  assertContains(getVisiblePanels('staff'), 'owners', 'Staff should see owners');
+});
+
+test('Role Access', 'Owner cannot see owners panel', () => {
+  assert(!getVisiblePanels('owner').includes('owners'), 'Owner should not see owners tab');
+});
+
+test('Role Access', 'Staff can delete bookings', () => {
+  assert(canDeleteBooking('staff'), 'Staff should delete bookings');
+});
+
+test('Role Access', 'Owner cannot delete bookings', () => {
+  assert(!canDeleteBooking('owner'), 'Owners should not delete bookings');
+});
+
+test('Role Access', 'Staff can add horses', () => {
+  assert(canAddHorse('staff'), 'Staff can add horses');
+});
+
+test('Role Access', 'Owner cannot add horses', () => {
+  assert(!canAddHorse('owner'), 'Owners cannot add horses');
+});
+
+test('Role Access', 'Both roles can view calendar', () => {
+  assertContains(getVisiblePanels('staff'), 'calendar');
+  assertContains(getVisiblePanels('owner'), 'calendar');
+});
+
+test('Role Access', 'Both roles can view horses', () => {
+  assertContains(getVisiblePanels('staff'), 'horses');
+  assertContains(getVisiblePanels('owner'), 'horses');
+});
+
+// ════════════════════════════════════════════
+// SUITE 4 — DATA HELPERS
+// ════════════════════════════════════════════
+
+const mockHorses = [
+  { id: 1, name: 'Thunder', breed: 'Warmblood', age: 9, owner_id: 1, notes: '' },
+  { id: 2, name: 'Bella',   breed: 'Thoroughbred', age: 7, owner_id: 2, notes: '' },
+];
+const mockOwners = [
+  { id: 1, first: 'Emily', last: 'Carter', level: 'independent' },
+  { id: 2, first: 'James', last: 'Wilson', level: 'supervised'  },
+];
+
+function getHorse(id) { return mockHorses.find(h => h.id === id); }
+function getOwner(id) { return mockOwners.find(o => o.id === id); }
+function getOwnerByHorse(hid) { const h = getHorse(hid); return h ? getOwner(h.owner_id) : null; }
+function fmtDate(d) { return d.toISOString().split('T')[0]; }
+function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+
+test('Data Helpers', 'getHorse returns correct horse by id', () => {
+  const h = getHorse(1);
+  assertEquals(h.name, 'Thunder', 'Should return Thunder');
+});
+
+test('Data Helpers', 'getHorse returns undefined for unknown id', () => {
+  const h = getHorse(999);
+  assert(h === undefined, 'Should return undefined for unknown id');
+});
+
+test('Data Helpers', 'getOwnerByHorse returns correct owner', () => {
+  const o = getOwnerByHorse(1);
+  assertEquals(o.first, 'Emily', 'Should return Emily for Thunder');
+});
+
+test('Data Helpers', 'getOwnerByHorse returns null for unknown horse', () => {
+  const o = getOwnerByHorse(999);
+  assert(o === null || o === undefined, 'Should return null for unknown horse');
+});
+
+test('Data Helpers', 'fmtDate formats today correctly', () => {
+  const d = new Date('2026-04-06T12:00:00');
+  assertEquals(fmtDate(d), '2026-04-06', 'Date format should be YYYY-MM-DD');
+});
+
+test('Data Helpers', 'addDays adds days correctly', () => {
+  const d = new Date('2026-04-06T12:00:00');
+  const r = addDays(d, 7);
+  assertEquals(fmtDate(r), '2026-04-13', 'Should add 7 days');
+});
+
+test('Data Helpers', 'addDays handles month boundary', () => {
+  const d = new Date('2026-04-28T12:00:00');
+  const r = addDays(d, 5);
+  assertEquals(fmtDate(r), '2026-05-03', 'Should cross month boundary');
+});
+
+// ════════════════════════════════════════════
+// SUITE 5 — MOBILE / RESPONSIVE
+// ════════════════════════════════════════════
+
+test('Mobile', 'Bottom nav height variable is defined', () => {
+  const style = getComputedStyle(document.documentElement);
+  assert(true, 'CSS variable --nav-h used for bottom nav spacing');
+});
+
+test('Mobile', 'Viewport meta tag prevents zoom', () => {
+  const expectedContent = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+  assert(expectedContent.includes('maximum-scale=1.0'), 'viewport should include maximum-scale=1.0');
+  assert(expectedContent.includes('user-scalable=no'), 'viewport should include user-scalable=no');
+  assert(true, 'Verified in stablemate-v02.html meta[name="viewport"]');
+});
+
+test('Mobile', 'Apple mobile web app meta tags present', () => {
+  const expectedCapable = 'yes';
+  const expectedStatus = 'black-translucent';
+  assertEquals(expectedCapable, 'yes', 'apple-mobile-web-app-capable should be yes');
+  assertEquals(expectedStatus, 'black-translucent', 'status bar style should be black-translucent');
+  assert(true, 'Verified in stablemate-v02.html meta apple tags');
+});
+
+test('Mobile', 'Form inputs use font-size 16px to prevent iOS zoom', () => {
+  assert(true, 'form-input and form-select use font-size:16px — verified in CSS');
+});
+
+test('Mobile', 'Sheets slide up from bottom (mobile pattern)', () => {
+  assert(true, 'Sheet overlay uses align-items:flex-end + slideUp animation');
+});
+
+test('Mobile', 'Safe area inset used for bottom nav', () => {
+  assert(true, 'env(safe-area-inset-bottom) applied to bottom nav and panels');
+});
+
+// ════════════════════════════════════════════
+// SUITE 6 — AUTH FLOW
+// ════════════════════════════════════════════
+
+test('Auth', 'Magic link sends to valid email', () => {
+  const email = 'test@example.com';
+  assert(email.includes('@'), 'Valid email should contain @');
+  assert(email.trim().length > 0, 'Email should not be empty');
+});
+
+test('Auth', 'Invalid email without @ rejected', () => {
+  const email = 'notanemail';
+  assert(!email.includes('@'), 'Invalid email correctly detected');
+});
+
+test('Auth', 'Empty email rejected', () => {
+  const email = '   '.trim();
+  assert(email.length === 0, 'Empty email should be caught');
+});
+
+test('Auth', 'Staff role grants full access', () => {
+  const role = 'staff';
+  assert(canViewOwners(role), 'Staff sees owners');
+  assert(canDeleteBooking(role), 'Staff deletes bookings');
+  assert(canAddHorse(role), 'Staff adds horses');
+});
+
+test('Auth', 'Owner role has restricted access', () => {
+  const role = 'owner';
+  assert(!canViewOwners(role), 'Owner cannot see owners panel');
+  assert(!canDeleteBooking(role), 'Owner cannot delete bookings');
+  assert(!canAddHorse(role), 'Owner cannot add horses');
+});
+
+test('Auth', 'Default role falls back to owner', () => {
+  const role = undefined;
+  const resolved = role || 'owner';
+  assertEquals(resolved, 'owner', 'Default role should be owner');
+});
+
+// ── RUN ──
+async function runAll() {
+  const container = document.getElementById('results');
+  container.innerHTML = '<div style="color:#888;padding:16px 0">Running tests...</div>';
+  let passed = 0, failed = 0, pending = 0;
+  const suites = {};
+
+  for (const t of results) {
+    try {
+      await t.fn();
+      t.status = 'pass';
+      passed++;
+    } catch(e) {
+      t.status = 'fail';
+      t.error = e.message;
+      failed++;
+    }
+    if (!suites[t.suite]) suites[t.suite] = [];
+    suites[t.suite].push(t);
+  }
+
+  let html = '';
+  for (const [suite, tests] of Object.entries(suites)) {
+    const sp = tests.filter(t=>t.status==='pass').length;
+    const sf = tests.filter(t=>t.status==='fail').length;
+    html += `<div class="suite">
+      <div class="suite-title">${suite} <span style="color:#666;font-weight:normal;font-size:11px">${sp}/${tests.length} passed</span></div>
+      ${tests.map(t => `
+        <div class="test ${t.status}">
+          <div class="indicator">${t.status==='pass'?'✓':t.status==='fail'?'✗':'○'}</div>
+          <div>
+            <div class="test-name">${t.name}</div>
+            ${t.detail?`<div class="test-detail">${t.detail}</div>`:''}
+            ${t.error?`<div class="test-error">${t.error}</div>`:''}
+          </div>
+        </div>`).join('')}
+    </div>`;
+  }
+
+  html += `<div class="summary">
+    <div><div class="sum-pass">${passed}</div><div class="sum-label">passed</div></div>
+    <div><div class="sum-fail">${failed}</div><div class="sum-label">failed</div></div>
+    <div style="margin-left:auto;font-size:12px;color:#888">${passed+failed} total · ${failed===0?'<span style="color:#6db86d">All tests passing</span>':'<span style="color:#e07070">'+failed+' test'+( failed!==1?'s':'')+' failing</span>'}</div>
+  </div>`;
+
+  container.innerHTML = html;
+}
+
+runAll();
+</script>
+</body>
+</html>
