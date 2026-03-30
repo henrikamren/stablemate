@@ -774,8 +774,6 @@ function loadTestData(){
 }
 
 async function loadAll(){
-  loadTestData();
-  populateLoginDropdowns();
   try{
     const[ob,hb,rb,bb,sc]=await Promise.all([
       sb.from('owners').select('*').order('first'),
@@ -784,8 +782,17 @@ async function loadAll(){
       sb.from('bookings').select('*').order('date').order('time'),
       sb.from('trainer_schedules').select('*'),
     ]);
-    if(hb.data?.length){owners=ob.data||owners;horses=hb.data;riders=rb.data||riders;bookings=bb.data||bookings;schedules=sc.data||schedules;}
-  }catch(e){console.log('Using test data');}
+    if(ob.error)throw ob.error;
+    owners=ob.data||[];
+    horses=(hb.data||[]).map(h=>({...h,services:h.services||{}}));
+    riders=rb.data||[];
+    bookings=bb.data||[];
+    schedules=sc.data||[];
+  }catch(e){
+    console.error('Supabase load error:',e);
+    showToast('Connection error - check console');
+  }
+  populateLoginDropdowns();
 }
 
 function populateLoginDropdowns(){
@@ -1036,10 +1043,13 @@ function renderHorses(){
   }).join('');
 }
 
-function toggleService(horseId,svc){
+async function toggleService(horseId,svc){
   const h=horses.find(x=>x.id===horseId);if(!h)return;
   if(!h.services)h.services={};
   h.services[svc]=!h.services[svc];
+  try{
+    await sb.from('horses').update({services:h.services}).eq('id',horseId);
+  }catch(e){console.error('Service update error:',e);}
   showToast(`${svc.charAt(0).toUpperCase()+svc.slice(1)} ${h.services[svc]?'requested':'cancelled'} for ${h.name}`);
   renderHorses();
 }
