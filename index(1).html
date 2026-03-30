@@ -234,14 +234,10 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 <div class="screen" id="screen-login">
   <div class="login-card">
     <div class="login-logo">Stable<span>Mate</span></div>
-    <div class="login-sub">Enter your email to sign in</div>
-    <label class="login-label">Email address</label>
-    <input type="email" class="login-input" id="login-email" placeholder="you@example.com" autocomplete="email">
-    <button class="login-btn" id="login-btn" onclick="sendMagicLink()">Send Magic Link</button>
-    <div class="login-success" id="login-success">
-      Magic link sent! Check your email and tap the link to sign in. You can close this tab.
-    </div>
-    <div class="login-note" id="login-note">We'll send you a secure link — no password needed.</div>
+    <div class="login-sub">Enter your name to get started</div>
+    <label class="login-label">Your name</label>
+    <input type="text" class="login-input" id="login-name" placeholder="Jane Smith" autocomplete="name">
+    <button class="login-btn" id="login-btn" onclick="enterApp()">Enter Stable</button>
     <button style="margin-top:24px;background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;text-decoration:underline" onclick="showScreen('splash')">← Back</button>
   </div>
 </div>
@@ -467,56 +463,39 @@ function showScreen(name){
 }
 
 // ── AUTH ──
-async function initAuth(){
-  try{
-    const hash=window.location.hash;
-    if(hash.includes('access_token')){
-      await sb.auth.getSession();
-    }
-    const{data:{session}}=await sb.auth.getSession();
-    if(session){
-      currentUser=session.user;
-      await loadUserRole();
-      await loadAll();
-      showScreen('app');
-    } else {
-      showScreen('splash');
-    }
-  } catch(e){
-    console.error('Auth error:',e);
+function initAuth(){
+  const savedName=localStorage.getItem('sm_user_name');
+  if(savedName){
+    currentUser={name:savedName};
+    setUserUI(savedName);
+    loadAll();
+    showScreen('app');
+  } else {
     showScreen('splash');
   }
   document.getElementById('loading-screen').classList.add('hidden');
 }
 
-async function loadUserRole(){
-  if(!currentUser)return;
-  const{data}=await sb.from('user_profiles').select('role').eq('id',currentUser.id).single();
-  currentRole=data?.role||'owner';
-  const email=currentUser.email||'';
-  const initials=email.substring(0,2).toUpperCase();
+function setUserUI(name){
+  const initials=name.trim().split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
   document.getElementById('topbar-avatar').textContent=initials;
-  document.getElementById('topbar-role').textContent=currentRole==='staff'?'Staff':'Owner';
-  if(currentRole!=='staff'){
-    document.getElementById('add-horse-btn').style.display='none';
-    document.getElementById('nav-owners').style.display='none';
-  }
+  document.getElementById('topbar-role').textContent=name;
+  // Everyone is staff for now — can add role picker later
+  currentRole='staff';
 }
 
-async function sendMagicLink(){
-  const email=document.getElementById('login-email').value.trim();
-  if(!email||!email.includes('@')){showToast('Please enter a valid email');return;}
-  const btn=document.getElementById('login-btn');
-  btn.disabled=true;btn.textContent='Sending...';
-  const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin+window.location.pathname}});
-  btn.disabled=false;btn.textContent='Send Magic Link';
-  if(error){showToast('Error sending link — try again');return;}
-  document.getElementById('login-success').classList.add('show');
-  document.getElementById('login-note').style.display='none';
+function enterApp(){
+  const name=document.getElementById('login-name').value.trim();
+  if(!name){showToast('Please enter your name');return;}
+  localStorage.setItem('sm_user_name',name);
+  currentUser={name};
+  setUserUI(name);
+  loadAll();
+  showScreen('app');
 }
 
-async function signOut(){
-  await sb.auth.signOut();
+function signOut(){
+  localStorage.removeItem('sm_user_name');
   currentUser=null;currentRole='owner';
   horses=[];owners=[];bookings=[];
   showScreen('splash');
