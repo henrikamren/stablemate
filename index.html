@@ -1669,7 +1669,27 @@ function openSheet(name){
     populateTimeSelect('rb-time');
     const bd=document.getElementById('rb-date');if(bd)bd.value=fmtDate(today);
     const rh=document.getElementById('rb-horse');
-    if(rh)rh.innerHTML='<option value="">— Trainer will assign —</option>'+horses.map(h=>`<option value="${h.id}">${h.name}</option>`).join('');
+    if(rh){
+      // Find the current rider's approved horses
+      const nameLower=(currentUser?.name||'').trim().toLowerCase();
+      const me=riders.find(r=>r.first.toLowerCase()===nameLower);
+      // Show all barn horses + horses approved for this rider
+      // If no rider profile found, show all horses
+      let availableHorses=horses;
+      if(me&&me.approved_horses&&me.approved_horses.length>0){
+        availableHorses=horses.filter(h=>
+          h.access==='barn'||
+          (me.approved_horses&&me.approved_horses.map(Number).includes(parseInt(h.id)))
+        );
+      }
+      // Also exclude owner-only horses unless this rider is the owner
+      availableHorses=availableHorses.filter(h=>h.access!=='owner-only');
+      if(availableHorses.length===0){
+        rh.innerHTML='<option value="">— No horses available —</option>';
+      } else {
+        rh.innerHTML='<option value="">— Trainer will assign —</option>'+availableHorses.map(h=>`<option value="${h.id}">${h.name}</option>`).join('');
+      }
+    }
     const warn=document.getElementById('rb-trainer-warning');if(warn)warn.className='trainer-warning';
   }
   if(name==='horse'){populateOwnerSelect('h-owner');}
