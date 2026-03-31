@@ -275,6 +275,36 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 .child-next{font-size:12px;color:var(--text-muted)}
 .child-chevron{color:var(--text-muted);font-size:16px}
 
+/* LARGE FONT MODE */
+.large-font .rider-greeting{font-size:34px}
+.large-font .rider-date-sub{font-size:15px}
+.large-font .schedule-horse{font-size:18px}
+.large-font .schedule-detail{font-size:14px}
+.large-font .schedule-rider{font-size:13px}
+.large-font .schedule-time{font-size:15px}
+.large-font .child-name{font-size:20px}
+.large-font .child-next-hl{font-size:15px}
+.large-font .child-next{font-size:14px}
+.large-font .next-up-horse{font-size:30px}
+.large-font .next-up-detail{font-size:16px}
+.large-font .next-up-time{font-size:15px}
+.large-font .trainer-chip{font-size:15px;padding:8px 16px}
+.large-font .section-label{font-size:14px}
+.large-font .trainer-name{font-size:17px}
+.large-font .trainer-days{font-size:14px}
+
+/* WEATHER CARD */
+.weather-card{background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.weather-left{display:flex;align-items:center;gap:12px}
+.weather-icon{font-size:28px}
+.weather-temp{font-family:'Cormorant Garamond',serif;font-size:32px;color:var(--earth);line-height:1}
+.weather-cond{font-size:12px;color:var(--text-muted);margin-top:2px}
+.weather-forecast{display:flex;gap:10px;overflow-x:auto;padding-bottom:2px}
+.weather-day{text-align:center;flex-shrink:0}
+.weather-day-name{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em}
+.weather-day-high{font-size:13px;font-weight:500;color:var(--earth);margin-top:2px}
+.weather-day-rain{font-size:10px;color:#0c447c;margin-top:1px}
+
 /* SECTION LABEL */
 .section-label{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;margin-top:4px}
 
@@ -372,7 +402,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 <!-- ══════════════════════════════════ -->
 <!--           RIDER APP               -->
 <!-- ══════════════════════════════════ -->
-<div class="screen" id="screen-rider-app">
+<div class="screen large-font" id="screen-rider-app">
   <div class="simple-topbar">
     <div>
       <div class="topbar-logo">Stable<span>Mate</span></div>
@@ -391,7 +421,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 <!-- ══════════════════════════════════ -->
 <!--           PARENT APP              -->
 <!-- ══════════════════════════════════ -->
-<div class="screen" id="screen-parent-app">
+<div class="screen large-font" id="screen-parent-app">
   <div class="simple-topbar">
     <div>
       <div class="topbar-logo">Stable<span>Mate</span></div>
@@ -407,7 +437,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 </div>
 
 <!-- CHILD SCHEDULE -->
-<div class="screen" id="screen-child-schedule">
+<div class="screen large-font" id="screen-child-schedule">
   <div class="simple-topbar">
     <div>
       <div class="topbar-logo">Stable<span>Mate</span></div>
@@ -422,7 +452,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 </div>
 
 <!-- ALL RIDERS VIEW -->
-<div class="screen" id="screen-all-riders">
+<div class="screen large-font" id="screen-all-riders">
   <div class="simple-topbar">
     <div>
       <div class="topbar-logo">Stable<span>Mate</span></div>
@@ -887,12 +917,198 @@ function populateLoginDropdowns(){
   parentNames.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;pSel.appendChild(o);});
 }
 
+// ── WEATHER ──
+const WEATHER_CACHE={data:null,ts:0};
+async function fetchWeather(){
+  const now=Date.now();
+  if(WEATHER_CACHE.data&&now-WEATHER_CACHE.ts<1800000)return WEATHER_CACHE.data;
+  try{
+    const r=await fetch('https://wttr.in/Portola+Valley,CA?format=j1');
+    const d=await r.json();
+    const cur=d.current_condition[0];
+    const forecast=d.weather.slice(0,5).map(w=>({
+      date:w.date,
+      high:Math.round(w.maxtempF),
+      rain:w.hourly.reduce((mx,h)=>Math.max(mx,parseInt(h.chanceofrain)),0),
+      icon:weatherIcon(parseInt(cur.weatherCode))
+    }));
+    const data={
+      temp:cur.temp_F,
+      cond:cur.weatherDesc[0].value,
+      icon:weatherIcon(parseInt(cur.weatherCode)),
+      forecast
+    };
+    WEATHER_CACHE.data=data;WEATHER_CACHE.ts=now;
+    return data;
+  }catch(e){return null;}
+}
+function weatherIcon(code){
+  if(code<=113)return'☀️';
+  if(code<=116)return'⛅';
+  if(code<=122)return'☁️';
+  if(code<=143)return'🌫️';
+  if(code<=185)return'🌧️';
+  if(code<=200)return'⛈️';
+  if(code<=227)return'🌨️';
+  if(code<=260)return'🌧️';
+  if(code<=299)return'🌦️';
+  if(code<=399)return'🌧️';
+  return'🌡️';
+}
+function getDressSuggestion(temp, cond){
+  const condL=(cond||'').toLowerCase();
+  const rain=condL.includes('rain')||condL.includes('drizzle')||condL.includes('shower');
+  const cold=temp<45;
+  const chilly=temp>=45&&temp<58;
+  const mild=temp>=58&&temp<68;
+  const warm=temp>=68&&temp<80;
+  const hot=temp>=80;
+
+  let items=[];
+  // Base layer
+  if(cold) items.push('Thermal base layer');
+  else if(chilly) items.push('Long sleeve base layer');
+  else items.push('Short sleeve shirt');
+  // Mid layer
+  if(cold) items.push('Fleece or heavy sweater');
+  else if(chilly) items.push('Light sweater or vest');
+  // Outer layer
+  if(rain) items.push('Waterproof riding jacket 🌧️');
+  else if(cold||chilly) items.push('Wind-resistant jacket');
+  else if(mild&&rain) items.push('Light rain shell');
+  // Breeches / pants
+  if(cold) items.push('Winter thermal breeches');
+  else if(chilly) items.push('Full-seat breeches');
+  else items.push('Regular breeches');
+  // Gloves
+  if(cold) items.push('Winter gloves 🧤');
+  else if(chilly) items.push('Light gloves');
+  // Boots
+  items.push('Tall riding boots');
+  // Extras
+  if(cold) items.push('Neck warmer or scarf');
+  if(hot) items.push('Light breathable hat brim · Sunscreen');
+  if(rain) items.push('Waterproof half chaps');
+
+  let note='';
+  if(cold) note='❄️ Very cold — dress in warm layers';
+  else if(chilly) note='🧥 Cool today — layer up';
+  else if(mild) note='👌 Comfortable riding weather';
+  else if(warm) note='🌤️ Warm — dress light';
+  else if(hot) note='🥵 Hot today — stay cool and hydrated';
+  if(rain) note+=' · Rain expected';
+
+  return{items,note};
+}
+
+function renderWeatherCard(data,el){
+  if(!data||!el)return;
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const forecastHtml=data.forecast.map(f=>{
+    const d=new Date(f.date+'T12:00:00');
+    return`<div class="weather-day">
+      <div class="weather-day-name">${days[d.getDay()]}</div>
+      <div class="weather-day-high">${f.high}°</div>
+      ${f.rain>20?`<div class="weather-day-rain">${f.rain}%</div>`:''}
+    </div>`;
+  }).join('');
+
+  const dress=getDressSuggestion(parseInt(data.temp), data.cond);
+  const dressHtml=dress.items.map(i=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--cream-dark);font-size:13px;color:var(--text)">
+    <div style="width:6px;height:6px;border-radius:50%;background:var(--hay);flex-shrink:0"></div>${i}
+  </div>`).join('');
+
+  el.innerHTML=`<div class="weather-card">
+    <div class="weather-left">
+      <div class="weather-icon">${data.icon}</div>
+      <div>
+        <div class="weather-temp">${data.temp}°F</div>
+        <div class="weather-cond">${data.cond} · Portola Valley</div>
+      </div>
+    </div>
+    <div class="weather-forecast">${forecastHtml}</div>
+  </div>
+  <div style="background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:14px 16px;margin-bottom:16px">
+    <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">What to Wear Today</div>
+    <div style="font-size:12px;color:var(--earth-light);font-weight:500;margin-bottom:8px">${dress.note}</div>
+    ${dressHtml}
+  </div>`;
+}
+
+// ── RIDER DAY VIEW CALENDAR ──
+function buildDayCalendar(dateStr, myBookingIds){
+  const SLOT_H=48; // px per hour
+  const START_H=7, END_H=18;
+  const totalH=END_H-START_H;
+  const dayTrainers=getTrainersForDate(dateStr);
+  const dayBookings=bookings.filter(b=>b.date===dateStr).sort((a,b)=>a.time.localeCompare(b.time));
+
+  let rows='';
+  for(let h=START_H;h<=END_H;h++){
+    const label=h===0?'12am':h<12?h+'am':h===12?'12pm':(h-12)+'pm';
+    rows+=`<div style="display:flex;align-items:flex-start;min-height:${SLOT_H}px;border-top:1px solid var(--cream-dark);position:relative">
+      <div style="width:44px;font-size:10px;color:var(--text-muted);padding-top:3px;flex-shrink:0">${label}</div>
+      <div style="flex:1;position:relative;min-height:${SLOT_H}px" id="cal-slot-${h}"></div>
+    </div>`;
+  }
+
+  // Build trainer band behind slots
+  let trainerBg='';
+  dayTrainers.forEach(s=>{
+    const sh=parseInt(s.start_time.split(':')[0]);
+    const sm=parseInt(s.start_time.split(':')[1]);
+    const eh=parseInt(s.end_time.split(':')[0]);
+    const em=parseInt(s.end_time.split(':')[1]);
+    const top=((sh-START_H)+(sm/60))*SLOT_H;
+    const height=((eh-sh)+((em-sm)/60))*SLOT_H;
+    if(top>=0&&height>0){
+      trainerBg+=`<div style="position:absolute;left:44px;right:0;top:${top}px;height:${height}px;background:${TRAINER_COLORS[s.trainer_name]||TRAINER_COLORS.default};opacity:0.08;pointer-events:none;z-index:0"></div>`;
+    }
+  });
+
+  // Build booking blocks
+  let bookingBlocks='';
+  dayBookings.forEach(b=>{
+    const [bh,bm]=b.time.split(':').map(Number);
+    const top=((bh-START_H)+(bm/60))*SLOT_H;
+    const height=((b.duration||60)/60)*SLOT_H;
+    if(top<0||top>(totalH*SLOT_H))return;
+    const h=getHorse(b.horse_id);const r=getRider(b.rider_id);const t=typeConfig[b.type]||{dot:'#888',label:b.type};
+    const isMe=myBookingIds.includes(b.id);
+    const bg=isMe?t.dot:'var(--sand)';
+    const textColor=isMe?'white':'var(--text-muted)';
+    const deleteBtn=isMe?`<button onclick="deleteRiderBooking(${b.id})" style="background:none;border:none;color:${textColor};opacity:0.7;font-size:11px;cursor:pointer;padding:0;margin-left:4px">✕</button>`:'';
+    bookingBlocks+=`<div style="position:absolute;left:44px;right:4px;top:${top}px;height:${Math.max(height-2,20)}px;background:${bg};border-radius:6px;padding:3px 6px;overflow:hidden;z-index:1;display:flex;align-items:flex-start;justify-content:space-between">
+      <div style="min-width:0;overflow:hidden">
+        <div style="font-size:11px;font-weight:500;color:${textColor};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${h?h.name:(r?r.first:'Booking')}</div>
+        ${height>30?`<div style="font-size:10px;color:${textColor};opacity:0.85">${t.label}</div>`:''}
+      </div>
+      ${deleteBtn}
+    </div>`;
+  });
+
+  return `<div style="position:relative;overflow:hidden">
+    ${trainerBg}
+    ${rows}
+    ${bookingBlocks}
+  </div>`;
+}
+
+async function deleteRiderBooking(id){
+  if(!confirm('Cancel this booking?'))return;
+  try{await sb.from('bookings').delete().eq('id',id);}catch(e){}
+  bookings=bookings.filter(b=>b.id!==id);
+  showToast('Booking cancelled');
+  renderRiderHome();
+}
+
 // ── RIDER HOME ──
 function renderRiderHome(){
   const name=currentUser.name;
   const todayStr=fmtDate(today);
   const rider=riders.find(r=>r.first===name||r.first+' '+(r.last||'')===name);
   const myB=rider?bookings.filter(b=>b.rider_id===rider.id&&b.date>=todayStr).sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date)):[];
+  const myBIds=myB.map(b=>b.id);
   const next=myB[0];
 
   // Today's trainers
@@ -901,9 +1117,14 @@ function renderRiderHome(){
     ?todayTrainers.map(s=>`<div class="trainer-chip available"><div class="trainer-chip-dot" style="background:${TRAINER_COLORS[s.trainer_name]||TRAINER_COLORS.default}"></div>${s.trainer_name} · ${s.start_time}–${s.end_time}</div>`).join('')
     :'<div class="trainer-chip unavailable"><div class="trainer-chip-dot" style="background:#ccc"></div>No trainer today</div>';
 
-  let html=`<div class="rider-greeting">Hi, ${name.split(' ')[0]} 👋</div>
+  let html=`<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:2px">
+    <div class="rider-greeting">Hi, ${name.split(' ')[0]} 👋</div>
+    <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.06em">Oasis Farm</div>
+  </div>
   <div class="rider-date-sub">${today.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</div>
-  <div class="trainer-avail-row">${trainerHtml}</div>`;
+  <div class="trainer-avail-row">${trainerHtml}</div>
+  <div id="rider-weather"></div>`;
+  fetchWeather().then(w=>renderWeatherCard(w,document.getElementById('rider-weather')));
 
   if(next){
     const h=getHorse(next.horse_id);const t=typeConfig[next.type]||{label:next.type};
@@ -916,10 +1137,16 @@ function renderRiderHome(){
     </div>`;
   }
 
+  // Booking list header top left
+  html+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--earth)">Booking List</div>
+    <div style="font-size:11px;color:var(--text-muted)">${myB.length} upcoming</div>
+  </div>`;
+
   if(myB.length===0){
-    html+='<div class="empty"><div class="empty-icon">🐴</div><div class="empty-text">No upcoming visits booked</div></div>';
+    html+='<div class="empty" style="padding:24px 20px"><div class="empty-icon">🐴</div><div class="empty-text">No upcoming visits booked</div></div>';
   } else {
-    html+='<div class="schedule-card"><div class="schedule-header"><div class="schedule-title">Upcoming Visits</div></div>';
+    html+='<div class="schedule-card" style="margin-bottom:20px"><div class="schedule-header"><div class="schedule-title">Upcoming Visits</div></div>';
     myB.forEach(b=>{
       const h=getHorse(b.horse_id);const t=typeConfig[b.type]||{label:b.type,dot:'#888'};
       const dl=b.date===todayStr?'Today':new Date(b.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
@@ -933,11 +1160,33 @@ function renderRiderHome(){
           <div class="schedule-detail">${dl} · ${t.label} · ${fmtDur(b.duration)}</div>
           <div class="schedule-rider" style="color:var(--text-muted)">${arenaLabel(b.arena)} · ${trAvail}</div>
         </div>
+        <button class="btn-danger-sm" onclick="deleteRiderBooking(${b.id})">✕</button>
       </div>`;
     });
     html+='</div>';
   }
+
+  // Day view calendar for today
+  html+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--earth)">Today's Arena</div>
+    <div style="font-size:11px;color:var(--text-muted)">${today.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</div>
+  </div>
+  <div style="background:var(--white);border-radius:10px;border:1px solid var(--sand);overflow:hidden;margin-bottom:20px">
+    <div id="rider-day-cal" style="overflow-y:auto;max-height:320px;position:relative;padding:0 4px 4px">
+      ${buildDayCalendar(todayStr, myBIds)}
+    </div>
+  </div>`;
+
   document.getElementById('rider-content').innerHTML=html;
+
+  // Scroll day calendar to 1PM
+  const calEl=document.getElementById('rider-day-cal');
+  if(calEl){
+    const SLOT_H=48;
+    const START_H=7;
+    const scrollTo=(13-START_H)*SLOT_H - 20; // 1PM minus a little offset
+    calEl.scrollTop=Math.max(0,scrollTo);
+  }
 }
 
 // ── PARENT HOME ──
@@ -954,7 +1203,9 @@ function renderParentHome(){
 
   let html=`<div class="rider-greeting">Hi, ${name.split(' ')[0]} 👋</div>
   <div class="rider-date-sub">${today.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</div>
-  <div class="trainer-avail-row">${trainerHtml}</div>`;
+  <div class="trainer-avail-row">${trainerHtml}</div>
+  <div id="parent-weather"></div>`;
+  fetchWeather().then(w=>renderWeatherCard(w,document.getElementById('parent-weather')));
 
   if(myChildren.length>0){
     html+=`<div class="section-label">Your Children</div>`;
