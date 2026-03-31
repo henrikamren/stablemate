@@ -1023,6 +1023,51 @@ function renderWeatherCard(data,el){
   </div>`;
 }
 
+// ── WEEKLY CALENDAR ──
+function buildWeekCalendar(highlightRiderIds){
+  const todayStr=fmtDate(today);
+  const days7=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let html='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">';
+
+  for(let i=0;i<7;i++){
+    const d=addDays(today,i);
+    const ds=fmtDate(d);
+    const isToday=ds===todayStr;
+    const dayTrainers=getTrainersForDate(ds);
+    const hasTrainer=dayTrainers.length>0;
+    const trainerNames=[...new Set(dayTrainers.map(s=>s.trainer_name))];
+
+    // Find bookings for the highlighted riders on this day
+    const myBookings=bookings.filter(b=>b.date===ds&&highlightRiderIds.includes(parseInt(b.rider_id)));
+    const allBookings=bookings.filter(b=>b.date===ds);
+
+    // Trainer band color
+    const trainerColor=hasTrainer?(TRAINER_COLORS[trainerNames[0]]||TRAINER_COLORS.default):'transparent';
+
+    html+=`<div style="background:var(--white);border-radius:8px;border:1px solid ${isToday?'var(--earth)':'var(--sand)'};overflow:hidden;${isToday?'box-shadow:0 0 0 2px var(--earth)':''}">
+      <!-- trainer band -->
+      <div style="height:4px;background:${trainerColor};opacity:${hasTrainer?0.85:0}"></div>
+      <!-- day header -->
+      <div style="padding:4px 4px 2px;text-align:center">
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:${isToday?'var(--earth)':'var(--text-muted)'};font-weight:${isToday?'500':'400'}">${days7[d.getDay()]}</div>
+        <div style="font-size:13px;font-weight:500;color:${isToday?'var(--earth)':'var(--text-muted)'};width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:50%;margin:1px auto;${isToday?'background:var(--earth);color:var(--white)':''}">${d.getDate()}</div>
+      </div>
+      <!-- booking dots -->
+      <div style="padding:2px 4px 6px;display:flex;flex-direction:column;gap:2px;min-height:20px">
+        ${myBookings.map(b=>{
+          const t=typeConfig[b.type]||{dot:'#888'};
+          const h=getHorse(b.horse_id);
+          return`<div style="background:${t.dot};border-radius:3px;padding:1px 3px;font-size:9px;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${h?h.name:b.time}</div>`;
+        }).join('')}
+        ${allBookings.length>0&&myBookings.length===0?`<div style="width:6px;height:6px;border-radius:50%;background:var(--sand);margin:0 auto"></div>`:''}
+      </div>
+      ${hasTrainer?`<div style="padding:0 3px 4px;text-align:center"><div style="font-size:8px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${trainerNames.join('/')}</div></div>`:''}
+    </div>`;
+  }
+  html+='</div>';
+  return html;
+}
+
 // ── RIDER DAY VIEW CALENDAR ──
 function buildDayCalendar(dateStr, myBookingIds){
   const SLOT_H=48; // px per hour
@@ -1149,6 +1194,16 @@ function renderRiderHome(){
     html+='</div>';
   }
 
+  // Weekly calendar
+  const myBIdsForWeek=myB.map(b=>parseInt(b.rider_id));
+  const riderId=rider?parseInt(rider.id):null;
+  const weekRiderIds=riderId?[riderId]:[];
+  html+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--earth)">This Week</div>
+    <div style="font-size:11px;color:var(--text-muted)">Next 7 days</div>
+  </div>
+  <div style="margin-bottom:20px">${buildWeekCalendar(weekRiderIds)}</div>`;
+
   // Day view calendar for today
   html+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
     <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--earth)">Today's Arena</div>
@@ -1188,6 +1243,14 @@ function renderParentHome(){
   <div class="rider-date-sub">${today.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</div>
   <div class="trainer-avail-row">${trainerHtml}</div>
   <div id="parent-weather"></div>`;
+
+  // Weekly calendar highlighting all my children
+  const myChildIds=myChildren.map(ch=>parseInt(ch.id));
+  html+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--earth)">This Week</div>
+    <div style="font-size:11px;color:var(--text-muted)">Your children's schedule</div>
+  </div>
+  <div style="margin-bottom:20px">${buildWeekCalendar(myChildIds)}</div>`;
 
   if(myChildren.length>0){
     html+=`<div class="section-label">Your Children</div>`;
@@ -1669,6 +1732,18 @@ function showPanel(name){
 }
 
 // ── TIME SELECT ──
+function getDefaultTimeForDate(dateStr){
+  // Returns trainer start time if trainer is scheduled that day, else 09:00
+  if(!dateStr)return'09:00';
+  const dayTrainers=getTrainersForDate(dateStr);
+  if(dayTrainers.length>0){
+    // Pick the earliest trainer start time
+    const times=dayTrainers.map(s=>s.start_time).sort();
+    return times[0];
+  }
+  return'09:00';
+}
+
 function populateTimeSelect(id,def='09:00'){
   const sel=document.getElementById(id);if(!sel)return;sel.innerHTML='';
   for(let h=6;h<=21;h++)for(let m=0;m<60;m+=15){
@@ -1681,14 +1756,30 @@ function populateTimeSelect(id,def='09:00'){
 function openSheet(name){
   if(name==='booking'){
     populateHorseSelect();populateRiderSelect();
-    populateTimeSelect('b-time');
     const bd=document.getElementById('b-date');if(bd)bd.value=fmtDate(today);
+    populateTimeSelect('b-time',getDefaultTimeForDate(fmtDate(today)));
     const warn=document.getElementById('trainer-warning');if(warn)warn.className='trainer-warning';
     const saveBtn=document.getElementById('b-save-btn');if(saveBtn){saveBtn.style.opacity='1';saveBtn.style.filter='';}
+    // Update time when date changes
+    const dateEl=document.getElementById('b-date');
+    if(dateEl){
+      dateEl.onchange=function(){
+        populateTimeSelect('b-time',getDefaultTimeForDate(this.value));
+        checkTrainer();
+      };
+    }
   }
   if(name==='rider-booking'){
-    populateTimeSelect('rb-time');
     const bd=document.getElementById('rb-date');if(bd)bd.value=fmtDate(today);
+    populateTimeSelect('rb-time',getDefaultTimeForDate(fmtDate(today)));
+    // Update time when date changes
+    const rdateEl=document.getElementById('rb-date');
+    if(rdateEl){
+      rdateEl.onchange=function(){
+        populateTimeSelect('rb-time',getDefaultTimeForDate(this.value));
+        checkRiderTrainer();
+      };
+    }
     const rh=document.getElementById('rb-horse');
     if(rh){
       // Find the current rider's approved horses
