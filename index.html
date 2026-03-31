@@ -773,8 +773,14 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 <div class="sheet-overlay" id="sheet-rider-booking">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">Book a Visit</div>
+    <div class="sheet-title" id="rb-sheet-title">Book a Visit</div>
     <div class="trainer-warning" id="rb-trainer-warning"></div>
+    <div class="form-group" id="rb-child-group" style="display:none">
+      <label class="form-label">Booking for</label>
+      <select class="form-select" id="rb-child" onchange="onRbChildChange()">
+        <option value="">— Select child —</option>
+      </select>
+    </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="rb-date" onchange="checkRiderTrainer()"></div>
       <div class="form-group"><label class="form-label">Start Time</label><select class="form-select" id="rb-time" onchange="checkRiderTrainer()"></select></div>
@@ -910,9 +916,10 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
     <div class="sheet-handle"></div>
     <div class="sheet-title">Add Show</div>
     <div class="form-group"><label class="form-label">Show Name</label><input type="text" class="form-input" id="sh-name" placeholder="Spring Classic"></div>
+    <div class="form-group"><label class="form-label">Location</label><input type="text" class="form-input" id="sh-location" placeholder="Palo Alto"></div>
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="sh-date"></div>
-      <div class="form-group"><label class="form-label">Location</label><input type="text" class="form-input" id="sh-location" placeholder="Palo Alto"></div>
+      <div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="sh-date"></div>
+      <div class="form-group"><label class="form-label">End Date</label><input type="date" class="form-input" id="sh-end-date"><div class="form-hint">Leave blank for single day</div></div>
     </div>
     <div class="form-group"><label class="form-label">Class / Division</label><input type="text" class="form-input" id="sh-class" placeholder="Beginner Hunter, 2'6 Jumper..."></div>
     <div class="form-group"><label class="form-label">Horses Entered</label><select class="form-select" id="sh-horses" multiple style="min-height:90px"></select><div class="form-hint">Hold Ctrl / Cmd to select multiple</div></div>
@@ -2016,6 +2023,28 @@ function renderLungeRequests(){
   el.innerHTML=html;
 }
 
+// ── RIDER BOOKING CHILD CHANGE ──
+function onRbChildChange(){
+  const childSel=document.getElementById('rb-child');
+  const riderId=parseInt(childSel?.value)||null;
+  if(!riderId)return;
+  currentChildId=riderId;
+  const child=getRider(riderId);
+  if(!child)return;
+  // Update horse dropdown for this child
+  const rh=document.getElementById('rb-horse');
+  if(rh){
+    let availableHorses=horses.filter(h=>h.access!=='owner-only');
+    if(child.approved_horses&&child.approved_horses.length>0){
+      availableHorses=horses.filter(h=>
+        h.access==='barn'||child.approved_horses.map(Number).includes(parseInt(h.id))
+      );
+    }
+    rh.innerHTML='<option value="">— Trainer will assign —</option>'+
+      availableHorses.map(h=>`<option value="${h.id}">${h.name}</option>`).join('');
+  }
+}
+
 // ── SEARCH DROPDOWN ──
 function toggleSearchDropdown(id){
   const dd=document.getElementById(id);
@@ -2954,13 +2983,29 @@ function openSheet(name){
   if(name==='rider-booking'){
     const bd=document.getElementById('rb-date');if(bd)bd.value=fmtDate(today);
     populateTimeSelect('rb-time',getDefaultTimeForDate(fmtDate(today)));
-    // Update time when date changes
     const rdateEl=document.getElementById('rb-date');
     if(rdateEl){
       rdateEl.onchange=function(){
         populateTimeSelect('rb-time',getDefaultTimeForDate(this.value));
         checkRiderTrainer();
       };
+    }
+    // Show child selector for parents, hide for riders
+    const childGroup=document.getElementById('rb-child-group');
+    const childSel=document.getElementById('rb-child');
+    const titleEl=document.getElementById('rb-sheet-title');
+    if(currentRole==='parent'){
+      const myChildren=riders.filter(r=>r.parents&&r.parents.split(',').map(p=>p.trim().toLowerCase()).includes(currentUser.name.trim().toLowerCase()));
+      if(childSel){
+        childSel.innerHTML='<option value="">— Select child —</option>'+myChildren.map(r=>`<option value="${r.id}">${r.first}</option>`).join('');
+        // Pre-select if currentChildId is set
+        if(currentChildId)childSel.value=currentChildId;
+      }
+      if(childGroup)childGroup.style.display='block';
+      if(titleEl)titleEl.textContent='Book a Visit';
+    } else {
+      if(childGroup)childGroup.style.display='none';
+      if(titleEl)titleEl.textContent='Book a Visit';
     }
     const rh=document.getElementById('rb-horse');
     if(rh){
@@ -3044,8 +3089,19 @@ async function saveRiderBooking(){
   if(!date){showToast('Please select a date');return;}
 
   let riderId=null;
-  if(currentChildId){riderId=currentChildId;}
-  else{const rider=riders.find(r=>r.first===currentUser.name||r.first+' '+(r.last||'').trim()===currentUser.name);riderId=rider?rider.id:null;}
+  if(currentRole==='parent'){
+    // Use child selector value
+    const childSel=document.getElementById('rb-child');
+    const selChildId=parseInt(childSel?.value)||null;
+    riderId=selChildId||currentChildId||null;
+    if(!riderId){showToast('Please select a child');return;}
+    currentChildId=riderId;
+  } else if(currentChildId){
+    riderId=currentChildId;
+  } else {
+    const rider=riders.find(r=>r.first===currentUser.name||r.first+' '+(r.last||'').trim()===currentUser.name);
+    riderId=rider?rider.id:null;
+  }
 
   // Build list of dates to book
   const dates=[date];
@@ -3132,19 +3188,21 @@ async function saveOwner(){
 async function saveShow(){
   const name=document.getElementById('sh-name').value.trim();
   const date=document.getElementById('sh-date').value;
+  const endDate=document.getElementById('sh-end-date').value||date;
   const location=document.getElementById('sh-location').value.trim();
   const division=document.getElementById('sh-class').value.trim();
   const notes=document.getElementById('sh-notes').value.trim();
   const horseIds=Array.from(document.getElementById('sh-horses').selectedOptions).map(o=>parseInt(o.value));
   const riderIds=Array.from(document.getElementById('sh-riders').selectedOptions).map(o=>parseInt(o.value));
   if(!name||!date){showToast('Please enter a name and date');return;}
-  const ns={id:Date.now(),name,date,location,division,notes,horse_ids:horseIds,rider_ids:riderIds};
+  // rsvps starts as empty object — riders respond yes/no/maybe
+  const ns={id:Date.now(),name,date,end_date:endDate,location,division,notes,horse_ids:horseIds,rider_ids:riderIds,rsvps:{}};
   try{
-    const{data,error}=await sb.from('shows').insert({name,date,location,division,notes,horse_ids:horseIds,rider_ids:riderIds}).select().single();
+    const{data,error}=await sb.from('shows').insert({name,date,end_date:endDate,location,division,notes,horse_ids:horseIds,rider_ids:riderIds,rsvps:{}}).select().single();
     if(!error&&data)shows.push(data);else shows.push(ns);
   }catch(e){shows.push(ns);}
   closeSheet('show');
-  ['sh-name','sh-date','sh-location','sh-class','sh-notes'].forEach(id=>document.getElementById(id).value='');
+  ['sh-name','sh-date','sh-end-date','sh-location','sh-class','sh-notes'].forEach(id=>document.getElementById(id).value='');
   showToast(name+' added');
 }
 
@@ -3156,13 +3214,50 @@ async function deleteShow(id){
 }
 
 function openShowSheet(){
-  // Populate horse and rider multiselects
   const hEl=document.getElementById('sh-horses');
   const rEl=document.getElementById('sh-riders');
   if(hEl)hEl.innerHTML=horses.map(h=>`<option value="${h.id}">${h.name}</option>`).join('');
   if(rEl)rEl.innerHTML=riders.map(r=>`<option value="${r.id}">${r.first}</option>`).join('');
-  const sd=document.getElementById('sh-date');if(sd)sd.value=fmtDate(today);
+  const sd=document.getElementById('sh-date');if(sd)sd.value=fmtDate(addDays(today,7));
+  const sed=document.getElementById('sh-end-date');if(sed)sed.value='';
   document.getElementById('sheet-show').classList.add('open');
+}
+
+async function rsvpShow(showId, response){
+  // response: 'yes' | 'no' | 'maybe'
+  const show=shows.find(s=>parseInt(s.id)===parseInt(showId));
+  if(!show)return;
+  if(!show.rsvps)show.rsvps={};
+
+  // Find the current rider
+  let riderKey=currentUser.name;
+  if(currentRole==='parent'&&currentChildId){
+    const child=getRider(currentChildId);
+    if(child)riderKey=child.first+'_'+child.id;
+  } else if(currentRole==='rider'){
+    const me=riders.find(r=>r.first.toLowerCase()===currentUser.name.toLowerCase());
+    if(me)riderKey=me.first+'_'+me.id;
+  }
+
+  show.rsvps[riderKey]=response;
+  try{
+    await sb.from('shows').update({rsvps:show.rsvps}).eq('id',showId);
+  }catch(e){}
+  showToast(response==='yes'?'Confirmed! See you at the show 🏆':response==='no'?'RSVP: Not attending':'RSVP: Maybe');
+  showShowDetail(showId);
+}
+
+function getRsvpStatus(show){
+  if(!show.rsvps)return null;
+  let riderKey=null;
+  if(currentRole==='parent'&&currentChildId){
+    const child=getRider(currentChildId);
+    if(child)riderKey=child.first+'_'+child.id;
+  } else if(currentRole==='rider'){
+    const me=riders.find(r=>r.first.toLowerCase()===currentUser.name.toLowerCase());
+    if(me)riderKey=me.first+'_'+me.id;
+  }
+  return riderKey?show.rsvps[riderKey]:null;
 }
 
 function showShowDetail(showId){
@@ -3170,12 +3265,71 @@ function showShowDetail(showId){
   if(!show)return;
   const showHorses=(show.horse_ids||[]).map(id=>getHorse(id)).filter(Boolean);
   const showRiders=(show.rider_ids||[]).map(id=>getRider(id)).filter(Boolean);
-  const d=new Date(show.date+'T12:00:00');
-  const dateLabel=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  const rsvps=show.rsvps||{};
+
+  // Date display - multi-day support
+  const d1=new Date(show.date+'T12:00:00');
+  const endDate=show.end_date&&show.end_date!==show.date?show.end_date:null;
+  const d2=endDate?new Date(endDate+'T12:00:00'):null;
+  const dateLabel=d2
+    ?d1.toLocaleDateString('en-US',{month:'long',day:'numeric'})+' – '+d2.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})
+    :d1.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+
+  const todayStr=fmtDate(today);
+  const isFuture=show.date>=todayStr;
+  const daysUntil=Math.ceil((d1-today)/86400000);
+  const countdown=isFuture?(daysUntil===0?'Today!':daysUntil===1?'Tomorrow':`In ${daysUntil} days`):'Past show';
+
   let html=`<div class="rider-greeting">${show.name}</div>
-  <div class="rider-date-sub" style="margin-bottom:20px">${dateLabel}${show.location?' · '+show.location:''}</div>
-  ${show.division?`<div style="margin-bottom:14px"><span class="ev-badge ev-competition">${show.division}</span></div>`:''}
-  <div class="schedule-card" style="margin-bottom:14px">
+  <div class="rider-date-sub">${dateLabel}${show.location?' · '+show.location:''}</div>
+  <div style="margin:8px 0 16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    ${show.division?`<span class="ev-badge ev-competition">${show.division}</span>`:''}
+    <span style="background:var(--earth);color:var(--white);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500">${countdown}</span>
+  </div>`;
+
+  // ── RSVP section for riders/parents ──
+  if((currentRole==='rider'||currentRole==='parent')&&isFuture){
+    const myStatus=getRsvpStatus(show);
+    const riderName=currentRole==='parent'&&currentChildId?getRider(currentChildId)?.first:currentUser.name;
+    html+=`<div style="background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:14px 16px;margin-bottom:14px">
+      <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">
+        ${riderName?riderName+"'s RSVP":'Your RSVP'}
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="rsvpShow(${show.id},'yes')" style="flex:1;padding:10px;border-radius:8px;border:2px solid ${myStatus==='yes'?'#2d6a4f':'var(--sand)'};background:${myStatus==='yes'?'#e8f4ed':'var(--white)'};color:${myStatus==='yes'?'#2d6a4f':'var(--text-muted)'};font-weight:500;cursor:pointer;font-family:inherit;font-size:13px">
+          ✓ Going
+        </button>
+        <button onclick="rsvpShow(${show.id},'maybe')" style="flex:1;padding:10px;border-radius:8px;border:2px solid ${myStatus==='maybe'?'var(--hay)':'var(--sand)'};background:${myStatus==='maybe'?'var(--hay-light)':'var(--white)'};color:${myStatus==='maybe'?'var(--hay-dark)':'var(--text-muted)'};font-weight:500;cursor:pointer;font-family:inherit;font-size:13px">
+          ? Maybe
+        </button>
+        <button onclick="rsvpShow(${show.id},'no')" style="flex:1;padding:10px;border-radius:8px;border:2px solid ${myStatus==='no'?'#c0392b':'var(--sand)'};background:${myStatus==='no'?'#fdecea':'var(--white)'};color:${myStatus==='no'?'#c0392b':'var(--text-muted)'};font-weight:500;cursor:pointer;font-family:inherit;font-size:13px">
+          ✕ Can't go
+        </button>
+      </div>
+    </div>`;
+  }
+
+  // ── RSVP summary for staff ──
+  if(currentRole==='staff'&&showRiders.length>0){
+    const going=showRiders.filter(r=>{const k=r.first+'_'+r.id;return rsvps[k]==='yes';});
+    const maybe=showRiders.filter(r=>{const k=r.first+'_'+r.id;return rsvps[k]==='maybe';});
+    const notGoing=showRiders.filter(r=>{const k=r.first+'_'+r.id;return rsvps[k]==='no';});
+    const noResponse=showRiders.filter(r=>{const k=r.first+'_'+r.id;return !rsvps[k];});
+    html+=`<div class="schedule-card" style="margin-bottom:14px">
+      <div class="schedule-header"><div class="schedule-title">RSVP Status</div><div class="schedule-meta">${showRiders.length} invited</div></div>
+      ${going.length>0?`<div style="padding:8px 16px 4px;font-size:11px;font-weight:500;color:#2d6a4f;letter-spacing:0.06em">✓ GOING (${going.length})</div>
+      ${going.map(r=>`<div class="schedule-item"><div class="schedule-dot" style="background:${getRiderColor(r.id)}"></div><div class="schedule-info"><div class="schedule-horse">${r.first}</div><div class="schedule-detail">${r.level}</div></div></div>`).join('')}`:''}
+      ${maybe.length>0?`<div style="padding:8px 16px 4px;font-size:11px;font-weight:500;color:var(--hay-dark);letter-spacing:0.06em">? MAYBE (${maybe.length})</div>
+      ${maybe.map(r=>`<div class="schedule-item"><div class="schedule-dot" style="background:${getRiderColor(r.id)}"></div><div class="schedule-info"><div class="schedule-horse">${r.first}</div><div class="schedule-detail">${r.level}</div></div></div>`).join('')}`:''}
+      ${notGoing.length>0?`<div style="padding:8px 16px 4px;font-size:11px;font-weight:500;color:#c0392b;letter-spacing:0.06em">✕ NOT GOING (${notGoing.length})</div>
+      ${notGoing.map(r=>`<div class="schedule-item" style="opacity:0.6"><div class="schedule-dot" style="background:#ccc"></div><div class="schedule-info"><div class="schedule-horse">${r.first}</div><div class="schedule-detail">${r.level}</div></div></div>`).join('')}`:''}
+      ${noResponse.length>0?`<div style="padding:8px 16px 4px;font-size:11px;color:var(--text-muted);letter-spacing:0.06em">NO RESPONSE (${noResponse.length})</div>
+      ${noResponse.map(r=>`<div class="schedule-item" style="opacity:0.5"><div class="schedule-dot" style="background:var(--sand)"></div><div class="schedule-info"><div class="schedule-horse">${r.first}</div></div></div>`).join('')}`:''}
+    </div>`;
+  }
+
+  // Horses
+  html+=`<div class="schedule-card" style="margin-bottom:14px">
     <div class="schedule-header"><div class="schedule-title">Horses Entered</div></div>
     ${showHorses.length===0?'<div style="padding:12px 16px;font-size:13px;color:var(--text-muted)">None assigned</div>'
       :showHorses.map(h=>`<div class="schedule-item">
@@ -3183,21 +3337,19 @@ function showShowDetail(showId){
         <div class="schedule-info"><div class="schedule-horse">${h.name}</div>
         <div class="schedule-detail">${h.breed||''}${h.age?' · '+h.age+' yrs':''}</div></div>
       </div>`).join('')}
-  </div>
-  <div class="schedule-card" style="margin-bottom:14px">
-    <div class="schedule-header"><div class="schedule-title">Riders Competing</div></div>
-    ${showRiders.length===0?'<div style="padding:12px 16px;font-size:13px;color:var(--text-muted)">None assigned</div>'
-      :showRiders.map(r=>`<div class="schedule-item">
-        <div class="schedule-dot" style="background:${getRiderColor(r.id)}"></div>
-        <div class="schedule-info"><div class="schedule-horse">${r.first}</div>
-        <div class="schedule-detail">${r.level}</div></div>
-      </div>`).join('')}
-  </div>
-  ${show.notes?`<div style="background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:14px 16px;margin-bottom:14px">
-    <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Notes</div>
-    <div style="font-size:13px;color:var(--text)">${show.notes}</div>
-  </div>`:''}
-  ${currentRole==='staff'?`<button class="btn btn-secondary" style="width:100%;margin-top:4px" onclick="deleteShow(${show.id});showScreen('${currentRole==='parent'?'parent':'rider'}-app')">Remove Show</button>`:''}`;
+  </div>`;
+
+  // Notes
+  if(show.notes){
+    html+=`<div style="background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:14px 16px;margin-bottom:14px">
+      <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Notes</div>
+      <div style="font-size:13px;color:var(--text)">${show.notes}</div>
+    </div>`;
+  }
+
+  if(currentRole==='staff'){
+    html+=`<button class="btn btn-secondary" style="width:100%;margin-top:4px" onclick="deleteShow(${show.id});showScreen('app')">Remove Show</button>`;
+  }
 
   document.getElementById('child-schedule-content').innerHTML=html;
   document.getElementById('child-book-fab').style.display='none';
