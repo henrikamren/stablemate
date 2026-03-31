@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StableMate Test Suite</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body{font-family:'DM Sans',sans-serif;background:#f5f5f5;padding:20px;color:#2a1a0e;max-width:700px;margin:0 auto}
+  h1{font-size:22px;margin-bottom:4px}
+  .sub{font-size:13px;color:#888;margin-bottom:24px}
+  .test-group{background:white;border-radius:10px;border:1px solid #e8dcc8;margin-bottom:16px;overflow:hidden}
+  .test-group-header{padding:12px 16px;background:#faf6ef;border-bottom:1px solid #e8dcc8;font-weight:500;font-size:14px;display:flex;align-items:center;justify-content:space-between}
+  .test-row{padding:10px 16px;border-bottom:1px solid #faf6ef;display:flex;align-items:center;gap:10px;font-size:13px}
+  .test-row:last-child{border-bottom:none}
+  .status{width:20px;height:20px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px}
+  .status.pending{background:#e8dcc8;color:#8c7060}
+  .status.running{background:#faeeda;color:#633806;animation:pulse 1s infinite}
+  .status.pass{background:#e8f0e0;color:#2d6a4f}
+  .status.fail{background:#fdecea;color:#c0392b}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+  .test-name{flex:1}
+  .test-detail{font-size:11px;color:#8c7060;margin-top:2px}
+  .btn{padding:10px 20px;border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:500;font-family:inherit}
+  .btn-run{background:#2c1810;color:white}
+  .btn-run:hover{background:#4a2c1e}
+  .btn-run:disabled{background:#e8dcc8;color:#8c7060;cursor:not-allowed}
+  .summary{padding:14px 16px;font-size:13px;border-top:2px solid #e8dcc8;display:flex;gap:20px}
+  .summary-item{display:flex;align-items:center;gap:6px}
+  .log{background:#1a1a1a;color:#e0e0e0;border-radius:8px;padding:16px;font-size:11px;font-family:monospace;max-height:200px;overflow-y:auto;margin-top:16px;display:none}
+  .log.show{display:block}
+  .log-line{margin-bottom:4px}
+  .log-line.ok{color:#6fcf97}
+  .log-line.err{color:#eb5757}
+  .log-line.info{color:#9b9b9b}
+  .toggle-log{font-size:11px;color:#8c7060;background:none;border:none;cursor:pointer;text-decoration:underline;margin-top:8px}
+</style>
+</head>
+<body>
+
+<h1>StableMate Test Suite</h1>
+<div class="sub">Tests add and delete operations against the live Supabase database</div>
+
+<div style="display:flex;gap:10px;margin-bottom:20px">
+  <button class="btn btn-run" id="run-btn" onclick="runAll()">▶ Run All Tests</button>
+  <button class="btn" style="background:#e8dcc8;color:#2c1810" onclick="resetAll()">↺ Reset</button>
+</div>
+
+<div id="test-groups"></div>
+<div class="log" id="log"></div>
+<button class="toggle-log" onclick="toggleLog()">Show / hide log</button>
+
+<script>
+const SUPABASE_URL='https://rdyktbwkrcepojkiunwb.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkeWt0YndrcmNlcG9qa2l1bndiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NDk4NzgsImV4cCI6MjA5MDIyNTg3OH0.fkttT72Y9LzwcTPhgu3jZ6nD9dL5Jqc0KOhn9sgU44g';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+// ── TEST DEFINITIONS ──
+const TESTS=[
+  {
+    group:'Riders',
+    tests:[
+      {
+        id:'rider-add',
+        name:'Add a test rider',
+        detail:'Inserts a rider named __TEST__ into riders table',
+        run:async()=>{
+          const{data,error}=await sb.from('riders').insert({first:'__TEST__',last:'',email:'test@test.com',level:'beginner',parents:''}).select().single();
+          if(error)throw error;
+          if(!data?.id)throw new Error('No ID returned');
+          log(`Created rider id=${data.id}`,'ok');
+          return data.id;
+        }
+      },
+      {
+        id:'rider-read',
+        name:'Read test rider back',
+        detail:'Fetches the inserted rider by name',
+        depends:'rider-add',
+        run:async(ctx)=>{
+          const{data,error}=await sb.from('riders').select('*').eq('first','__TEST__').single();
+          if(error)throw error;
+          if(data.first!=='__TEST__')throw new Error('Name mismatch');
+          log(`Read rider: ${data.first} id=${data.id}`,'ok');
+          return data.id;
+        }
+      },
+      {
+        id:'rider-delete',
+        name:'Delete test rider',
+        detail:'Removes the test rider and verifies it is gone',
+        depends:'rider-add',
+        run:async(ctx)=>{
+          const{error}=await sb.from('riders').delete().eq('first','__TEST__');
+          if(error)throw error;
+          const{data}=await sb.from('riders').select('id').eq('first','__TEST__');
+          if(data&&data.length>0)throw new Error('Rider still exists after delete');
+          log('Rider deleted and confirmed gone','ok');
+        }
+      },
+    ]
+  },
+  {
+    group:'Horses',
+    tests:[
+      {
+        id:'horse-add',
+        name:'Add a test horse',
+        detail:'Inserts a horse named __TESTHORSE__ into horses table',
+        run:async()=>{
+          const{data,error}=await sb.from('horses').insert({name:'__TESTHORSE__',breed:'Test',age:1,access:'barn',notes:'test'}).select().single();
+          if(error)throw error;
+          if(!data?.id)throw new Error('No ID returned');
+          log(`Created horse id=${data.id}`,'ok');
+          return data.id;
+        }
+      },
+      {
+        id:'horse-read',
+        name:'Read test horse back',
+        detail:'Fetches the inserted horse by name',
+        depends:'horse-add',
+        run:async()=>{
+          const{data,error}=await sb.from('horses').select('*').eq('name','__TESTHORSE__').single();
+          if(error)throw error;
+          if(data.name!=='__TESTHORSE__')throw new Error('Name mismatch');
+          log(`Read horse: ${data.name} id=${data.id}`,'ok');
+        }
+      },
+      {
+        id:'horse-delete',
+        name:'Delete test horse',
+        detail:'Removes the test horse and verifies it is gone',
+        depends:'horse-add',
+        run:async()=>{
+          const{error}=await sb.from('horses').delete().eq('name','__TESTHORSE__');
+          if(error)throw error;
+          const{data}=await sb.from('horses').select('id').eq('name','__TESTHORSE__');
+          if(data&&data.length>0)throw new Error('Horse still exists after delete');
+          log('Horse deleted and confirmed gone','ok');
+        }
+      },
+    ]
+  },
+  {
+    group:'Bookings',
+    tests:[
+      {
+        id:'booking-add',
+        name:'Add a test booking',
+        detail:'Inserts a booking with date 2099-01-01 as sentinel',
+        run:async()=>{
+          const{data,error}=await sb.from('bookings').insert({date:'2099-01-01',time:'09:00',duration:60,type:'lesson',arena:'covered',notes:'__TEST__'}).select().single();
+          if(error)throw error;
+          if(!data?.id)throw new Error('No ID returned');
+          log(`Created booking id=${data.id}`,'ok');
+          return data.id;
+        }
+      },
+      {
+        id:'booking-read',
+        name:'Read test booking back',
+        detail:'Fetches the booking by sentinel date',
+        depends:'booking-add',
+        run:async()=>{
+          const{data,error}=await sb.from('bookings').select('*').eq('date','2099-01-01').eq('notes','__TEST__').single();
+          if(error)throw error;
+          if(data.notes!=='__TEST__')throw new Error('Notes mismatch');
+          log(`Read booking: ${data.date} ${data.time} id=${data.id}`,'ok');
+        }
+      },
+      {
+        id:'booking-delete',
+        name:'Delete test booking',
+        detail:'Removes the test booking and verifies it is gone',
+        depends:'booking-add',
+        run:async()=>{
+          const{error}=await sb.from('bookings').delete().eq('date','2099-01-01').eq('notes','__TEST__');
+          if(error)throw error;
+          const{data}=await sb.from('bookings').select('id').eq('date','2099-01-01').eq('notes','__TEST__');
+          if(data&&data.length>0)throw new Error('Booking still exists after delete');
+          log('Booking deleted and confirmed gone','ok');
+        }
+      },
+    ]
+  },
+  {
+    group:'Owners',
+    tests:[
+      {
+        id:'owner-add',
+        name:'Add a test owner',
+        detail:'Inserts an owner named __TESTOWNER__',
+        run:async()=>{
+          const{data,error}=await sb.from('owners').insert({first:'__TESTOWNER__',last:'',level:'owner',notes:'test'}).select().single();
+          if(error)throw error;
+          log(`Created owner id=${data.id}`,'ok');
+          return data.id;
+        }
+      },
+      {
+        id:'owner-delete',
+        name:'Delete test owner',
+        detail:'Removes the test owner',
+        depends:'owner-add',
+        run:async()=>{
+          const{error}=await sb.from('owners').delete().eq('first','__TESTOWNER__');
+          if(error)throw error;
+          const{data}=await sb.from('owners').select('id').eq('first','__TESTOWNER__');
+          if(data&&data.length>0)throw new Error('Owner still exists after delete');
+          log('Owner deleted and confirmed gone','ok');
+        }
+      },
+    ]
+  },
+  {
+    group:'Cleanup',
+    tests:[
+      {
+        id:'cleanup',
+        name:'Clean up any leftover test data',
+        detail:'Safety net — removes all __TEST__ records if any remain',
+        run:async()=>{
+          await sb.from('riders').delete().eq('first','__TEST__');
+          await sb.from('horses').delete().eq('name','__TESTHORSE__');
+          await sb.from('bookings').delete().eq('notes','__TEST__');
+          await sb.from('owners').delete().eq('first','__TESTOWNER__');
+          log('Cleanup complete','ok');
+        }
+      }
+    ]
+  }
+];
+
+// ── STATE ──
+const state={};
+let logLines=[];
+
+function log(msg,type='info'){
+  logLines.push({msg,type});
+  const el=document.getElementById('log');
+  el.innerHTML=logLines.map(l=>`<div class="log-line ${l.type}">${l.type==='ok'?'✓':l.type==='err'?'✗':'·'} ${l.msg}</div>`).join('');
+  el.scrollTop=el.scrollHeight;
+}
+
+function toggleLog(){
+  document.getElementById('log').classList.toggle('show');
+}
+
+function setStatus(id,status,detail=''){
+  const row=document.getElementById('row-'+id);
+  if(!row)return;
+  const dot=row.querySelector('.status');
+  dot.className='status '+status;
+  dot.textContent=status==='pass'?'✓':status==='fail'?'✗':status==='running'?'…':'·';
+  if(detail){
+    let d=row.querySelector('.test-detail');
+    if(!d){d=document.createElement('div');d.className='test-detail';row.querySelector('.test-name').appendChild(d);}
+    d.textContent=detail;
+    d.style.color=status==='fail'?'#c0392b':'#8c7060';
+  }
+}
+
+function updateSummary(){
+  const allTests=TESTS.flatMap(g=>g.tests);
+  const passed=allTests.filter(t=>state[t.id]==='pass').length;
+  const failed=allTests.filter(t=>state[t.id]==='fail').length;
+  const pending=allTests.filter(t=>!state[t.id]||state[t.id]==='pending').length;
+  document.getElementById('summary').innerHTML=`
+    <div class="summary-item"><div class="status pass">✓</div>${passed} passed</div>
+    <div class="summary-item"><div class="status fail">✗</div>${failed} failed</div>
+    <div class="summary-item"><div class="status pending">·</div>${pending} pending</div>
+  `;
+}
+
+// ── RENDER ──
+function renderTests(){
+  const container=document.getElementById('test-groups');
+  container.innerHTML=TESTS.map(g=>`
+    <div class="test-group">
+      <div class="test-group-header">${g.group}<span style="font-size:12px;color:#8c7060">${g.tests.length} test${g.tests.length!==1?'s':''}</span></div>
+      ${g.tests.map(t=>`
+        <div class="test-row" id="row-${t.id}">
+          <div class="status pending" >·</div>
+          <div class="test-name">
+            ${t.name}
+            <div class="test-detail">${t.detail}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('')+`<div class="test-group"><div class="summary" id="summary">
+    <div class="summary-item"><div class="status pending">·</div>Ready to run</div>
+  </div></div>`;
+}
+
+// ── RUN ──
+async function runAll(){
+  logLines=[];
+  document.getElementById('log').innerHTML='';
+  document.getElementById('run-btn').disabled=true;
+
+  const allTests=TESTS.flatMap(g=>g.tests);
+  const results={};
+
+  for(const test of allTests){
+    setStatus(test.id,'running');
+    state[test.id]='running';
+    log(`Running: ${test.name}`);
+    try{
+      const result=await test.run(results);
+      if(result!==undefined)results[test.id]=result;
+      state[test.id]='pass';
+      setStatus(test.id,'pass');
+      log(`PASS: ${test.name}`,'ok');
+    }catch(e){
+      state[test.id]='fail';
+      setStatus(test.id,'fail',e.message||String(e));
+      log(`FAIL: ${test.name} — ${e.message||e}`,'err');
+    }
+    updateSummary();
+    await new Promise(r=>setTimeout(r,300)); // small delay between tests
+  }
+
+  document.getElementById('run-btn').disabled=false;
+  document.getElementById('log').classList.add('show');
+  const failed=allTests.filter(t=>state[t.id]==='fail').length;
+  log(failed===0?'All tests passed!':'Some tests failed — check log above',failed===0?'ok':'err');
+}
+
+function resetAll(){
+  logLines=[];
+  document.getElementById('log').innerHTML='';
+  document.getElementById('log').classList.remove('show');
+  TESTS.flatMap(g=>g.tests).forEach(t=>{state[t.id]='pending';setStatus(t.id,'pending');});
+  updateSummary();
+}
+
+renderTests();
+</script>
+</body>
+</html>
