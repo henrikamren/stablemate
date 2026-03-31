@@ -98,7 +98,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 .section-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
 
 /* STATS */
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:16px}
 .stat-card{background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:10px 6px;text-align:center}
 .stat-label{font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:2px}
 .stat-value{font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--earth);line-height:1}
@@ -321,6 +321,20 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 .weather-day-name{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em}
 .weather-day-high{font-size:13px;font-weight:500;color:var(--earth);margin-top:2px}
 .weather-day-rain{font-size:10px;color:#0c447c;margin-top:1px}
+
+/* LUNGE REQUEST */
+.lunge-request-btn{width:100%;padding:12px;border-radius:8px;border:none;background:#f0e8ff;color:#5b2d8e;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;transition:all 0.15s}
+.lunge-request-btn:active{background:#e0d0ff}
+.lunge-request-btn.requested{background:#e8f4ed;color:#2d6a4f}
+.lunge-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:500}
+.lunge-badge.pending{background:#f0e8ff;color:#5b2d8e}
+.lunge-badge.accepted{background:#e8f4ed;color:#2d6a4f}
+.lunge-badge.declined{background:#fdecea;color:#c0392b}
+.request-card{background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:14px 16px;margin-bottom:10px}
+.request-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.request-card-name{font-size:14px;font-weight:500;color:var(--earth)}
+.request-card-meta{font-size:12px;color:var(--text-muted);margin-top:2px}
+.request-actions{display:flex;gap:8px;margin-top:10px}
 
 /* SEARCH DROPDOWN */
 .search-dropdown-wrap{position:relative}
@@ -607,6 +621,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
         <div class="stat-card"><div class="stat-label">Today</div><div class="stat-value" id="stat-today">—</div></div>
         <div class="stat-card"><div class="stat-label">Week</div><div class="stat-value" id="stat-week">—</div></div>
         <div class="stat-card"><div class="stat-label">Riders</div><div class="stat-value" id="stat-riders">—</div></div>
+        <div class="stat-card" style="cursor:pointer" onclick="showPanel('lunge')"><div class="stat-label">Lunges</div><div class="stat-value" id="stat-lunge">—</div><div style="font-size:9px;color:var(--text-muted)">pending</div></div>
       </div>
       <div id="today-trainer-info"></div>
       <div class="schedule-card">
@@ -666,6 +681,14 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
       </div>
       <div id="owners-list"></div>
     </div>
+    <!-- LUNGE REQUESTS -->
+    <div class="panel" id="panel-lunge">
+      <div class="section-head">
+        <div><div class="section-title">Lunge Requests</div><div class="section-sub" id="lunge-sub"></div></div>
+      </div>
+      <div id="lunge-requests-list"></div>
+    </div>
+
     <!-- BOOKINGS -->
     <div class="panel" id="panel-bookings">
       <div class="section-head">
@@ -696,6 +719,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
     </button>
     <button class="nav-tab" id="nav-bookings" onclick="showPanel('bookings')">
       <div class="nav-tab-icon">◷</div><div class="nav-tab-label">Bookings</div><div class="nav-indicator"></div>
+    </button>
+    <button class="nav-tab" id="nav-lunge" onclick="showPanel('lunge')">
+      <div class="nav-tab-icon">🔄</div><div class="nav-tab-label">Lunge</div><div class="nav-indicator"></div>
     </button>
   </div>
 </div>
@@ -897,6 +923,27 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
   </div>
 </div>
 
+<!-- LUNGE REQUEST SHEET -->
+<div class="sheet-overlay" id="sheet-lunge-request">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Request Lunge</div>
+    <input type="hidden" id="lr-horse-id">
+    <div id="lr-horse-name" style="font-size:15px;font-weight:500;color:var(--earth);margin-bottom:16px"></div>
+    <div class="form-group"><label class="form-label">Preferred Date</label>
+      <input type="date" class="form-input" id="lr-date">
+    </div>
+    <div class="form-group"><label class="form-label">Preferred Time</label>
+      <select class="form-select" id="lr-time"></select>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label>
+      <textarea class="form-textarea" id="lr-notes" placeholder="Any specific instructions for the trainer..."></textarea>
+    </div>
+    <button class="btn btn-primary" onclick="saveLungeRequest()">Send Request</button>
+    <button class="btn btn-secondary" style="width:100%;margin-top:10px" onclick="closeSheet('lunge-request')">Cancel</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -912,7 +959,7 @@ const ARENAS=[
 
 const today=new Date();
 let calMonth=today.getMonth(),calYear=today.getFullYear();
-let horses=[],owners=[],riders=[],bookings=[],schedules=[],shows=[];
+let horses=[],owners=[],riders=[],bookings=[],schedules=[],shows=[],lungeRequests=[];
 let currentUser=null,currentRole='rider';
 let currentChildId=null;
 
@@ -1075,6 +1122,7 @@ async function loadAll(){
       sb.from('bookings').select('*').order('date').order('time'),
       sb.from('trainer_schedules').select('*'),
       sb.from('shows').select('*').order('date'),
+      sb.from('lunge_requests').select('*').order('created_at',{ascending:false}),
     ]);
     if(ob.error)throw ob.error;
     owners=ob.data||[];
@@ -1083,6 +1131,9 @@ async function loadAll(){
     bookings=bb.data||[];
     schedules=sc.data||[];
     shows=sh.data||[];
+    const lr=arguments[0]?.[6]; // lunge_requests result
+    lungeRequests=[];
+    try{const lrRes=await sb.from('lunge_requests').select('*').order('created_at',{ascending:false});lungeRequests=lrRes.data||[];}catch(e){}
   }catch(e){
     console.error('Load error:',e);
     showToast('Connection error');
@@ -1853,6 +1904,118 @@ function showShowsDash(){
   showScreen('shows-dash');
 }
 
+// ── LUNGE REQUESTS ──
+function openLungeRequest(horseId){
+  const h=getHorse(horseId);if(!h)return;
+  document.getElementById('lr-horse-id').value=horseId;
+  document.getElementById('lr-horse-name').textContent='🔄 Lunge request for '+h.name;
+  const ld=document.getElementById('lr-date');if(ld)ld.value=fmtDate(addDays(today,1));
+  populateTimeSelect('lr-time',getDefaultTimeForDate(fmtDate(addDays(today,1))));
+  document.getElementById('lr-notes').value='';
+  document.getElementById('sheet-lunge-request').classList.add('open');
+}
+
+async function saveLungeRequest(){
+  const horseId=parseInt(document.getElementById('lr-horse-id').value);
+  const date=document.getElementById('lr-date').value;
+  const time=document.getElementById('lr-time').value;
+  const notes=document.getElementById('lr-notes').value.trim();
+  if(!horseId||!date){showToast('Please select a date');return;}
+
+  // Find requester
+  let requestedBy=currentUser?.name||'Unknown';
+  let riderId=null;
+  if(currentRole==='rider'){
+    const me=riders.find(r=>r.first.toLowerCase()===requestedBy.toLowerCase());
+    if(me)riderId=me.id;
+  } else if(currentRole==='parent'&&currentChildId){
+    riderId=currentChildId;
+    const child=getRider(currentChildId);
+    if(child)requestedBy+=` (for ${child.first})`;
+  }
+
+  const nr={id:Date.now(),horse_id:horseId,rider_id:riderId,requested_by:requestedBy,date,time,notes,status:'pending',created_at:new Date().toISOString()};
+  try{
+    const{data,error}=await sb.from('lunge_requests').insert({horse_id:horseId,rider_id:riderId,requested_by:requestedBy,date,time,notes,status:'pending'}).select().single();
+    if(!error&&data)lungeRequests.unshift(data);else lungeRequests.unshift(nr);
+  }catch(e){lungeRequests.unshift(nr);}
+  closeSheet('lunge-request');
+  showToast('Lunge request sent!');
+}
+
+async function acceptLungeRequest(id){
+  const req=lungeRequests.find(r=>r.id===id||parseInt(r.id)===parseInt(id));
+  if(!req)return;
+  // Create a booking from the request
+  const nb={id:Date.now(),horse_id:req.horse_id,rider_id:req.rider_id,date:req.date,time:req.time,duration:60,type:'lunge',arena:'covered',notes:'Lunge: '+req.requested_by+(req.notes?' · '+req.notes:'')};
+  try{
+    const{data,error}=await sb.from('bookings').insert({horse_id:req.horse_id,rider_id:req.rider_id,date:req.date,time:req.time,duration:60,type:'lunge',arena:'covered',notes:nb.notes}).select().single();
+    if(!error&&data)bookings.push(data);else bookings.push(nb);
+    await sb.from('lunge_requests').update({status:'accepted'}).eq('id',id);
+  }catch(e){bookings.push(nb);}
+  lungeRequests=lungeRequests.map(r=>parseInt(r.id)===parseInt(id)?{...r,status:'accepted'}:r);
+  renderDash();renderCalendar();
+  renderLungeRequests();
+  showToast('Lunge accepted and booked!');
+}
+
+async function declineLungeRequest(id){
+  if(!confirm('Decline this lunge request?'))return;
+  try{await sb.from('lunge_requests').update({status:'declined'}).eq('id',id);}catch(e){}
+  lungeRequests=lungeRequests.map(r=>parseInt(r.id)===parseInt(id)?{...r,status:'declined'}:r);
+  renderLungeRequests();
+  showToast('Request declined');
+}
+
+function renderLungeRequests(){
+  const el=document.getElementById('lunge-requests-list');if(!el)return;
+  const pending=lungeRequests.filter(r=>r.status==='pending');
+  const recent=lungeRequests.filter(r=>r.status!=='pending').slice(0,5);
+  if(lungeRequests.length===0){
+    el.innerHTML='<div class="empty"><div class="empty-icon">🔄</div><div class="empty-text">No lunge requests</div></div>';
+    return;
+  }
+  let html='';
+  if(pending.length>0){
+    html+=`<div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Pending (${pending.length})</div>`;
+    pending.forEach(req=>{
+      const h=getHorse(req.horse_id);
+      const d=new Date(req.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+      html+=`<div class="request-card">
+        <div class="request-card-header">
+          <div>
+            <div class="request-card-name">🔄 ${h?h.name:'Unknown horse'}</div>
+            <div class="request-card-meta">${d} · ${req.time} · Requested by ${req.requested_by}</div>
+            ${req.notes?`<div class="request-card-meta" style="margin-top:2px;font-style:italic">"${req.notes}"</div>`:''}
+          </div>
+          <span class="lunge-badge pending">Pending</span>
+        </div>
+        <div class="request-actions">
+          <button class="btn btn-primary" style="flex:1;padding:10px" onclick="acceptLungeRequest(${req.id})">✓ Accept & Book</button>
+          <button class="btn-danger-sm" style="flex:1;padding:10px" onclick="declineLungeRequest(${req.id})">✕ Decline</button>
+        </div>
+      </div>`;
+    });
+  }
+  if(recent.length>0){
+    html+=`<div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin:16px 0 10px">Recent</div>`;
+    recent.forEach(req=>{
+      const h=getHorse(req.horse_id);
+      const d=new Date(req.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+      html+=`<div class="request-card" style="opacity:0.7">
+        <div class="request-card-header">
+          <div>
+            <div class="request-card-name">🔄 ${h?h.name:'Unknown horse'}</div>
+            <div class="request-card-meta">${d} · ${req.time} · ${req.requested_by}</div>
+          </div>
+          <span class="lunge-badge ${req.status}">${req.status.charAt(0).toUpperCase()+req.status.slice(1)}</span>
+        </div>
+      </div>`;
+    });
+  }
+  el.innerHTML=html;
+}
+
 // ── SEARCH DROPDOWN ──
 function toggleSearchDropdown(id){
   const dd=document.getElementById(id);
@@ -2095,9 +2258,17 @@ function showHorseSchedule(horseId){
   }
   html+='</div>';
 
+  // Lunge request button for riders and parents
+  if(currentRole==='rider'||currentRole==='parent'){
+    const myReq=lungeRequests.find(r=>parseInt(r.horse_id)===parseInt(horse.id)&&r.status==='pending');
+    html+=`<button class="lunge-request-btn ${myReq?'requested':''}" onclick="${myReq?'':'openLungeRequest('+horse.id+')'}">
+      🔄 ${myReq?'Lunge Requested — Pending':'Request a Lunge'}
+    </button>`;
+  }
+
   // Notes
   if(horse.notes){
-    html+=`<div style="background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:14px 16px;margin-bottom:14px">
+    html+=`<div style="background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:14px 16px;margin-bottom:14px;margin-top:8px">
       <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Notes</div>
       <div style="font-size:13px;color:var(--text)">${horse.notes}</div>
     </div>`;
@@ -2254,6 +2425,8 @@ function renderDash(){
   document.getElementById('stat-today').textContent=todayB.length;
   document.getElementById('stat-week').textContent=bookings.filter(b=>b.date>=todayStr&&b.date<=weekEnd).length;
   document.getElementById('stat-riders').textContent=riders.length;
+  const pendingLunge=lungeRequests.filter(r=>r.status==='pending').length;
+  const statLunge=document.getElementById('stat-lunge');if(statLunge)statLunge.textContent=pendingLunge;
   document.getElementById('dash-date').textContent=today.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
 
   // Trainer info card for today
@@ -2711,6 +2884,7 @@ function showPanel(name){
   if(name==='shows')renderShows();
   if(name==='owners')renderOwners();
   if(name==='bookings')renderBookings();
+  if(name==='lunge'){renderLungeRequests();const s=document.getElementById('lunge-sub');if(s)s.textContent=lungeRequests.filter(r=>r.status==='pending').length+' pending';}
   if(name==='home')renderDash();
 }
 
