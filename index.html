@@ -565,10 +565,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title">Add Rider</div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">First Name</label><input type="text" class="form-input" id="r-first" placeholder="Emma"></div>
-      <div class="form-group"><label class="form-label">Last Name</label><input type="text" class="form-input" id="r-last" placeholder="Jensen"></div>
-    </div>
+    <div class="form-group"><label class="form-label">Name</label><input type="text" class="form-input" id="r-first" placeholder="Emma"></div>
     <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="r-email" placeholder="emma@example.com"></div>
     <div class="form-group"><label class="form-label">Phone</label><input type="tel" class="form-input" id="r-phone" placeholder="555-0000"></div>
     <div class="form-group"><label class="form-label">Riding Level</label>
@@ -592,10 +589,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title">Add Owner</div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">First Name</label><input type="text" class="form-input" id="o-first" placeholder="Jane"></div>
-      <div class="form-group"><label class="form-label">Last Name</label><input type="text" class="form-input" id="o-last" placeholder="Smith"></div>
-    </div>
+    <div class="form-group"><label class="form-label">Name</label><input type="text" class="form-input" id="o-first" placeholder="Jane Smith"></div>
     <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="o-email" placeholder="jane@example.com"></div>
     <div class="form-group"><label class="form-label">Phone</label><input type="tel" class="form-input" id="o-phone" placeholder="555-0000"></div>
     <div class="form-group"><label class="form-label">Access Type</label>
@@ -802,7 +796,7 @@ function populateLoginDropdowns(){
   while(rSel.options.length>1)rSel.remove(1);
   while(pSel.options.length>1)pSel.remove(1);
   riders.forEach(r=>{
-    const o=document.createElement('option');o.value=r.first+' '+r.last;o.textContent=r.first+' '+r.last;rSel.appendChild(o);
+    const o=document.createElement('option');o.value=r.first;o.textContent=r.first;rSel.appendChild(o);
   });
   const parentNames=new Set();
   riders.forEach(r=>{if(r.parents)r.parents.split(',').map(p=>p.trim()).filter(Boolean).forEach(p=>parentNames.add(p));});
@@ -813,7 +807,7 @@ function populateLoginDropdowns(){
 function renderRiderHome(){
   const name=currentUser.name;
   const todayStr=fmtDate(today);
-  const rider=riders.find(r=>r.first+' '+r.last===name);
+  const rider=riders.find(r=>r.first===name);
   const myB=rider?bookings.filter(b=>b.rider_id===rider.id&&b.date>=todayStr).sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date)):[];
   const next=myB[0];
   let html=`<div class="rider-greeting">Hi, ${name.split(' ')[0]} 👋</div>
@@ -909,12 +903,23 @@ function checkTrainer(){
   const time=document.getElementById('b-time')?.value;
   const warn=document.getElementById('trainer-warning');if(!warn)return;
   const t=typeConfig[type];
+  const saveBtn=document.querySelector('#sheet-booking .btn-primary');
   if(t&&t.supervised&&date&&time){
     const{available,trainers}=isTrainerAvailable(date,time);
-    warn.textContent=available?'✓ '+trainers.join(' & ')+' will be available.':'⚠️ No trainer scheduled at this time.';
-    warn.style.background=available?'#e8f4ed':'#faeeda';warn.style.color=available?'#2d6a4f':'#633806';
+    if(available){
+      warn.textContent='✓ '+trainers.join(' & ')+' will be available.';
+      warn.style.background='#e8f4ed';warn.style.color='#2d6a4f';
+      if(saveBtn){saveBtn.style.opacity='1';saveBtn.style.filter='';}
+    } else {
+      warn.textContent='⚠️ No trainer scheduled — booking allowed but trainer must be arranged.';
+      warn.style.background='#faeeda';warn.style.color='#633806';
+      if(saveBtn){saveBtn.style.opacity='0.6';saveBtn.style.filter='grayscale(30%)';}
+    }
     warn.classList.add('show');
-  } else {warn.classList.remove('show');}
+  } else {
+    warn.classList.remove('show');
+    if(saveBtn){saveBtn.style.opacity='1';saveBtn.style.filter='';}
+  }
 }
 
 // ── STAFF DASHBOARD ──
@@ -939,7 +944,7 @@ function renderDash(){
     nextArea.innerHTML=`<div class="next-up-card">
       <div class="next-up-label">▶ Next Up</div>
       <div class="next-up-horse">${h?h.name:'Unassigned'}</div>
-      <div class="next-up-detail">${t.label} · ${fmtDur(nextB.duration)}${r?' · '+r.first+' '+r.last:' · <span style="opacity:0.6">Rider unassigned</span>'}</div>
+      <div class="next-up-detail">${t.label} · ${fmtDur(nextB.duration)}${r?' · '+r.first:' · <span style="opacity:0.6">Rider unassigned</span>'}</div>
       <div class="next-up-time">${nextB.time}</div></div>`;
   } else nextArea.innerHTML='';
 
@@ -995,7 +1000,7 @@ function showCalDay(dateStr){
     html+=`<div class="booking-row">
       <div class="booking-left">
         <div class="booking-horse">${h?h.name:'Unknown'}</div>
-        <div class="booking-meta">${b.time} · ${t.label} · ${fmtDur(b.duration)}${r?' · '+r.first+' '+r.last:' · Unassigned'}</div>
+        <div class="booking-meta">${b.time} · ${t.label} · ${fmtDur(b.duration)}${r?' · '+r.first:' · Unassigned'}</div>
       </div>
       <span class="ev-badge ${t.cls}">${t.label}</span>
     </div>`;
@@ -1020,7 +1025,7 @@ function renderHorses(){
         <div style="flex:1;min-width:0">
           <div class="horse-name">${h.name}</div>
           <div class="horse-detail">${h.breed||'Unknown breed'}${h.age?' · '+h.age+' yrs':''}</div>
-          <div class="horse-detail">${o?o.first+' '+o.last:'Barn owned'}</div>
+          <div class="horse-detail">${o?o.first:'Barn owned'}</div>
           <span class="horse-badge ${aMap[h.access]||'badge-barn'}">${aLbl[h.access]||h.access}</span>
         </div>
         <div class="horse-actions">
@@ -1063,7 +1068,7 @@ function renderRiders(){
     const myH=(r.approved_horses||[]).map(id=>getHorse(id)).filter(Boolean);
     return`<div class="person-card">
       <div class="person-header">
-        <div class="person-avatar">${(r.first[0]+r.last[0]).toUpperCase()}</div>
+        <div class="person-avatar">${r.first.substring(0,2).toUpperCase()}</div>
         <div style="flex:1"><div class="person-name">${r.first} ${r.last}</div><div class="person-sub">${r.level}${myH.length?' · '+myH.map(h=>h.name).join(', '):''}</div></div>
         <button class="btn-danger-sm" onclick="deleteRider(${r.id})">✕</button>
       </div>
@@ -1084,7 +1089,7 @@ function renderOwners(){
     const myH=horses.filter(h=>h.owner_id===o.id);
     return`<div class="person-card">
       <div class="person-header">
-        <div class="person-avatar">${(o.first[0]+o.last[0]).toUpperCase()}</div>
+        <div class="person-avatar">${o.first.substring(0,2).toUpperCase()}</div>
         <div style="flex:1"><div class="person-name">${o.first} ${o.last}</div><div class="person-sub">${myH.map(h=>h.name).join(', ')||'No horse assigned'}</div></div>
         <button class="btn-danger-sm" onclick="deleteOwner(${o.id})">✕</button>
       </div>
@@ -1106,7 +1111,7 @@ function renderBookings(){
     return`<div class="booking-row">
       <div class="booking-left">
         <div class="booking-horse">${h?h.name:'Unknown'}${!b.rider_id?'<span class="unassigned-badge" style="margin-left:6px">No rider</span>':''}</div>
-        <div class="booking-meta">${ds} · ${b.time} · ${fmtDur(b.duration)}${r?' · '+r.first+' '+r.last:''}</div>
+        <div class="booking-meta">${ds} · ${b.time} · ${fmtDur(b.duration)}${r?' · '+r.first:''}</div>
       </div>
       <div class="booking-right">
         <span class="ev-badge ${t.cls}">${t.label}</span>
@@ -1182,7 +1187,7 @@ async function saveRiderBooking(){
   const type=document.getElementById('rb-type').value;
   const notes=document.getElementById('rb-notes').value;
   if(!date){showToast('Please select a date');return;}
-  const rider=riders.find(r=>r.first+' '+r.last===currentUser.name);
+  const rider=riders.find(r=>r.first===currentUser.name);
   const riderId=rider?rider.id:null;
   const nb={id:Date.now(),horse_id:horseId,rider_id:riderId,date,time,duration,type,notes};
   try{const{data,error}=await sb.from('bookings').insert({horse_id:horseId,rider_id:riderId,date,time,duration,type,notes}).select().single();if(!error&&data)bookings.push(data);else bookings.push(nb);}catch(e){bookings.push(nb);}
@@ -1219,17 +1224,16 @@ async function saveRider(){
 
 async function saveOwner(){
   const first=document.getElementById('o-first').value.trim();
-  const last=document.getElementById('o-last').value.trim();
   const email=document.getElementById('o-email').value.trim();
   const phone=document.getElementById('o-phone').value.trim();
   const level=document.getElementById('o-level').value;
   const notes=document.getElementById('o-notes').value.trim();
   const allowed_days=level==='partial-lease'?Array.from(document.querySelectorAll('#o-days-check input:checked')).map(c=>c.value):null;
-  if(!first||!last){showToast('Please enter a name');return;}
-  const no={id:Date.now(),first,last,email,phone,level,notes,allowed_days};
-  try{const{data,error}=await sb.from('owners').insert({first,last,email,phone,level,notes,allowed_days}).select().single();if(!error&&data)owners.push(data);else owners.push(no);}catch(e){owners.push(no);}
-  closeSheet('owner');['o-first','o-last','o-email','o-phone','o-notes'].forEach(id=>document.getElementById(id).value='');
-  renderOwners();renderDash();showToast(first+' '+last+' added');
+  if(!first){showToast('Please enter a name');return;}
+  const no={id:Date.now(),first,last:'',email,phone,level,notes,allowed_days};
+  try{const{data,error}=await sb.from('owners').insert({first,last:'',email,phone,level,notes,allowed_days}).select().single();if(!error&&data)owners.push(data);else owners.push(no);}catch(e){owners.push(no);}
+  closeSheet('owner');['o-first','o-email','o-phone','o-notes'].forEach(id=>document.getElementById(id).value='');
+  renderOwners();renderDash();showToast(first+' added');
 }
 
 // ── DELETES ──
@@ -1240,8 +1244,8 @@ async function deleteOwner(id){if(!confirm('Remove this owner?'))return;try{awai
 
 // ── HELPERS ──
 function populateHorseSelect(){const el=document.getElementById('b-horse');if(!el)return;el.innerHTML=horses.map(h=>`<option value="${h.id}">${h.name}</option>`).join('')||'<option>No horses yet</option>';}
-function populateRiderSelect(){const el=document.getElementById('b-rider');if(!el)return;el.innerHTML='<option value="">— Unassigned —</option>'+riders.map(r=>`<option value="${r.id}">${r.first} ${r.last}</option>`).join('');}
-function populateOwnerSelect(id){const el=document.getElementById(id);if(!el)return;el.innerHTML='<option value="">Barn owned</option>'+owners.map(o=>`<option value="${o.id}">${o.first} ${o.last}</option>`).join('');}
+function populateRiderSelect(){const el=document.getElementById('b-rider');if(!el)return;el.innerHTML='<option value="">— Unassigned —</option>'+riders.map(r=>`<option value="${r.id}">${r.first}</option>`).join('');}
+function populateOwnerSelect(id){const el=document.getElementById(id);if(!el)return;el.innerHTML='<option value="">Barn owned</option>'+owners.map(o=>`<option value="${o.id}">${o.first}</option>`).join('');}
 function quickBook(horseId){populateHorseSelect();populateRiderSelect();populateTimeSelect('b-time');document.getElementById('b-horse').value=horseId;const bd=document.getElementById('b-date');if(bd)bd.value=fmtDate(today);document.getElementById('sheet-booking').classList.add('open');}
 
 document.getElementById('o-level').addEventListener('change',function(){document.getElementById('o-days-group').style.display=this.value==='partial-lease'?'block':'none';});
