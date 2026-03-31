@@ -441,20 +441,23 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
     <div class="search-dropdown-wrap">
       <button class="search-btn" onclick="toggleSearchDropdown('rider-dd')">🔍 Browse <span style="font-size:10px">▾</span></button>
       <div class="search-dropdown" id="rider-dd">
-        <div class="search-dropdown-section" onclick="toggleDDSection('rider-dd-horses-body')">
-          Horses <span class="search-dropdown-section-arrow" id="rider-dd-horses-arrow">▾</span>
+        <div class="search-dropdown-section" style="justify-content:space-between" onclick="toggleDDSection('rider-dd-horses-body')">
+          <span onclick="event.stopPropagation();showHorsesDash();closeAllDropdowns()" style="flex:1;cursor:pointer">🐴 Horses</span>
+          <span class="search-dropdown-section-arrow" id="rider-dd-horses-arrow" onclick="event.stopPropagation();toggleDDSection('rider-dd-horses-body')">▾</span>
         </div>
         <div class="search-dropdown-section-body" id="rider-dd-horses-body">
           <div id="rider-dd-horses"></div>
         </div>
-        <div class="search-dropdown-section" onclick="toggleDDSection('rider-dd-riders-body')">
-          Riders <span class="search-dropdown-section-arrow" id="rider-dd-riders-arrow">▾</span>
+        <div class="search-dropdown-section" style="justify-content:space-between" onclick="toggleDDSection('rider-dd-riders-body')">
+          <span onclick="event.stopPropagation();showRidersDash();closeAllDropdowns()" style="flex:1;cursor:pointer">🏇 Riders</span>
+          <span class="search-dropdown-section-arrow" id="rider-dd-riders-arrow" onclick="event.stopPropagation();toggleDDSection('rider-dd-riders-body')">▾</span>
         </div>
         <div class="search-dropdown-section-body" id="rider-dd-riders-body">
           <div id="rider-dd-riders"></div>
         </div>
-        <div class="search-dropdown-section" onclick="toggleDDSection('rider-dd-shows-body')">
-          Shows <span class="search-dropdown-section-arrow" id="rider-dd-shows-arrow">▾</span>
+        <div class="search-dropdown-section" style="justify-content:space-between" onclick="toggleDDSection('rider-dd-shows-body')">
+          <span onclick="event.stopPropagation();showShowsDash();closeAllDropdowns()" style="flex:1;cursor:pointer">🏆 Shows</span>
+          <span class="search-dropdown-section-arrow" id="rider-dd-shows-arrow" onclick="event.stopPropagation();toggleDDSection('rider-dd-shows-body')">▾</span>
         </div>
         <div class="search-dropdown-section-body" id="rider-dd-shows-body">
           <div id="rider-dd-shows"></div>
@@ -479,20 +482,23 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
     <div class="search-dropdown-wrap">
       <button class="search-btn" onclick="toggleSearchDropdown('parent-dd')">🔍 Browse <span style="font-size:10px">▾</span></button>
       <div class="search-dropdown" id="parent-dd">
-        <div class="search-dropdown-section" onclick="toggleDDSection('parent-dd-horses-body')">
-          Horses <span class="search-dropdown-section-arrow" id="parent-dd-horses-arrow">▾</span>
+        <div class="search-dropdown-section" style="justify-content:space-between" onclick="toggleDDSection('parent-dd-horses-body')">
+          <span onclick="event.stopPropagation();showHorsesDash();closeAllDropdowns()" style="flex:1;cursor:pointer">🐴 Horses</span>
+          <span class="search-dropdown-section-arrow" id="parent-dd-horses-arrow" onclick="event.stopPropagation();toggleDDSection('parent-dd-horses-body')">▾</span>
         </div>
         <div class="search-dropdown-section-body" id="parent-dd-horses-body">
           <div id="parent-dd-horses"></div>
         </div>
-        <div class="search-dropdown-section" onclick="toggleDDSection('parent-dd-riders-body')">
-          Riders <span class="search-dropdown-section-arrow" id="parent-dd-riders-arrow">▾</span>
+        <div class="search-dropdown-section" style="justify-content:space-between" onclick="toggleDDSection('parent-dd-riders-body')">
+          <span onclick="event.stopPropagation();showRidersDash();closeAllDropdowns()" style="flex:1;cursor:pointer">🏇 Riders</span>
+          <span class="search-dropdown-section-arrow" id="parent-dd-riders-arrow" onclick="event.stopPropagation();toggleDDSection('parent-dd-riders-body')">▾</span>
         </div>
         <div class="search-dropdown-section-body" id="parent-dd-riders-body">
           <div id="parent-dd-riders"></div>
         </div>
-        <div class="search-dropdown-section" onclick="toggleDDSection('parent-dd-shows-body')">
-          Shows <span class="search-dropdown-section-arrow" id="parent-dd-shows-arrow">▾</span>
+        <div class="search-dropdown-section" style="justify-content:space-between" onclick="toggleDDSection('parent-dd-shows-body')">
+          <span onclick="event.stopPropagation();showShowsDash();closeAllDropdowns()" style="flex:1;cursor:pointer">🏆 Shows</span>
+          <span class="search-dropdown-section-arrow" id="parent-dd-shows-arrow" onclick="event.stopPropagation();toggleDDSection('parent-dd-shows-body')">▾</span>
         </div>
         <div class="search-dropdown-section-body" id="parent-dd-shows-body">
           <div id="parent-dd-shows"></div>
@@ -535,6 +541,40 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
     </div>
   </div>
   <div class="simple-content" id="all-riders-content"></div>
+</div>
+
+<!-- HORSES DASHBOARD -->
+<div class="screen large-font" id="screen-horses-dash">
+  <div class="simple-topbar">
+    <div><div class="topbar-logo">Stable<span>Mate</span></div><div class="topbar-barn">Oasis Farm</div></div>
+    <div class="topbar-user">
+      <button class="logout-btn" id="horses-dash-back">← Back</button>
+    </div>
+  </div>
+  <div class="simple-content" id="horses-dash-content"></div>
+</div>
+
+<!-- RIDERS DASHBOARD -->
+<div class="screen large-font" id="screen-riders-dash">
+  <div class="simple-topbar">
+    <div><div class="topbar-logo">Stable<span>Mate</span></div><div class="topbar-barn">Oasis Farm</div></div>
+    <div class="topbar-user">
+      <button class="logout-btn" id="riders-dash-back">← Back</button>
+    </div>
+  </div>
+  <div class="simple-content" id="riders-dash-content"></div>
+</div>
+
+<!-- SHOWS DASHBOARD -->
+<div class="screen large-font" id="screen-shows-dash">
+  <div class="simple-topbar">
+    <div><div class="topbar-logo">Stable<span>Mate</span></div><div class="topbar-barn">Oasis Farm</div></div>
+    <div class="topbar-user">
+      <button class="logout-btn" id="shows-dash-back">← Back</button>
+    </div>
+  </div>
+  <div class="simple-content" id="shows-dash-content"></div>
+  <button class="book-fab" id="shows-add-fab" style="display:none" onclick="openShowSheet()">+ Add Show</button>
 </div>
 
 <!-- ══════════════════════════════════ -->
@@ -958,7 +998,11 @@ function enterRider(){
   const name=typed||sel;
   if(!name){showToast('Please select or enter your name');return;}
   currentUser={name};currentRole='rider';saveSession();
-  setupRiderUI();showScreen('rider-app');
+  if(riders.length===0){
+    loadAll().then(()=>{setupRiderUI();showScreen('rider-app');});
+  } else {
+    setupRiderUI();showScreen('rider-app');
+  }
 }
 function enterParent(){
   const sel=document.getElementById('parent-select').value;
@@ -966,7 +1010,6 @@ function enterParent(){
   const name=typed||sel;
   if(!name){showToast('Please select or enter your name');return;}
   currentUser={name};currentRole='parent';saveSession();
-  // Reload to ensure fresh data then render
   if(riders.length===0){
     loadAll().then(()=>{setupParentUI();showScreen('parent-app');});
   } else {
@@ -977,7 +1020,11 @@ function enterStaff(){
   const name=document.getElementById('staff-name-input').value.trim();
   if(!name){showToast('Please enter your name');return;}
   currentUser={name};currentRole='staff';saveSession();
-  setupStaffUI();showScreen('app');
+  if(horses.length===0){
+    loadAll().then(()=>{setupStaffUI();showScreen('app');});
+  } else {
+    setupStaffUI();showScreen('app');
+  }
 }
 function signOut(){
   localStorage.removeItem('sm_session');
@@ -1574,6 +1621,201 @@ async function deleteAnyBooking(id){
     if(currentChildId){showChildSchedule(currentChildId,true);}
     else{renderParentHome();}
   }
+}
+
+// ── DASHBOARD FUNCTIONS ──
+function getBackScreen(){
+  if(currentRole==='parent')return'parent-app';
+  if(currentRole==='staff')return'app';
+  return'rider-app';
+}
+
+function showHorsesDash(){
+  const todayStr=fmtDate(today);
+  let html=`<div class="rider-greeting">The Herd</div>
+  <div class="rider-date-sub" style="margin-bottom:20px">${horses.length} horse${horses.length!==1?'s':''} at ${BARN_NAME}</div>`;
+
+  if(horses.length===0){
+    html+='<div class="empty"><div class="empty-icon">🐴</div><div class="empty-text">No horses registered yet</div></div>';
+  } else {
+    horses.forEach(h=>{
+      const o=getOwner(h.owner_id);
+      const hBookings=bookings.filter(b=>parseInt(b.horse_id)===parseInt(h.id)&&b.date>=todayStr)
+        .sort((a,b)=>a.date.localeCompare(b.date));
+      const next=hBookings[0];
+      const nextR=next?getRider(next.rider_id):null;
+      const nextT=next?(typeConfig[next.type]||{label:next.type}):null;
+      const sv=h.services||{};
+      const serviceIcons=[sv.lunge?'🔄':'',sv.turnout?'🌿':'',sv.walker?'⭕':''].filter(Boolean).join(' ');
+      const aMap={'barn':'Barn','owner-only':'Owner Only','owner-allow':'Owner+','partial-lease':'Partial','full-lease':'Lease'};
+
+      // Mini 7-day
+      const days7=['S','M','T','W','T','F','S'];
+      let miniWeek='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:8px">';
+      for(let i=0;i<7;i++){
+        const d=addDays(today,i);const ds=fmtDate(d);
+        const isToday=ds===todayStr;
+        const dayBs=hBookings.filter(b=>b.date===ds);
+        const hasTrainer=getTrainersForDate(ds).length>0;
+        const trColor=hasTrainer?(TRAINER_COLORS[getTrainersForDate(ds)[0]?.trainer_name]||TRAINER_COLORS.default):'transparent';
+        miniWeek+=`<div style="text-align:center">
+          <div style="font-size:8px;color:var(--text-muted)">${days7[d.getDay()]}</div>
+          <div style="width:28px;height:28px;border-radius:6px;margin:2px auto;background:${isToday?'var(--cream-dark)':'var(--cream)'};border:1px solid ${isToday?'var(--earth)':'var(--sand)'};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;overflow:hidden;position:relative">
+            ${hasTrainer?`<div style="position:absolute;top:0;left:0;right:0;height:3px;background:${trColor};opacity:0.8"></div>`:''}
+            ${dayBs.length>0
+              ?dayBs.slice(0,2).map(b=>{const r=getRider(b.rider_id);const col=r?getRiderColor(r.id):(typeConfig[b.type]||{dot:'#888'}).dot;return`<div style="width:18px;height:6px;border-radius:2px;background:${col}"></div>`;}).join('')
+              :'<div style="width:5px;height:5px;border-radius:50%;background:var(--sand)"></div>'}
+          </div>
+          <div style="font-size:8px;color:var(--text-muted)">${d.getDate()}</div>
+        </div>`;
+      }
+      miniWeek+='</div>';
+
+      html+=`<div style="background:var(--white);border-radius:12px;border:1px solid var(--sand);padding:14px 16px;margin-bottom:12px;cursor:pointer" onclick="showHorseSchedule(${h.id})">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+          <div style="width:44px;height:44px;border-radius:50%;background:var(--cream-dark);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--earth);flex-shrink:0">${h.name[0]}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:16px;font-weight:500;color:var(--earth)">${h.name}</div>
+            <div style="font-size:12px;color:var(--text-muted)">${h.breed||'Unknown breed'}${h.age?' · '+h.age+' yrs':''}${o?' · '+o.first:' · Barn'}</div>
+            <div style="display:flex;gap:6px;margin-top:4px;align-items:center">
+              <span style="font-size:10px;padding:2px 7px;border-radius:8px;background:var(--cream-dark);color:var(--text-muted)">${aMap[h.access]||'Barn'}</span>
+              ${serviceIcons?`<span style="font-size:12px">${serviceIcons}</span>`:''}
+            </div>
+          </div>
+          ${next?`<div style="text-align:right;flex-shrink:0">
+            <div style="font-size:11px;color:var(--earth-light);font-weight:500">${next.date===todayStr?'Today':new Date(next.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
+            <div style="font-size:11px;color:var(--text-muted)">${next.time}${nextR?' · '+nextR.first:''}</div>
+          </div>`:'<div style="font-size:11px;color:var(--text-muted)">No upcoming</div>'}
+        </div>
+        ${miniWeek}
+      </div>`;
+    });
+  }
+
+  document.getElementById('horses-dash-content').innerHTML=html;
+  document.getElementById('horses-dash-back').onclick=()=>showScreen(getBackScreen());
+  showScreen('horses-dash');
+}
+
+function showRidersDash(){
+  const todayStr=fmtDate(today);
+  let html=`<div class="rider-greeting">Riders</div>
+  <div class="rider-date-sub" style="margin-bottom:20px">${riders.length} rider${riders.length!==1?'s':''} at ${BARN_NAME}</div>`;
+
+  if(riders.length===0){
+    html+='<div class="empty"><div class="empty-icon">🏇</div><div class="empty-text">No riders registered yet</div></div>';
+  } else {
+    riders.forEach(r=>{
+      const rColor=getRiderColor(r.id);
+      const myB=bookings.filter(b=>parseInt(b.rider_id)===parseInt(r.id)&&b.date>=todayStr)
+        .sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date));
+      const next=myB[0];
+      const nextH=next?getHorse(next.horse_id):null;
+      const approvedH=(r.approved_horses||[]).map(id=>getHorse(id)).filter(Boolean);
+      const nowTimeR=String(today.getHours()).padStart(2,'0')+':'+String(today.getMinutes()).padStart(2,'0');
+
+      // Mini 7-day
+      const days7=['S','M','T','W','T','F','S'];
+      let miniWeek='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:8px">';
+      for(let i=0;i<7;i++){
+        const d=addDays(today,i);const ds=fmtDate(d);
+        const isToday=ds===todayStr;
+        const dayBs=myB.filter(b=>b.date===ds);
+        const hasTrainer=getTrainersForDate(ds).length>0;
+        const trColor=hasTrainer?(TRAINER_COLORS[getTrainersForDate(ds)[0]?.trainer_name]||TRAINER_COLORS.default):'transparent';
+        miniWeek+=`<div style="text-align:center">
+          <div style="font-size:8px;color:var(--text-muted)">${days7[d.getDay()]}</div>
+          <div style="width:28px;height:28px;border-radius:6px;margin:2px auto;background:${isToday?'var(--cream-dark)':'var(--cream)'};border:1px solid ${isToday?'var(--earth)':'var(--sand)'};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;overflow:hidden;position:relative">
+            ${hasTrainer?`<div style="position:absolute;top:0;left:0;right:0;height:3px;background:${trColor};opacity:0.8"></div>`:''}
+            ${dayBs.length>0
+              ?dayBs.slice(0,2).map(b=>{const h=getHorse(b.horse_id);return`<div style="width:18px;height:6px;border-radius:2px;background:${rColor}"></div>`;}).join('')
+              :'<div style="width:5px;height:5px;border-radius:50%;background:var(--sand)"></div>'}
+          </div>
+          <div style="font-size:8px;color:var(--text-muted)">${d.getDate()}</div>
+        </div>`;
+      }
+      miniWeek+='</div>';
+
+      const isMyChild=currentRole==='parent'&&r.parents&&r.parents.split(',').map(p=>p.trim().toLowerCase()).includes(currentUser.name.trim().toLowerCase());
+      const canBook=isMyChild||currentRole==='staff';
+
+      html+=`<div style="background:var(--white);border-radius:12px;border:1px solid var(--sand);padding:14px 16px;margin-bottom:12px;cursor:pointer" onclick="showRiderScheduleFromSearch(${r.id})">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+          <div style="width:44px;height:44px;border-radius:50%;background:${rColor};display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:20px;color:white;flex-shrink:0">${r.first[0]}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:16px;font-weight:500;color:var(--earth)">${r.first}${isMyChild?` <span style="font-size:10px;background:var(--hay-light);color:var(--earth);padding:2px 6px;border-radius:8px">Your child</span>`:''}</div>
+            <div style="font-size:12px;color:var(--text-muted)">${r.level}${approvedH.length>0?' · '+approvedH.map(h=>h.name).join(', '):''}</div>
+            ${r.parents?`<div style="font-size:11px;color:var(--text-muted);margin-top:2px">👨‍👧 ${r.parents}</div>`:''}
+          </div>
+          ${next?`<div style="text-align:right;flex-shrink:0">
+            <div style="font-size:11px;color:var(--earth-light);font-weight:500">${next.date===todayStr?'Today':new Date(next.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
+            <div style="font-size:11px;color:var(--text-muted)">${next.time}${nextH?' · '+nextH.name:''}</div>
+          </div>`:'<div style="font-size:11px;color:var(--text-muted)">No upcoming</div>'}
+        </div>
+        ${miniWeek}
+      </div>`;
+    });
+  }
+
+  document.getElementById('riders-dash-content').innerHTML=html;
+  document.getElementById('riders-dash-back').onclick=()=>showScreen(getBackScreen());
+  showScreen('riders-dash');
+}
+
+function showShowsDash(){
+  const todayStr=fmtDate(today);
+  const upcoming=shows.filter(s=>s.date>=todayStr).sort((a,b)=>a.date.localeCompare(b.date));
+  const past=shows.filter(s=>s.date<todayStr).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+
+  let html=`<div class="rider-greeting">Shows</div>
+  <div class="rider-date-sub" style="margin-bottom:20px">${upcoming.length} upcoming · ${BARN_NAME}</div>`;
+
+  if(currentRole==='staff'){
+    html+=`<button class="btn btn-secondary btn-sm" style="margin-bottom:16px;width:100%" onclick="openShowSheet()">+ Add Show</button>`;
+  }
+
+  function showCard(s, isPast){
+    const d=new Date(s.date+'T12:00:00');
+    const dl=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+    const showRiders=(s.rider_ids||[]).map(id=>getRider(id)).filter(Boolean);
+    const showHorses=(s.horse_ids||[]).map(id=>getHorse(id)).filter(Boolean);
+    const daysUntil=Math.ceil((d-today)/86400000);
+    const countdownTxt=daysUntil===0?'Today!':daysUntil===1?'Tomorrow':daysUntil>0?`In ${daysUntil} days`:'';
+    return`<div style="background:var(--white);border-radius:12px;border:1px solid var(--sand);padding:16px;margin-bottom:12px;cursor:pointer;${isPast?'opacity:0.6':''}" onclick="showShowDetail(${s.id})">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
+        <div>
+          <div style="font-size:16px;font-weight:500;color:var(--earth)">${s.name}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${dl}${s.location?' · '+s.location:''}</div>
+          ${s.division?`<div style="margin-top:4px"><span class="ev-badge ev-competition">${s.division}</span></div>`:''}
+        </div>
+        ${countdownTxt?`<div style="background:var(--earth);color:var(--white);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;flex-shrink:0">${countdownTxt}</div>`:''}
+      </div>
+      ${showRiders.length>0?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+        ${showRiders.map(r=>`<div style="display:flex;align-items:center;gap:4px;background:var(--cream);border-radius:20px;padding:3px 8px">
+          <div style="width:8px;height:8px;border-radius:50%;background:${getRiderColor(r.id)}"></div>
+          <span style="font-size:12px;color:var(--text)">${r.first}</span>
+        </div>`).join('')}
+      </div>`:''}
+      ${showHorses.length>0?`<div style="font-size:12px;color:var(--text-muted)">🐴 ${showHorses.map(h=>h.name).join(', ')}</div>`:''}
+    </div>`;
+  }
+
+  if(upcoming.length===0){
+    html+='<div class="empty" style="padding:32px 20px"><div class="empty-icon">🏆</div><div class="empty-text">No upcoming shows</div></div>';
+  } else {
+    html+=upcoming.map(s=>showCard(s,false)).join('');
+  }
+
+  if(past.length>0){
+    html+=`<div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin:20px 0 10px">Past Shows</div>`;
+    html+=past.map(s=>showCard(s,true)).join('');
+  }
+
+  document.getElementById('shows-dash-content').innerHTML=html;
+  document.getElementById('shows-dash-back').onclick=()=>showScreen(getBackScreen());
+  const fab=document.getElementById('shows-add-fab');
+  if(fab)fab.style.display=currentRole==='staff'?'none':'none'; // handled by inline button
+  showScreen('shows-dash');
 }
 
 // ── SEARCH DROPDOWN ──
