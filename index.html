@@ -276,22 +276,39 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 .child-chevron{color:var(--text-muted);font-size:16px}
 
 /* LARGE FONT MODE */
+/* Rider large font */
 .large-font .rider-greeting{font-size:34px}
 .large-font .rider-date-sub{font-size:15px}
 .large-font .schedule-horse{font-size:18px}
 .large-font .schedule-detail{font-size:14px}
 .large-font .schedule-rider{font-size:13px}
 .large-font .schedule-time{font-size:15px}
-.large-font .child-name{font-size:20px}
-.large-font .child-next-hl{font-size:15px}
-.large-font .child-next{font-size:14px}
 .large-font .next-up-horse{font-size:30px}
 .large-font .next-up-detail{font-size:16px}
 .large-font .next-up-time{font-size:15px}
 .large-font .trainer-chip{font-size:15px;padding:8px 16px}
-.large-font .section-label{font-size:14px}
-.large-font .trainer-name{font-size:17px}
-.large-font .trainer-days{font-size:14px}
+/* Parent extra-large font */
+.xl-font .rider-greeting{font-size:42px}
+.xl-font .rider-date-sub{font-size:18px}
+.xl-font .child-name{font-size:26px}
+.xl-font .child-next-hl{font-size:19px}
+.xl-font .child-next{font-size:17px}
+.xl-font .schedule-horse{font-size:22px}
+.xl-font .schedule-detail{font-size:17px}
+.xl-font .schedule-rider{font-size:16px}
+.xl-font .schedule-time{font-size:18px}
+.xl-font .next-up-horse{font-size:36px}
+.xl-font .next-up-detail{font-size:19px}
+.xl-font .next-up-time{font-size:18px}
+.xl-font .trainer-chip{font-size:18px;padding:10px 18px}
+.xl-font .section-label{font-size:17px}
+.xl-font .trainer-name{font-size:20px}
+.xl-font .trainer-days{font-size:17px}
+.xl-font .weather-temp{font-size:40px}
+.xl-font .weather-cond{font-size:15px}
+.xl-font .weather-day-name{font-size:13px}
+.xl-font .weather-day-high{font-size:17px}
+.xl-font .btn-danger-sm{font-size:15px;padding:10px 18px}
 
 /* WEATHER CARD */
 .weather-card{background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
@@ -421,7 +438,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 <!-- ══════════════════════════════════ -->
 <!--           PARENT APP              -->
 <!-- ══════════════════════════════════ -->
-<div class="screen large-font" id="screen-parent-app">
+<div class="screen xl-font" id="screen-parent-app">
   <div class="simple-topbar">
     <div>
       <div class="topbar-logo">Stable<span>Mate</span></div>
@@ -437,7 +454,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 </div>
 
 <!-- CHILD SCHEDULE -->
-<div class="screen large-font" id="screen-child-schedule">
+<div class="screen xl-font" id="screen-child-schedule">
   <div class="simple-topbar">
     <div>
       <div class="topbar-logo">Stable<span>Mate</span></div>
@@ -452,7 +469,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 </div>
 
 <!-- ALL RIDERS VIEW -->
-<div class="screen large-font" id="screen-all-riders">
+<div class="screen xl-font" id="screen-all-riders">
   <div class="simple-topbar">
     <div>
       <div class="topbar-logo">Stable<span>Mate</span></div>
@@ -912,9 +929,9 @@ function populateLoginDropdowns(){
   riders.forEach(r=>{
     const o=document.createElement('option');o.value=r.first;o.textContent=r.first;rSel.appendChild(o);
   });
-  const parentNames=new Set();
-  riders.forEach(r=>{if(r.parents)r.parents.split(',').map(p=>p.trim()).filter(Boolean).forEach(p=>parentNames.add(p));});
-  parentNames.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;pSel.appendChild(o);});
+  const parentNames=new Map();
+  riders.forEach(r=>{if(r.parents)r.parents.split(',').map(p=>p.trim()).filter(Boolean).forEach(p=>{if(!parentNames.has(p.toLowerCase()))parentNames.set(p.toLowerCase(),p);});});
+  parentNames.forEach((display,key)=>{const o=document.createElement('option');o.value=display;o.textContent=display;pSel.appendChild(o);});
 }
 
 // ── WEATHER ──
@@ -958,47 +975,15 @@ function weatherIcon(code){
 function getDressSuggestion(temp, cond){
   const condL=(cond||'').toLowerCase();
   const rain=condL.includes('rain')||condL.includes('drizzle')||condL.includes('shower');
-  const cold=temp<45;
-  const chilly=temp>=45&&temp<58;
-  const mild=temp>=58&&temp<68;
-  const warm=temp>=68&&temp<80;
-  const hot=temp>=80;
-
-  let items=[];
-  // Base layer
-  if(cold) items.push('Thermal base layer');
-  else if(chilly) items.push('Long sleeve base layer');
-  else items.push('Short sleeve shirt');
-  // Mid layer
-  if(cold) items.push('Fleece or heavy sweater');
-  else if(chilly) items.push('Light sweater or vest');
-  // Outer layer
-  if(rain) items.push('Waterproof riding jacket 🌧️');
-  else if(cold||chilly) items.push('Wind-resistant jacket');
-  else if(mild&&rain) items.push('Light rain shell');
-  // Breeches / pants
-  if(cold) items.push('Winter thermal breeches');
-  else if(chilly) items.push('Full-seat breeches');
-  else items.push('Regular breeches');
-  // Gloves
-  if(cold) items.push('Winter gloves 🧤');
-  else if(chilly) items.push('Light gloves');
-  // Boots
-  items.push('Tall riding boots');
-  // Extras
-  if(cold) items.push('Neck warmer or scarf');
-  if(hot) items.push('Light breathable hat brim · Sunscreen');
-  if(rain) items.push('Waterproof half chaps');
-
-  let note='';
-  if(cold) note='❄️ Very cold — dress in warm layers';
-  else if(chilly) note='🧥 Cool today — layer up';
-  else if(mild) note='👌 Comfortable riding weather';
-  else if(warm) note='🌤️ Warm — dress light';
-  else if(hot) note='🥵 Hot today — stay cool and hydrated';
-  if(rain) note+=' · Rain expected';
-
-  return{items,note};
+  const cold=temp<45,chilly=temp>=45&&temp<58,warm=temp>=68&&temp<80,hot=temp>=80;
+  let wear='';
+  if(cold) wear='Thermals, fleece, winter breeches, gloves';
+  else if(chilly) wear='Long sleeve, light jacket, full-seat breeches, gloves';
+  else if(warm) wear='Short sleeve, regular breeches';
+  else if(hot) wear='Light shirt, regular breeches, sunscreen';
+  else wear='Light sweater, regular breeches';
+  if(rain) wear+=' + waterproof jacket';
+  return wear;
 }
 
 function renderWeatherCard(data,el){
@@ -1014,10 +999,6 @@ function renderWeatherCard(data,el){
   }).join('');
 
   const dress=getDressSuggestion(parseInt(data.temp), data.cond);
-  const dressHtml=dress.items.map(i=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--cream-dark);font-size:13px;color:var(--text)">
-    <div style="width:6px;height:6px;border-radius:50%;background:var(--hay);flex-shrink:0"></div>${i}
-  </div>`).join('');
-
   el.innerHTML=`<div class="weather-card">
     <div class="weather-left">
       <div class="weather-icon">${data.icon}</div>
@@ -1028,10 +1009,12 @@ function renderWeatherCard(data,el){
     </div>
     <div class="weather-forecast">${forecastHtml}</div>
   </div>
-  <div style="background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:14px 16px;margin-bottom:16px">
-    <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">What to Wear Today</div>
-    <div style="font-size:12px;color:var(--earth-light);font-weight:500;margin-bottom:8px">${dress.note}</div>
-    ${dressHtml}
+  <div style="background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
+    <div style="font-size:18px">👕</div>
+    <div>
+      <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:3px">Wear Today</div>
+      <div style="font-size:13px;color:var(--earth);font-weight:500">${dress}</div>
+    </div>
   </div>`;
 }
 
@@ -1077,7 +1060,7 @@ function buildDayCalendar(dateStr, myBookingIds){
     const isMe=myBookingIds.includes(b.id);
     const bg=isMe?t.dot:'var(--sand)';
     const textColor=isMe?'white':'var(--text-muted)';
-    const deleteBtn=isMe?`<button onclick="deleteRiderBooking(${b.id})" style="background:none;border:none;color:${textColor};opacity:0.7;font-size:11px;cursor:pointer;padding:0;margin-left:4px">✕</button>`:'';
+    const deleteBtn=isMe?`<button onclick="deleteAnyBooking(${b.id})" style="background:none;border:none;color:${textColor};opacity:0.7;font-size:11px;cursor:pointer;padding:0;margin-left:4px">✕</button>`:'';
     bookingBlocks+=`<div style="position:absolute;left:44px;right:4px;top:${top}px;height:${Math.max(height-2,20)}px;background:${bg};border-radius:6px;padding:3px 6px;overflow:hidden;z-index:1;display:flex;align-items:flex-start;justify-content:space-between">
       <div style="min-width:0;overflow:hidden">
         <div style="font-size:11px;font-weight:500;color:${textColor};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${h?h.name:(r?r.first:'Booking')}</div>
@@ -1094,19 +1077,14 @@ function buildDayCalendar(dateStr, myBookingIds){
   </div>`;
 }
 
-async function deleteRiderBooking(id){
-  if(!confirm('Cancel this booking?'))return;
-  try{await sb.from('bookings').delete().eq('id',id);}catch(e){}
-  bookings=bookings.filter(b=>b.id!==id);
-  showToast('Booking cancelled');
-  renderRiderHome();
-}
+// deleteRiderBooking now handled by deleteAnyBooking
 
 // ── RIDER HOME ──
 function renderRiderHome(){
   const name=currentUser.name;
   const todayStr=fmtDate(today);
-  const rider=riders.find(r=>r.first===name||r.first+' '+(r.last||'')===name);
+  const nameLower=name.trim().toLowerCase();
+  const rider=riders.find(r=>r.first.toLowerCase()===nameLower||(r.first+' '+(r.last||'')).toLowerCase()===nameLower);
   const myB=rider?bookings.filter(b=>b.rider_id===rider.id&&b.date>=todayStr).sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date)):[];
   const myBIds=myB.map(b=>b.id);
   const next=myB[0];
@@ -1160,7 +1138,7 @@ function renderRiderHome(){
           <div class="schedule-detail">${dl} · ${t.label} · ${fmtDur(b.duration)}</div>
           <div class="schedule-rider" style="color:var(--text-muted)">${arenaLabel(b.arena)} · ${trAvail}</div>
         </div>
-        <button class="btn-danger-sm" onclick="deleteRiderBooking(${b.id})">✕</button>
+        <button class="btn-danger-sm" onclick="deleteAnyBooking(${b.id})">✕</button>
       </div>`;
     });
     html+='</div>';
@@ -1193,7 +1171,7 @@ function renderRiderHome(){
 function renderParentHome(){
   const name=currentUser.name;
   const todayStr=fmtDate(today);
-  const myChildren=riders.filter(r=>r.parents&&r.parents.split(',').map(p=>p.trim()).includes(name));
+  const myChildren=riders.filter(r=>r.parents&&r.parents.split(',').map(p=>p.trim().toLowerCase()).includes(name.trim().toLowerCase()));
 
   // Today's trainers
   const todayTrainers=getTrainersForDate(todayStr);
@@ -1285,6 +1263,7 @@ function showChildSchedule(riderId,canBook){
       const dl=b.date===todayStr?'Today':new Date(b.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
       const trs=getTrainersForDate(b.date);
       const trAvail=trs.length>0?trs.map(s=>s.trainer_name).join(', '):'No trainer';
+      const showDel=canBook; // canBook means this is parent's own child
       html+=`<div class="schedule-item">
         <div class="schedule-time">${b.time}</div>
         <div class="schedule-dot" style="background:${t.dot}"></div>
@@ -1293,6 +1272,7 @@ function showChildSchedule(riderId,canBook){
           <div class="schedule-detail">${dl} · ${t.label} · ${fmtDur(b.duration)}</div>
           <div class="schedule-rider" style="color:var(--text-muted)">${arenaLabel(b.arena)} · ${trAvail}</div>
         </div>
+        ${showDel?`<button class="btn-danger-sm" onclick="deleteAnyBooking(${b.id})">✕</button>`:''}
       </div>`;
     });
     html+='</div>';
@@ -1300,7 +1280,6 @@ function showChildSchedule(riderId,canBook){
 
   document.getElementById('child-schedule-content').innerHTML=html;
 
-  // Show book button only for parent's own children
   const fab=document.getElementById('child-book-fab');
   const fabName=document.getElementById('child-book-name');
   if(canBook){fab.style.display='block';if(fabName)fabName.textContent=child.first;}
@@ -1312,6 +1291,42 @@ function showChildSchedule(riderId,canBook){
 function openChildBooking(){
   openSheet('rider-booking');
   // Pre-set the booking for the child
+}
+
+// ── PERMISSION HELPERS ──
+function canDeleteBooking(bookingId){
+  // coerce to number for safe comparison
+  const bid=parseInt(bookingId);
+  const b=bookings.find(x=>parseInt(x.id)===bid);
+  if(!b)return false;
+  if(currentRole==='staff')return true;
+  if(currentRole==='rider'){
+    const me=riders.find(r=>r.first.toLowerCase()===currentUser.name.trim().toLowerCase());
+    return me&&parseInt(b.rider_id)===parseInt(me.id);
+  }
+  if(currentRole==='parent'){
+    const myChildren=riders.filter(r=>r.parents&&r.parents.split(',').map(p=>p.trim().toLowerCase()).includes(currentUser.name.trim().toLowerCase()));
+    return myChildren.some(ch=>parseInt(ch.id)===parseInt(b.rider_id));
+  }
+  return false;
+}
+
+async function deleteAnyBooking(id){
+  if(!canDeleteBooking(id)){showToast('You cannot delete this booking');return;}
+  if(!confirm('Cancel this booking?'))return;
+  try{
+    const{error}=await sb.from('bookings').delete().eq('id',id);
+    if(error)throw error;
+  }catch(e){console.error('Delete error:',e);showToast('Error deleting booking');return;}
+  bookings=bookings.filter(b=>b.id!==id);
+  showToast('Booking cancelled');
+  // Re-render whichever screen is active
+  if(currentRole==='staff'){renderDash();renderBookings();}
+  else if(currentRole==='rider'){renderRiderHome();}
+  else if(currentRole==='parent'){
+    if(currentChildId){showChildSchedule(currentChildId,true);}
+    else{renderParentHome();}
+  }
 }
 
 // ── TRAINER CHECK ──
