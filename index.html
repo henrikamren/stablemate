@@ -592,21 +592,29 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
       </div>
       <div id="cal-day-detail"></div>
     </div>
-    <!-- HERD -->
+    <!-- HERD DASHBOARD -->
     <div class="panel" id="panel-horses">
       <div class="section-head">
-        <div><div class="section-title">Meet the Herd</div><div class="section-sub" id="horses-sub"></div></div>
+        <div><div class="section-title">The Herd</div><div class="section-sub" id="horses-sub"></div></div>
         <button class="btn btn-secondary btn-sm" onclick="openSheet('horse')">+ Add</button>
       </div>
-      <div id="horses-list"></div>
+      <div id="horses-dash"></div>
     </div>
-    <!-- RIDERS -->
+    <!-- RIDERS DASHBOARD -->
     <div class="panel" id="panel-riders">
       <div class="section-head">
         <div><div class="section-title">Riders</div><div class="section-sub" id="riders-sub"></div></div>
         <button class="btn btn-secondary btn-sm" onclick="openSheet('rider-form')">+ Add</button>
       </div>
-      <div id="riders-list"></div>
+      <div id="riders-dash"></div>
+    </div>
+    <!-- SHOWS DASHBOARD -->
+    <div class="panel" id="panel-shows">
+      <div class="section-head">
+        <div><div class="section-title">Shows</div><div class="section-sub" id="shows-sub"></div></div>
+        <button class="btn btn-secondary btn-sm" onclick="openShowSheet()">+ Add</button>
+      </div>
+      <div id="shows-dash"></div>
     </div>
     <!-- OWNERS -->
     <div class="panel" id="panel-owners">
@@ -637,6 +645,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
     </button>
     <button class="nav-tab" id="nav-riders" onclick="showPanel('riders')">
       <div class="nav-tab-icon">🏇</div><div class="nav-tab-label">Riders</div><div class="nav-indicator"></div>
+    </button>
+    <button class="nav-tab" id="nav-shows" onclick="showPanel('shows')">
+      <div class="nav-tab-icon">🏆</div><div class="nav-tab-label">Shows</div><div class="nav-indicator"></div>
     </button>
     <button class="nav-tab" id="nav-owners" onclick="showPanel('owners')">
       <div class="nav-tab-icon">◉</div><div class="nav-tab-label">Owners</div><div class="nav-indicator"></div>
@@ -2137,42 +2148,73 @@ function changeMonth(dir){
   renderCalendar();
 }
 
-// ── HERD ──
+// ── HERD DASHBOARD ──
 function renderHorses(){
-  const c=horses.length;
-  document.getElementById('horses-sub').textContent=c===0?'No horses yet':`${c} horse${c!==1?'s':''} in the stable`;
-  if(c===0){document.getElementById('horses-list').innerHTML='<div class="empty"><div class="empty-icon">◈</div><div class="empty-text">No horses yet</div></div>';return;}
-  const aMap={'barn':'badge-barn','owner-only':'badge-owner-only','owner-allow':'badge-owned','partial-lease':'badge-partial-lease','full-lease':'badge-full-lease'};
-  const aLbl={'barn':'Barn Owned','owner-only':'Owner Only','owner-allow':'Owner - Shared','partial-lease':'Partial Lease','full-lease':'Full Lease'};
-  document.getElementById('horses-list').innerHTML=horses.map(h=>{
-    const o=getOwner(h.owner_id);const sv=h.services||{};
-    return`<div class="horse-card">
+  const count=horses.length;
+  document.getElementById('horses-sub').textContent=count===0?'No horses yet':`${count} horse${count!==1?'s':''} in the stable`;
+  const container=document.getElementById('horses-dash');
+  if(!container)return;
+  if(count===0){container.innerHTML='<div class="empty"><div class="empty-icon">◈</div><div class="empty-text">No horses yet</div></div>';return;}
+  const todayStr=fmtDate(today);
+  const nowTime=String(today.getHours()).padStart(2,'0')+':'+String(today.getMinutes()).padStart(2,'0');
+  container.innerHTML=horses.map(h=>{
+    const o=getOwner(h.owner_id);
+    const sv=h.services||{};
+    const hBookings=bookings.filter(b=>parseInt(b.horse_id)===parseInt(h.id)&&b.date>=todayStr)
+      .sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date));
+    const next=hBookings[0];
+    const nextR=next?getRider(next.rider_id):null;
+    const nextT=next?(typeConfig[next.type]||{label:next.type}):null;
+    const aMap={'barn':'Barn','owner-only':'Owner Only','owner-allow':'Shared','partial-lease':'Part Lease','full-lease':'Full Lease'};
+    // Mini week
+    const days7=['S','M','T','W','T','F','S'];
+    let miniWeek='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:10px 0 4px">';
+    for(let i=0;i<7;i++){
+      const d=addDays(today,i);const ds=fmtDate(d);
+      const isT=ds===todayStr;
+      const dayBs=bookings.filter(b=>parseInt(b.horse_id)===parseInt(h.id)&&b.date===ds);
+      const hasTrainer=getTrainersForDate(ds).length>0;
+      const trColor=hasTrainer?(TRAINER_COLORS[getTrainersForDate(ds)[0].trainer_name]||TRAINER_COLORS.default):'transparent';
+      miniWeek+=`<div style="text-align:center">
+        <div style="font-size:8px;color:var(--text-muted);margin-bottom:1px">${days7[d.getDay()]}</div>
+        <div style="width:100%;min-height:22px;border-radius:4px;background:${isT?'var(--cream-dark)':'var(--cream)'};border:1px solid ${isT?'var(--earth)':'var(--sand)'};position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px 1px">
+          ${hasTrainer?`<div style="position:absolute;top:0;left:0;right:0;height:2px;background:${trColor}"></div>`:''}
+          ${dayBs.length>0?dayBs.slice(0,2).map(b=>{
+            const r=getRider(b.rider_id);
+            return`<div style="width:90%;height:4px;border-radius:2px;background:${r?getRiderColor(r.id):(typeConfig[b.type]||{dot:'#888'}).dot}"></div>`;
+          }).join(''):`<div style="width:5px;height:5px;border-radius:50%;background:var(--sand)"></div>`}
+        </div>
+        <div style="font-size:8px;color:var(--text-muted);margin-top:1px">${d.getDate()}</div>
+      </div>`;
+    }
+    miniWeek+='</div>';
+    return`<div class="horse-card" onclick="showHorseSchedule(${h.id})" style="cursor:pointer">
       <div class="horse-card-top">
         <div class="horse-avatar">${h.name[0]}</div>
         <div style="flex:1;min-width:0">
           <div class="horse-name">${h.name}</div>
-          <div class="horse-detail">${h.breed||'Unknown breed'}${h.age?' · '+h.age+' yrs':''}</div>
-          <div class="horse-detail">${o?o.first:'Barn owned'}</div>
-          <span class="horse-badge ${aMap[h.access]||'badge-barn'}">${aLbl[h.access]||h.access||'Barn'}</span>
+          <div class="horse-detail">${h.breed||'?'}${h.age?' · '+h.age+' yrs':''}${o?' · '+o.first:' · Barn'}</div>
+          <span class="horse-badge badge-barn" style="margin-top:3px">${aMap[h.access]||'Barn'}</span>
         </div>
-        <div class="horse-actions">
+        <div class="horse-actions" onclick="event.stopPropagation()">
           <button class="btn btn-secondary btn-sm" onclick="quickBook(${h.id})">Book</button>
           <button class="btn-danger-sm" onclick="deleteHorse(${h.id})">✕</button>
         </div>
       </div>
-      <div class="service-row">
-        <button class="service-btn ${sv.lunge?'requested':''}" onclick="toggleService(${h.id},'lunge')">
-          <span class="service-btn-icon">🔄</span>Lunge
-        </button>
-        <button class="service-btn ${sv.turnout?'requested':''}" onclick="toggleService(${h.id},'turnout')">
-          <span class="service-btn-icon">🌿</span>Turnout
-        </button>
-        <button class="service-btn ${sv.walker?'requested':''}" onclick="toggleService(${h.id},'walker')">
-          <span class="service-btn-icon">⭕</span>Walker
-        </button>
+      ${miniWeek}
+      ${next?`<div style="background:var(--cream);border-radius:6px;padding:6px 10px;font-size:11px;color:var(--text-muted);display:flex;justify-content:space-between;align-items:center">
+        <span>Next: <strong style="color:var(--earth)">${nextR?nextR.first:'Unassigned'}</strong> · ${nextT?nextT.label:''}</span>
+        <span style="color:var(--earth-light)">${next.date===todayStr?'Today':new Date(next.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})} ${next.time}</span>
+      </div>`:''}
+      <div class="service-row" style="margin-top:10px" onclick="event.stopPropagation()">
+        <button class="service-btn ${sv.lunge?'requested':''}" onclick="toggleService(${h.id},'lunge')"><span class="service-btn-icon">🔄</span>Lunge</button>
+        <button class="service-btn ${sv.turnout?'requested':''}" onclick="toggleService(${h.id},'turnout')"><span class="service-btn-icon">🌿</span>Turnout</button>
+        <button class="service-btn ${sv.walker?'requested':''}" onclick="toggleService(${h.id},'walker')"><span class="service-btn-icon">⭕</span>Walker</button>
       </div>
     </div>`;
   }).join('');
+  // Keep old function signature for compatibility
+  const c=count;
 }
 
 async function toggleService(horseId,svc){
@@ -2184,24 +2226,115 @@ async function toggleService(horseId,svc){
   renderHorses();
 }
 
-// ── RIDERS ──
+// ── RIDERS DASHBOARD ──
 function renderRiders(){
-  const c=riders.length;
-  document.getElementById('riders-sub').textContent=c===0?'No riders yet':`${c} rider${c!==1?'s':''} registered`;
-  if(c===0){document.getElementById('riders-list').innerHTML='<div class="empty"><div class="empty-icon">🏇</div><div class="empty-text">No riders yet</div></div>';return;}
-  document.getElementById('riders-list').innerHTML=riders.map(r=>{
+  const count=riders.length;
+  document.getElementById('riders-sub').textContent=count===0?'No riders yet':`${count} rider${count!==1?'s':''} registered`;
+  const container=document.getElementById('riders-dash');
+  if(!container)return;
+  if(count===0){container.innerHTML='<div class="empty"><div class="empty-icon">🏇</div><div class="empty-text">No riders yet</div></div>';return;}
+  const todayStr=fmtDate(today);
+  container.innerHTML=riders.map(r=>{
     const myH=(r.approved_horses||[]).map(id=>getHorse(id)).filter(Boolean);
-    return`<div class="person-card">
+    const rColor=getRiderColor(r.id);
+    const myBookings=bookings.filter(b=>parseInt(b.rider_id)===parseInt(r.id)&&b.date>=todayStr)
+      .sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date));
+    const next=myBookings[0];
+    const nextH=next?getHorse(next.horse_id):null;
+    const nextT=next?(typeConfig[next.type]||{label:next.type}):null;
+    // Mini week
+    const days7=['S','M','T','W','T','F','S'];
+    let miniWeek='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:10px 0 4px">';
+    for(let i=0;i<7;i++){
+      const d=addDays(today,i);const ds=fmtDate(d);
+      const isT=ds===todayStr;
+      const dayBs=bookings.filter(b=>parseInt(b.rider_id)===parseInt(r.id)&&b.date===ds);
+      const hasTrainer=getTrainersForDate(ds).length>0;
+      const trColor=hasTrainer?(TRAINER_COLORS[getTrainersForDate(ds)[0].trainer_name]||TRAINER_COLORS.default):'transparent';
+      miniWeek+=`<div style="text-align:center">
+        <div style="font-size:8px;color:var(--text-muted);margin-bottom:1px">${days7[d.getDay()]}</div>
+        <div style="width:100%;min-height:22px;border-radius:4px;background:${isT?'var(--cream-dark)':'var(--cream)'};border:1px solid ${isT?'var(--earth)':'var(--sand)'};position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center">
+          ${hasTrainer?`<div style="position:absolute;top:0;left:0;right:0;height:2px;background:${trColor}"></div>`:''}
+          ${dayBs.length>0
+            ?`<div style="width:80%;height:6px;border-radius:3px;background:${rColor};opacity:0.9"></div>`
+            :`<div style="width:5px;height:5px;border-radius:50%;background:var(--sand)"></div>`}
+        </div>
+        <div style="font-size:8px;color:var(--text-muted);margin-top:1px">${d.getDate()}</div>
+      </div>`;
+    }
+    miniWeek+='</div>';
+    return`<div class="person-card" onclick="showRiderScheduleFromSearch(${r.id})" style="cursor:pointer">
       <div class="person-header">
-        <div class="person-avatar">${r.first.substring(0,2).toUpperCase()}</div>
-        <div style="flex:1"><div class="person-name">${r.first}</div><div class="person-sub">${r.level}${myH.length?' · '+myH.map(h=>h.name).join(', '):''}</div></div>
-        <button class="btn-danger-sm" onclick="deleteRider(${r.id})">✕</button>
+        <div class="person-avatar" style="background:${rColor};color:white">${r.first.substring(0,2).toUpperCase()}</div>
+        <div style="flex:1">
+          <div class="person-name">${r.first}</div>
+          <div class="person-sub">${r.level}${myH.length?' · '+myH.map(h=>h.name).join(', '):''}</div>
+          ${r.parents?`<div class="person-sub">Parents: ${r.parents}</div>`:''}
+        </div>
+        <button class="btn-danger-sm" onclick="event.stopPropagation();deleteRider(${r.id})">✕</button>
       </div>
-      <div class="person-field"><span class="person-field-label">Email</span><span class="person-field-val">${r.email||'—'}</span></div>
-      <div class="person-field"><span class="person-field-label">Phone</span><span class="person-field-val">${r.phone||'—'}</span></div>
-      <div class="person-field"><span class="person-field-label">Parents</span><span class="person-field-val">${r.parents||'—'}</span></div>
+      ${miniWeek}
+      ${next?`<div style="background:var(--cream);border-radius:6px;padding:6px 10px;font-size:11px;color:var(--text-muted);display:flex;justify-content:space-between;align-items:center">
+        <span>Next: <strong style="color:var(--earth)">${nextH?nextH.name:'Unassigned'}</strong> · ${nextT?nextT.label:''}</span>
+        <span style="color:var(--earth-light)">${next.date===todayStr?'Today':new Date(next.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})} ${next.time}</span>
+      </div>`:'<div style="background:var(--cream);border-radius:6px;padding:6px 10px;font-size:11px;color:var(--text-muted);text-align:center">No upcoming visits</div>'}
     </div>`;
   }).join('');
+}
+
+// ── SHOWS DASHBOARD ──
+function renderShows(){
+  const count=shows.length;
+  const todayStr=fmtDate(today);
+  const upcomingShows=shows.filter(s=>s.date>=todayStr).sort((a,b)=>a.date.localeCompare(b.date));
+  const pastShows=shows.filter(s=>s.date<todayStr).sort((a,b)=>b.date.localeCompare(a.date));
+  const showsSubEl=document.getElementById('shows-sub');
+  if(showsSubEl)showsSubEl.textContent=count===0?'No shows yet':`${upcomingShows.length} upcoming · ${pastShows.length} past`;
+  const container=document.getElementById('shows-dash');
+  if(!container)return;
+  if(count===0){
+    container.innerHTML='<div class="empty"><div class="empty-icon">🏆</div><div class="empty-text">No shows added yet</div></div>';
+    return;
+  }
+  let html='';
+  if(upcomingShows.length>0){
+    html+='<div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Upcoming</div>';
+    html+=upcomingShows.map(s=>showCard(s,false)).join('');
+  }
+  if(pastShows.length>0){
+    html+=`<div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin:16px 0 10px">Past Shows</div>`;
+    html+=pastShows.map(s=>showCard(s,true)).join('');
+  }
+  container.innerHTML=html;
+}
+
+function showCard(s,isPast){
+  const d=new Date(s.date+'T12:00:00');
+  const dateLabel=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+  const showHorses=(s.horse_ids||[]).map(id=>getHorse(id)).filter(Boolean);
+  const showRiders=(s.rider_ids||[]).map(id=>getRider(id)).filter(Boolean);
+  const daysUntil=Math.ceil((d-today)/(1000*60*60*24));
+  const countdown=!isPast&&daysUntil>=0?daysUntil===0?'Today':daysUntil===1?'Tomorrow':`In ${daysUntil} days`:'';
+  return`<div class="person-card" onclick="showShowDetail(${s.id})" style="cursor:pointer;${isPast?'opacity:0.65':''}">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
+      <div>
+        <div style="font-size:16px;font-weight:500;color:var(--earth);margin-bottom:2px">${s.name}</div>
+        <div style="font-size:12px;color:var(--text-muted)">${dateLabel}${s.location?' · '+s.location:''}</div>
+        ${s.division?`<div style="margin-top:4px"><span class="ev-badge ev-competition">${s.division}</span></div>`:''}
+      </div>
+      ${countdown?`<div style="background:var(--earth);color:var(--hay);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:500;white-space:nowrap">${countdown}</div>`:''}
+    </div>
+    ${showRiders.length>0||showHorses.length>0?`
+    <div style="display:flex;gap:16px;padding-top:8px;border-top:1px solid var(--cream-dark)">
+      ${showHorses.length>0?`<div><div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:4px">Horses</div>
+        <div style="font-size:12px;color:var(--text)">${showHorses.map(h=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:2px"><div style="width:6px;height:6px;border-radius:50%;background:var(--hay)"></div>${h.name}</div>`).join('')}</div>
+      </div>`:''}
+      ${showRiders.length>0?`<div><div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:4px">Riders</div>
+        <div style="font-size:12px;color:var(--text)">${showRiders.map(r=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:2px"><div style="width:6px;height:6px;border-radius:50%;background:${getRiderColor(r.id)}"></div>${r.first}</div>`).join('')}</div>
+      </div>`:''}
+    </div>`:''}
+    ${s.notes?`<div style="margin-top:8px;font-size:11px;color:var(--text-muted);font-style:italic">${s.notes}</div>`:''}
+  </div>`;
 }
 
 // ── OWNERS ──
@@ -2255,6 +2388,7 @@ function showPanel(name){
   if(name==='calendar')renderCalendar();
   if(name==='horses')renderHorses();
   if(name==='riders')renderRiders();
+  if(name==='shows')renderShows();
   if(name==='owners')renderOwners();
   if(name==='bookings')renderBookings();
   if(name==='home')renderDash();
