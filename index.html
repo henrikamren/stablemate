@@ -867,7 +867,12 @@ function enterParent(){
   const name=typed||sel;
   if(!name){showToast('Please select or enter your name');return;}
   currentUser={name};currentRole='parent';saveSession();
-  setupParentUI();showScreen('parent-app');
+  // Reload to ensure fresh data then render
+  if(riders.length===0){
+    loadAll().then(()=>{setupParentUI();showScreen('parent-app');});
+  } else {
+    setupParentUI();showScreen('parent-app');
+  }
 }
 function enterStaff(){
   const name=document.getElementById('staff-name-input').value.trim();
@@ -1183,7 +1188,6 @@ function renderParentHome(){
   <div class="rider-date-sub">${today.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</div>
   <div class="trainer-avail-row">${trainerHtml}</div>
   <div id="parent-weather"></div>`;
-  fetchWeather().then(w=>renderWeatherCard(w,document.getElementById('parent-weather')));
 
   if(myChildren.length>0){
     html+=`<div class="section-label">Your Children</div>`;
@@ -1216,6 +1220,8 @@ function renderParentHome(){
   </div>`;
 
   document.getElementById('parent-content').innerHTML=html;
+  // Fetch weather AFTER html is in DOM
+  fetchWeather().then(w=>renderWeatherCard(w,document.getElementById('parent-weather')));
 }
 
 function showAllRiders(){
@@ -1290,7 +1296,22 @@ function showChildSchedule(riderId,canBook){
 
 function openChildBooking(){
   openSheet('rider-booking');
-  // Pre-set the booking for the child
+  // Pre-populate horse dropdown for this child's approved horses
+  if(currentChildId){
+    const child=getRider(currentChildId);
+    const rh=document.getElementById('rb-horse');
+    if(rh&&child){
+      let availableHorses=horses.filter(h=>h.access!=='owner-only');
+      if(child.approved_horses&&child.approved_horses.length>0){
+        availableHorses=horses.filter(h=>
+          h.access==='barn'||
+          child.approved_horses.map(Number).includes(parseInt(h.id))
+        );
+      }
+      rh.innerHTML='<option value="">— Trainer will assign —</option>'+
+        availableHorses.map(h=>`<option value="${h.id}">${h.name}</option>`).join('');
+    }
+  }
 }
 
 // ── PERMISSION HELPERS ──
