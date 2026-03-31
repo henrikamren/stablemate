@@ -1642,8 +1642,13 @@ async function deleteAnyBooking(id){
     const{error}=await sb.from('bookings').delete().eq('id',id);
     if(error)throw error;
   }catch(e){console.error('Delete error:',e);showToast('Error deleting booking');return;}
+  const deletedB=bookings.find(b=>b.id===id);
   bookings=bookings.filter(b=>b.id!==id);
   showToast('Booking cancelled');
+  // Re-render calendar if visible
+  const calDays=document.getElementById('cal-days');
+  if(calDays&&calDays.innerHTML)renderCalendar();
+  if(deletedB){const det=document.getElementById('cal-day-detail');if(det&&det.innerHTML)showCalDay(deletedB.date);}
   // Re-render whichever screen is active
   if(currentRole==='staff'){renderDash();renderBookings();}
   else if(currentRole==='rider'){renderRiderHome();}
@@ -2383,33 +2388,77 @@ function showCalDay(dateStr){
   const dayB=bookings.filter(b=>b.date===dateStr).sort((a,b)=>a.time.localeCompare(b.time));
   const label=new Date(dateStr+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
   const dayTrainers=getTrainersForDate(dateStr);
+  const todayStr=fmtDate(today);
+  const isFuture=dateStr>=todayStr;
 
-  let html=`<div style="font-size:13px;font-weight:500;color:var(--earth);margin-bottom:6px">${label}</div>`;
+  let html=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <div style="font-size:13px;font-weight:500;color:var(--earth)">${label}</div>
+    ${isFuture?`<button class="btn btn-secondary btn-sm" onclick="bookFromWeekCal('${dateStr}')">+ Book</button>`:''}
+  </div>`;
 
   if(dayTrainers.length>0){
-    html+=`<div style="margin-bottom:12px">${dayTrainers.map(s=>`<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);margin-bottom:4px">
+    html+=`<div style="margin-bottom:10px">${dayTrainers.map(s=>`<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);margin-bottom:3px">
       <div style="width:8px;height:8px;border-radius:50%;background:${TRAINER_COLORS[s.trainer_name]||TRAINER_COLORS.default}"></div>
       ${s.trainer_name} · ${s.start_time}–${s.end_time}
     </div>`).join('')}</div>`;
   } else {
-    html+=`<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">No trainer scheduled</div>`;
+    html+=`<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">No trainer scheduled</div>`;
   }
 
   if(dayB.length===0){
-    html+='<div style="font-size:13px;color:var(--text-muted);text-align:center;padding:16px">No bookings</div>';
+    html+=`<div style="font-size:13px;color:var(--text-muted);text-align:center;padding:12px">No bookings</div>`;
   } else {
     dayB.forEach(b=>{
       const h=getHorse(b.horse_id);const r=getRider(b.rider_id);const t=typeConfig[b.type]||{label:b.type,cls:'ev-arena'};
-      html+=`<div class="booking-row">
+      const nowTimeCD=String(today.getHours()).padStart(2,'0')+':'+String(today.getMinutes()).padStart(2,'0');
+      const passed=b.date<todayStr||(b.date===todayStr&&bookingEndTime(b)<=nowTimeCD);
+      html+=`<div class="booking-row" style="${passed?'opacity:0.5':''}">
         <div class="booking-left">
-          <div class="booking-horse">${h?h.name:'Unknown'}${!b.rider_id?'<span class="unassigned-badge" style="margin-left:6px">No rider</span>':''}</div>
+          <div class="booking-horse" style="${passed?'text-decoration:line-through':''}">${h?h.name:'Unknown'}${!b.rider_id?'<span class="unassigned-badge" style="margin-left:6px">No rider</span>':''}</div>
           <div class="booking-meta">${b.time} · ${t.label} · ${fmtDur(b.duration)} · ${arenaLabel(b.arena)}${r?' · '+r.first:''}</div>
         </div>
-        <span class="ev-badge ${t.cls}">${t.label}</span>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <span class="ev-badge ${t.cls}">${t.label}</span>
+          ${!passed?`<div style="display:flex;gap:4px">
+            <button class="btn-danger-sm" onclick="deleteFromCal(${b.id},'${dateStr}')">✕ Cancel</button>
+            <button class="btn btn-secondary btn-sm" onclick="editFromCal(${b.id},'${dateStr}')">Edit</button>
+          </div>`:''}
+        </div>
       </div>`;
     });
   }
   document.getElementById('cal-day-detail').innerHTML=html;
+}
+
+async function deleteFromCal(id, dateStr){
+  if(!confirm('Cancel this booking?'))return;
+  try{await sb.from('bookings').delete().eq('id',id);}catch(e){}
+  bookings=bookings.filter(b=>b.id!==id);
+  renderCalendar();
+  showCalDay(dateStr);
+  renderDash();
+  showToast('Booking cancelled');
+}
+
+function editFromCal(id, dateStr){
+  const b=bookings.find(x=>x.id===id);
+  if(!b)return;
+  // Open staff booking sheet pre-filled
+  openSheet('booking');
+  setTimeout(()=>{
+    const bd=document.getElementById('b-date');if(bd)bd.value=b.date;
+    populateTimeSelect('b-time',b.time);
+    const bh=document.getElementById('b-horse');if(bh)bh.value=b.horse_id||'';
+    const br=document.getElementById('b-rider');if(br)br.value=b.rider_id||'';
+    const bdur=document.getElementById('b-duration');if(bdur)bdur.value=b.duration||60;
+    const bt=document.getElementById('b-type');if(bt)bt.value=b.type||'lesson';
+    const ba=document.getElementById('b-arena');if(ba)ba.value=b.arena||'covered';
+    const bn=document.getElementById('b-notes');if(bn)bn.value=b.notes||'';
+    // Store old id to delete on save
+    document.getElementById('sheet-booking').dataset.editId=id;
+    document.getElementById('sheet-booking').dataset.editDate=dateStr;
+    checkTrainer();
+  },50);
 }
 
 function changeMonth(dir){
@@ -2791,8 +2840,21 @@ async function saveBooking(){
     const{data,error}=await sb.from('bookings').insert({horse_id:horseId,rider_id:riderId,date,time,duration,type,arena,notes}).select().single();
     if(!error&&data)bookings.push(data);else bookings.push(nb);
   }catch(e){bookings.push(nb);}
+  // If editing an existing booking, delete the old one first
+  const sheetEl=document.getElementById('sheet-booking');
+  const editId=sheetEl?.dataset.editId;
+  const editDate=sheetEl?.dataset.editDate;
+  if(editId){
+    try{await sb.from('bookings').delete().eq('id',parseInt(editId));}catch(e){}
+    bookings=bookings.filter(b=>b.id!==parseInt(editId));
+    delete sheetEl.dataset.editId;
+    delete sheetEl.dataset.editDate;
+  }
   closeSheet('booking');document.getElementById('b-notes').value='';
-  renderDash();showToast('Booking saved');
+  renderDash();
+  renderCalendar();
+  if(editDate){showCalDay(editDate);}
+  showToast(editId?'Booking updated':'Booking saved');
 }
 
 async function saveRiderBooking(){
@@ -2846,6 +2908,7 @@ async function saveRiderBooking(){
   } else {
     renderRiderHome();
   }
+  renderCalendar();
   showToast(saved===1?'Visit booked!':saved+' visits booked!');
 }
 
@@ -2973,7 +3036,22 @@ function showShowDetail(showId){
 }
 
 // ── DELETES ──
-async function deleteBooking(id){if(!confirm('Remove this booking?'))return;try{await sb.from('bookings').delete().eq('id',id);}catch(e){}bookings=bookings.filter(b=>b.id!==id);renderDash();renderBookings();showToast('Booking removed');}
+async function deleteBooking(id){
+  if(!confirm('Remove this booking?'))return;
+  const b=bookings.find(x=>x.id===id);
+  try{await sb.from('bookings').delete().eq('id',id);}catch(e){}
+  bookings=bookings.filter(x=>x.id!==id);
+  renderDash();
+  renderBookings();
+  // Re-render calendar dots and refresh day detail if open
+  const calDays=document.getElementById('cal-days');
+  if(calDays&&calDays.innerHTML)renderCalendar();
+  if(b){
+    const det=document.getElementById('cal-day-detail');
+    if(det&&det.innerHTML)showCalDay(b.date);
+  }
+  showToast('Booking removed');
+}
 async function deleteHorse(id){if(!confirm('Remove this horse?'))return;try{await sb.from('horses').delete().eq('id',id);}catch(e){}horses=horses.filter(h=>h.id!==id);renderHorses();renderDash();showToast('Horse removed');}
 async function deleteRider(id){if(!confirm('Remove this rider?'))return;try{await sb.from('riders').delete().eq('id',id);}catch(e){}riders=riders.filter(r=>r.id!==id);renderRiders();renderDash();showToast('Rider removed');populateLoginDropdowns();}
 async function deleteOwner(id){if(!confirm('Remove this owner?'))return;try{await sb.from('owners').delete().eq('id',id);}catch(e){}owners=owners.filter(o=>o.id!==id);renderOwners();renderDash();showToast('Owner removed');}
