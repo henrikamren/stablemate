@@ -453,6 +453,12 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
         <div class="search-dropdown-section-body" id="rider-dd-riders-body">
           <div id="rider-dd-riders"></div>
         </div>
+        <div class="search-dropdown-section" onclick="toggleDDSection('rider-dd-shows-body')">
+          Shows <span class="search-dropdown-section-arrow" id="rider-dd-shows-arrow">▾</span>
+        </div>
+        <div class="search-dropdown-section-body" id="rider-dd-shows-body">
+          <div id="rider-dd-shows"></div>
+        </div>
       </div>
     </div>
     <div class="topbar-user">
@@ -484,6 +490,12 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
         </div>
         <div class="search-dropdown-section-body" id="parent-dd-riders-body">
           <div id="parent-dd-riders"></div>
+        </div>
+        <div class="search-dropdown-section" onclick="toggleDDSection('parent-dd-shows-body')">
+          Shows <span class="search-dropdown-section-arrow" id="parent-dd-shows-arrow">▾</span>
+        </div>
+        <div class="search-dropdown-section-body" id="parent-dd-shows-body">
+          <div id="parent-dd-shows"></div>
         </div>
       </div>
     </div>
@@ -801,6 +813,25 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
   </div>
 </div>
 
+<!-- SHOW SHEET -->
+<div class="sheet-overlay" id="sheet-show">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Add Show</div>
+    <div class="form-group"><label class="form-label">Show Name</label><input type="text" class="form-input" id="sh-name" placeholder="Spring Classic"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="sh-date"></div>
+      <div class="form-group"><label class="form-label">Location</label><input type="text" class="form-input" id="sh-location" placeholder="Palo Alto"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Class / Division</label><input type="text" class="form-input" id="sh-class" placeholder="Beginner Hunter, 2'6 Jumper..."></div>
+    <div class="form-group"><label class="form-label">Horses Entered</label><select class="form-select" id="sh-horses" multiple style="min-height:90px"></select><div class="form-hint">Hold Ctrl / Cmd to select multiple</div></div>
+    <div class="form-group"><label class="form-label">Riders Competing</label><select class="form-select" id="sh-riders" multiple style="min-height:90px"></select></div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="sh-notes" placeholder="Stabling, arrival time, etc..."></textarea></div>
+    <button class="btn btn-primary" onclick="saveShow()">Save Show</button>
+    <button class="btn btn-secondary" style="width:100%;margin-top:10px" onclick="closeSheet('show')">Cancel</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -816,7 +847,7 @@ const ARENAS=[
 
 const today=new Date();
 let calMonth=today.getMonth(),calYear=today.getFullYear();
-let horses=[],owners=[],riders=[],bookings=[],schedules=[];
+let horses=[],owners=[],riders=[],bookings=[],schedules=[],shows=[];
 let currentUser=null,currentRole='rider';
 let currentChildId=null;
 
@@ -956,12 +987,13 @@ function setupStaffUI(){
 // ── DATA ──
 async function loadAll(){
   try{
-    const[ob,hb,rb,bb,sc]=await Promise.all([
+    const[ob,hb,rb,bb,sc,sh]=await Promise.all([
       sb.from('owners').select('*').order('first'),
       sb.from('horses').select('*').order('name'),
       sb.from('riders').select('*').order('first'),
       sb.from('bookings').select('*').order('date').order('time'),
       sb.from('trainer_schedules').select('*'),
+      sb.from('shows').select('*').order('date'),
     ]);
     if(ob.error)throw ob.error;
     owners=ob.data||[];
@@ -969,6 +1001,7 @@ async function loadAll(){
     riders=rb.data||[];
     bookings=bb.data||[];
     schedules=sc.data||[];
+    shows=sh.data||[];
   }catch(e){
     console.error('Load error:',e);
     showToast('Connection error');
@@ -1574,6 +1607,39 @@ function populateSearchDropdown(id){
         </div>`;
       }).join('');
   }
+  // Shows section
+  const prefix2=id.split('-')[0];
+  const showsEl=document.getElementById(prefix2+'-dd-shows');
+  if(showsEl){
+    const todayStr=fmtDate(today);
+    const upcomingShows=shows.filter(s=>s.date>=todayStr).sort((a,b)=>a.date.localeCompare(b.date));
+    let showsHtml='';
+    if(currentRole==='staff'){
+      showsHtml+=`<div class="search-dropdown-item" onclick="openShowSheet();closeAllDropdowns()" style="color:var(--earth-light);font-weight:500">
+        <div class="search-dropdown-icon">＋</div><div>Add Show</div>
+      </div>`;
+    }
+    if(upcomingShows.length===0){
+      showsHtml+='<div class="search-dropdown-item" style="color:var(--text-muted)"><div class="search-dropdown-icon">🏆</div><div>No upcoming shows</div></div>';
+    } else {
+      showsHtml+=upcomingShows.map(s=>{
+        const d=new Date(s.date+'T12:00:00');
+        const dl=d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+        const showRiders=(s.rider_ids||[]).map(id=>getRider(id)).filter(Boolean);
+        return`<div class="search-dropdown-item" onclick="showShowDetail(${s.id});closeAllDropdowns()">
+          <div class="search-dropdown-icon">🏆</div>
+          <div>
+            <div>${s.name}</div>
+            <div class="search-dropdown-sub">${dl}${s.location?' · '+s.location:''}</div>
+            ${s.division?`<div class="search-dropdown-sub" style="color:var(--earth-light)">${s.division}</div>`:''}
+            ${showRiders.length>0?`<div class="search-dropdown-sub">${showRiders.map(r=>r.first).join(', ')}</div>`:''}
+          </div>
+        </div>`;
+      }).join('');
+    }
+    showsEl.innerHTML=showsHtml;
+  }
+
   // Update max-heights now that content is populated
   const ddEl=document.getElementById(id);
   if(ddEl){
@@ -2126,6 +2192,87 @@ async function saveOwner(){
   try{const{data,error}=await sb.from('owners').insert({first,last:'',email,phone,level,notes,allowed_days}).select().single();if(!error&&data)owners.push(data);else owners.push(no);}catch(e){owners.push(no);}
   closeSheet('owner');['o-first','o-email','o-phone','o-notes'].forEach(id=>document.getElementById(id).value='');
   renderOwners();renderDash();showToast(first+' added');
+}
+
+// ── SHOWS ──
+async function saveShow(){
+  const name=document.getElementById('sh-name').value.trim();
+  const date=document.getElementById('sh-date').value;
+  const location=document.getElementById('sh-location').value.trim();
+  const division=document.getElementById('sh-class').value.trim();
+  const notes=document.getElementById('sh-notes').value.trim();
+  const horseIds=Array.from(document.getElementById('sh-horses').selectedOptions).map(o=>parseInt(o.value));
+  const riderIds=Array.from(document.getElementById('sh-riders').selectedOptions).map(o=>parseInt(o.value));
+  if(!name||!date){showToast('Please enter a name and date');return;}
+  const ns={id:Date.now(),name,date,location,division,notes,horse_ids:horseIds,rider_ids:riderIds};
+  try{
+    const{data,error}=await sb.from('shows').insert({name,date,location,division,notes,horse_ids:horseIds,rider_ids:riderIds}).select().single();
+    if(!error&&data)shows.push(data);else shows.push(ns);
+  }catch(e){shows.push(ns);}
+  closeSheet('show');
+  ['sh-name','sh-date','sh-location','sh-class','sh-notes'].forEach(id=>document.getElementById(id).value='');
+  showToast(name+' added');
+}
+
+async function deleteShow(id){
+  if(!confirm('Remove this show?'))return;
+  try{await sb.from('shows').delete().eq('id',id);}catch(e){}
+  shows=shows.filter(s=>s.id!==id);
+  showToast('Show removed');
+}
+
+function openShowSheet(){
+  // Populate horse and rider multiselects
+  const hEl=document.getElementById('sh-horses');
+  const rEl=document.getElementById('sh-riders');
+  if(hEl)hEl.innerHTML=horses.map(h=>`<option value="${h.id}">${h.name}</option>`).join('');
+  if(rEl)rEl.innerHTML=riders.map(r=>`<option value="${r.id}">${r.first}</option>`).join('');
+  const sd=document.getElementById('sh-date');if(sd)sd.value=fmtDate(today);
+  document.getElementById('sheet-show').classList.add('open');
+}
+
+function showShowDetail(showId){
+  const show=shows.find(s=>s.id===showId||parseInt(s.id)===parseInt(showId));
+  if(!show)return;
+  const showHorses=(show.horse_ids||[]).map(id=>getHorse(id)).filter(Boolean);
+  const showRiders=(show.rider_ids||[]).map(id=>getRider(id)).filter(Boolean);
+  const d=new Date(show.date+'T12:00:00');
+  const dateLabel=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  let html=`<div class="rider-greeting">${show.name}</div>
+  <div class="rider-date-sub" style="margin-bottom:20px">${dateLabel}${show.location?' · '+show.location:''}</div>
+  ${show.division?`<div style="margin-bottom:14px"><span class="ev-badge ev-competition">${show.division}</span></div>`:''}
+  <div class="schedule-card" style="margin-bottom:14px">
+    <div class="schedule-header"><div class="schedule-title">Horses Entered</div></div>
+    ${showHorses.length===0?'<div style="padding:12px 16px;font-size:13px;color:var(--text-muted)">None assigned</div>'
+      :showHorses.map(h=>`<div class="schedule-item">
+        <div class="schedule-dot" style="background:var(--hay)"></div>
+        <div class="schedule-info"><div class="schedule-horse">${h.name}</div>
+        <div class="schedule-detail">${h.breed||''}${h.age?' · '+h.age+' yrs':''}</div></div>
+      </div>`).join('')}
+  </div>
+  <div class="schedule-card" style="margin-bottom:14px">
+    <div class="schedule-header"><div class="schedule-title">Riders Competing</div></div>
+    ${showRiders.length===0?'<div style="padding:12px 16px;font-size:13px;color:var(--text-muted)">None assigned</div>'
+      :showRiders.map(r=>`<div class="schedule-item">
+        <div class="schedule-dot" style="background:${getRiderColor(r.id)}"></div>
+        <div class="schedule-info"><div class="schedule-horse">${r.first}</div>
+        <div class="schedule-detail">${r.level}</div></div>
+      </div>`).join('')}
+  </div>
+  ${show.notes?`<div style="background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:14px 16px;margin-bottom:14px">
+    <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Notes</div>
+    <div style="font-size:13px;color:var(--text)">${show.notes}</div>
+  </div>`:''}
+  ${currentRole==='staff'?`<button class="btn btn-secondary" style="width:100%;margin-top:4px" onclick="deleteShow(${show.id});showScreen('${currentRole==='parent'?'parent':'rider'}-app')">Remove Show</button>`:''}`;
+
+  document.getElementById('child-schedule-content').innerHTML=html;
+  document.getElementById('child-book-fab').style.display='none';
+  document.getElementById('child-back-btn').onclick=()=>{
+    if(currentRole==='parent')showScreen('parent-app');
+    else if(currentRole==='staff')showScreen('app');
+    else showScreen('rider-app');
+  };
+  showScreen('child-schedule');
 }
 
 // ── DELETES ──
