@@ -783,16 +783,19 @@ function showScreen(name){
 // ── AUTH ──
 function initAuth(){
   const saved=localStorage.getItem('sm_session');
-  if(saved){
-    try{
-      const s=JSON.parse(saved);
-      currentUser=s.user;currentRole=s.role;
-      loadAll().then(()=>launchApp());
-    }catch(e){showScreen('splash');}
-  } else {
-    showScreen('splash');
-  }
-  document.getElementById('loading-screen').classList.add('hidden');
+  // Always preload data immediately so dropdowns are ready
+  loadAll().then(()=>{
+    if(saved){
+      try{
+        const s=JSON.parse(saved);
+        currentUser=s.user;currentRole=s.role;
+        launchApp();
+      }catch(e){showScreen('splash');}
+    } else {
+      showScreen('splash');
+    }
+    document.getElementById('loading-screen').classList.add('hidden');
+  });
 }
 
 function launchApp(){
@@ -809,7 +812,7 @@ function enterRider(){
   const name=typed||sel;
   if(!name){showToast('Please select or enter your name');return;}
   currentUser={name};currentRole='rider';saveSession();
-  loadAll().then(()=>{setupRiderUI();showScreen('rider-app');});
+  setupRiderUI();showScreen('rider-app');
 }
 function enterParent(){
   const sel=document.getElementById('parent-select').value;
@@ -817,13 +820,13 @@ function enterParent(){
   const name=typed||sel;
   if(!name){showToast('Please select or enter your name');return;}
   currentUser={name};currentRole='parent';saveSession();
-  loadAll().then(()=>{setupParentUI();showScreen('parent-app');});
+  setupParentUI();showScreen('parent-app');
 }
 function enterStaff(){
   const name=document.getElementById('staff-name-input').value.trim();
   if(!name){showToast('Please enter your name');return;}
   currentUser={name};currentRole='staff';saveSession();
-  loadAll().then(()=>{setupStaffUI();showScreen('app');});
+  setupStaffUI();showScreen('app');
 }
 function signOut(){
   localStorage.removeItem('sm_session');
