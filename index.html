@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>StableMate</title>
+<title>StableMate — Oasis Farm</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -15,6 +15,7 @@
   --cream:#faf6ef;--cream-dark:#f0e8d8;--sand:#e8dcc8;
   --white:#fdfaf5;--text:#2a1a0e;--text-mid:#5c3d2e;--text-muted:#8c7060;
   --danger:#c0392b;--success:#2d6a4f;
+  --trainer-band:#2d6a4f;
   --nav-h:72px;--safe-bottom:env(safe-area-inset-bottom,0px);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -28,7 +29,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 .splash-grain{position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");opacity:0.4}
 .splash-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(20,8,4,0.95) 0%,rgba(20,8,4,0.6) 50%,rgba(20,8,4,0.2) 100%)}
 .splash-content{position:relative;z-index:2;padding:0 32px calc(56px + var(--safe-bottom));width:100%;text-align:left}
-.splash-eyebrow{font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:var(--hay);margin-bottom:12px;font-weight:400;opacity:0;animation:fadeUp 0.8s ease 0.3s forwards}
+.splash-eyebrow{font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:var(--hay);margin-bottom:8px;font-weight:400;opacity:0;animation:fadeUp 0.8s ease 0.2s forwards}
+.splash-barn{font-size:13px;color:rgba(255,255,255,0.5);font-weight:300;margin-bottom:6px;opacity:0;animation:fadeUp 0.8s ease 0.4s forwards;letter-spacing:0.06em}
 .splash-title{font-family:'Cormorant Garamond',serif;font-size:64px;font-weight:300;color:var(--white);line-height:1;margin-bottom:8px;opacity:0;animation:fadeUp 0.8s ease 0.5s forwards}
 .splash-title span{color:var(--hay);font-style:italic}
 .splash-sub{font-size:14px;color:rgba(255,255,255,0.6);font-weight:300;margin-bottom:40px;opacity:0;animation:fadeUp 0.8s ease 0.7s forwards}
@@ -38,13 +40,14 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 
 /* ROLE */
 #screen-role{justify-content:center;align-items:center;padding:32px}
-.role-logo{font-family:'Cormorant Garamond',serif;font-size:32px;color:var(--earth);text-align:center;margin-bottom:6px}
+.role-logo{font-family:'Cormorant Garamond',serif;font-size:30px;color:var(--earth);text-align:center;margin-bottom:2px}
 .role-logo span{color:var(--hay);font-style:italic}
-.role-sub{font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:32px}
+.role-barn{font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:6px;letter-spacing:0.06em}
+.role-sub{font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:28px}
 .role-cards{display:flex;flex-direction:column;gap:10px;width:100%;max-width:340px}
-.role-card{background:var(--white);border:1px solid var(--sand);border-radius:12px;padding:18px 20px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:14px}
+.role-card{background:var(--white);border:1px solid var(--sand);border-radius:12px;padding:16px 20px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:14px}
 .role-card:active{background:var(--cream-dark)}
-.role-card-icon{font-size:26px;flex-shrink:0}
+.role-card-icon{font-size:24px;flex-shrink:0}
 .role-card-title{font-size:14px;font-weight:500;color:var(--earth)}
 .role-card-desc{font-size:11px;color:var(--text-muted);margin-top:2px}
 .role-back{margin-top:20px;background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;text-decoration:underline}
@@ -52,9 +55,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 /* LOGIN */
 #screen-login-rider,#screen-login-parent,#screen-login-staff{justify-content:center;align-items:center;padding:32px}
 .login-card{width:100%;max-width:380px;text-align:center}
-.login-logo{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;color:var(--earth);margin-bottom:4px}
+.login-logo{font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:300;color:var(--earth);margin-bottom:2px}
 .login-logo span{color:var(--hay);font-style:italic}
-.login-sub{font-size:13px;color:var(--text-muted);margin-bottom:32px}
+.login-barn{font-size:11px;color:var(--text-muted);margin-bottom:28px;letter-spacing:0.06em}
 .login-label{display:block;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;text-align:left}
 .login-input{width:100%;padding:14px 16px;border:1px solid var(--sand);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:16px;color:var(--text);background:var(--white);outline:none;transition:border-color 0.2s;margin-bottom:16px}
 .login-input:focus{border-color:var(--hay)}
@@ -68,6 +71,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 .topbar{background:var(--white);border-bottom:1px solid var(--sand);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding-top:env(safe-area-inset-top,0)}
 .topbar-logo{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--earth);font-weight:400}
 .topbar-logo span{color:var(--hay);font-style:italic}
+.topbar-barn{font-size:10px;color:var(--text-muted);letter-spacing:0.06em;margin-top:1px}
 .topbar-user{display:flex;align-items:center;gap:8px}
 .topbar-avatar{width:30px;height:30px;border-radius:50%;background:var(--hay);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--earth);flex-shrink:0}
 .topbar-name{font-size:11px;color:var(--text-muted)}
@@ -106,6 +110,10 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 .next-up-detail{font-size:13px;color:rgba(255,255,255,0.7)}
 .next-up-time{font-size:12px;color:var(--hay);margin-top:6px;font-weight:500}
 
+/* TRAINER BAND */
+.trainer-band{height:6px;border-radius:3px;margin-bottom:2px;display:flex;gap:2px}
+.trainer-band-seg{flex:1;border-radius:2px;background:var(--trainer-band);opacity:0.85}
+
 /* SCHEDULE */
 .schedule-card{background:var(--white);border-radius:10px;border:1px solid var(--sand);overflow:hidden;margin-bottom:16px}
 .schedule-header{padding:12px 16px;border-bottom:1px solid var(--cream-dark);display:flex;align-items:center;justify-content:space-between}
@@ -120,6 +128,15 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 .schedule-detail{font-size:11px;color:var(--text-muted);margin-top:1px}
 .schedule-rider{font-size:11px;color:var(--earth-light);font-weight:500;margin-top:1px}
 .unassigned-badge{font-size:10px;background:#faeeda;color:#633806;padding:2px 7px;border-radius:8px;margin-left:6px;font-weight:normal}
+
+/* TRAINER INFO CARD */
+.trainer-info-card{background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:14px 16px;margin-bottom:14px}
+.trainer-info-title{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px}
+.trainer-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.trainer-row:last-child{margin-bottom:0}
+.trainer-dot{width:10px;height:10px;border-radius:50%;background:var(--trainer-band);flex-shrink:0}
+.trainer-name{font-size:14px;font-weight:500;color:var(--earth)}
+.trainer-days{font-size:11px;color:var(--text-muted);margin-top:1px}
 
 /* BADGES */
 .ev-badge{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:500;white-space:nowrap}
@@ -175,17 +192,21 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 .cal-nav-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .cal-nav-btn{width:36px;height:36px;border-radius:8px;border:1px solid var(--sand);background:var(--white);font-size:18px;color:var(--earth-light);display:flex;align-items:center;justify-content:center;cursor:pointer}
 .cal-month-label{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--earth)}
-.cal-grid{background:var(--white);border-radius:10px;border:1px solid var(--sand);overflow:hidden}
+.cal-grid{background:var(--white);border-radius:10px;border:1px solid var(--sand);overflow:hidden;margin-bottom:12px}
 .cal-days-head{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--sand)}
 .cal-day-head{padding:8px 4px;text-align:center;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted)}
 .cal-days{display:grid;grid-template-columns:repeat(7,1fr)}
-.cal-day{min-height:52px;padding:4px;border-right:1px solid var(--cream-dark);border-bottom:1px solid var(--cream-dark);cursor:pointer}
+.cal-day{min-height:56px;padding:4px;border-right:1px solid var(--cream-dark);border-bottom:1px solid var(--cream-dark);cursor:pointer}
 .cal-day:nth-child(7n){border-right:none}
 .cal-day-num{font-size:12px;color:var(--text-muted);width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:50%;margin-bottom:2px}
 .cal-day.today .cal-day-num{background:var(--earth);color:var(--white)}
 .cal-day.other-month .cal-day-num{color:var(--sand)}
 .cal-dot-row{display:flex;gap:2px;flex-wrap:wrap;padding:0 2px}
 .cal-dot{width:5px;height:5px;border-radius:50%}
+/* Trainer band legend */
+.cal-legend{display:flex;align-items:center;gap:16px;margin-bottom:14px;flex-wrap:wrap}
+.cal-legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted)}
+.cal-legend-band{width:20px;height:6px;border-radius:3px}
 
 /* SHEETS */
 .sheet-overlay{position:fixed;inset:0;background:rgba(20,8,4,0.5);z-index:100;display:none;align-items:flex-end}
@@ -203,10 +224,13 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .form-textarea{width:100%;padding:12px 14px;border:1px solid var(--sand);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:16px;color:var(--text);background:var(--white);outline:none;resize:none;min-height:72px;transition:border-color 0.2s}
 .form-textarea:focus{border-color:var(--hay)}
+.form-hint{font-size:11px;color:var(--text-muted);margin-top:4px}
 
 /* TRAINER WARNING */
-.trainer-warning{background:#faeeda;border-radius:8px;padding:12px 14px;font-size:13px;color:#633806;margin-bottom:12px;display:none;line-height:1.5}
+.trainer-warning{border-radius:8px;padding:12px 14px;font-size:13px;margin-bottom:12px;display:none;line-height:1.5}
 .trainer-warning.show{display:block}
+.trainer-warning.warn{background:#faeeda;color:#633806}
+.trainer-warning.ok{background:#e8f4ed;color:#2d6a4f}
 
 /* BUTTONS */
 .btn{padding:14px 20px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all 0.15s;display:inline-flex;align-items:center;justify-content:center;gap:6px}
@@ -226,30 +250,47 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 .toast.show{transform:translateY(0);opacity:1}
 
 /* LOADING */
-.loading-screen{position:fixed;inset:0;background:var(--cream);display:flex;align-items:center;justify-content:center;z-index:300;transition:opacity 0.4s}
+.loading-screen{position:fixed;inset:0;background:var(--cream);display:flex;align-items:center;justify-content:center;z-index:300;transition:opacity 0.4s;flex-direction:column;gap:6px}
 .loading-screen.hidden{opacity:0;pointer-events:none}
 .loading-logo{font-family:'Cormorant Garamond',serif;font-size:32px;color:var(--earth)}
 .loading-logo span{color:var(--hay);font-style:italic}
+.loading-barn{font-size:12px;color:var(--text-muted);letter-spacing:0.06em}
 
-/* RIDER / PARENT APP */
-#screen-rider-app,#screen-parent-app,#screen-child-schedule{flex-direction:column}
+/* SIMPLE APP (rider/parent) */
+#screen-rider-app,#screen-parent-app,#screen-child-schedule,#screen-all-riders{flex-direction:column}
 .simple-topbar{background:var(--white);border-bottom:1px solid var(--sand);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding-top:env(safe-area-inset-top,0)}
 .simple-content{flex:1;overflow-y:auto;padding:20px 16px 110px;-webkit-overflow-scrolling:touch}
 .rider-greeting{font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--earth);margin-bottom:4px}
 .rider-date-sub{font-size:12px;color:var(--text-muted);margin-bottom:20px}
 .book-fab{position:fixed;bottom:calc(var(--safe-bottom) + 16px);left:16px;right:16px;padding:18px;background:var(--earth);color:var(--white);border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;z-index:50}
 .book-fab:active{background:var(--earth-mid)}
-.child-card{background:var(--white);border-radius:12px;border:1px solid var(--sand);padding:16px;margin-bottom:12px;cursor:pointer;transition:all 0.15s}
+
+/* CHILD / RIDER CARDS */
+.child-card{background:var(--white);border-radius:12px;border:1px solid var(--sand);padding:16px;margin-bottom:10px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:12px}
 .child-card:active{background:var(--cream-dark)}
-.child-name{font-size:16px;font-weight:500;color:var(--earth);margin-bottom:3px}
-.child-next-hl{font-size:12px;color:var(--earth-light);font-weight:500}
+.child-avatar{width:40px;height:40px;border-radius:50%;background:var(--hay-light);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--earth);flex-shrink:0}
+.child-info{flex:1;min-width:0}
+.child-name{font-size:15px;font-weight:500;color:var(--earth)}
+.child-next-hl{font-size:12px;color:var(--earth-light);font-weight:500;margin-top:2px}
 .child-next{font-size:12px;color:var(--text-muted)}
+.child-chevron{color:var(--text-muted);font-size:16px}
+
+/* SECTION LABEL */
+.section-label{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;margin-top:4px}
+
+/* TRAINER AVAILABILITY INLINE */
+.trainer-avail-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.trainer-chip{padding:6px 12px;border-radius:20px;font-size:12px;font-weight:500;display:flex;align-items:center;gap:6px}
+.trainer-chip.available{background:#e8f4ed;color:#2d6a4f}
+.trainer-chip.unavailable{background:var(--cream-dark);color:var(--text-muted)}
+.trainer-chip-dot{width:7px;height:7px;border-radius:50%}
 </style>
 </head>
 <body>
 
 <div class="loading-screen" id="loading-screen">
   <div class="loading-logo">Stable<span>Mate</span></div>
+  <div class="loading-barn">Oasis Farm</div>
 </div>
 
 <!-- SPLASH -->
@@ -257,6 +298,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
   <div class="splash-bg"></div><div class="splash-grain"></div><div class="splash-overlay"></div>
   <div class="splash-content">
     <div class="splash-eyebrow">Stable Management</div>
+    <div class="splash-barn">Oasis Farm</div>
     <div class="splash-title">Stable<span>Mate</span></div>
     <div class="splash-sub">Your barn, organized.</div>
     <button class="splash-btn" onclick="showScreen('role')">Get Started</button>
@@ -267,6 +309,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 <div class="screen" id="screen-role">
   <div style="width:100%;max-width:340px;margin:0 auto;padding:32px 0">
     <div class="role-logo">Stable<span>Mate</span></div>
+    <div class="role-barn">Oasis Farm</div>
     <div class="role-sub">Who are you today?</div>
     <div class="role-cards">
       <div class="role-card" onclick="showScreen('login-rider')">
@@ -275,7 +318,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
       </div>
       <div class="role-card" onclick="showScreen('login-parent')">
         <div class="role-card-icon">👨‍👧</div>
-        <div><div class="role-card-title">I am a Parent or Guardian</div><div class="role-card-desc">View your child's lessons</div></div>
+        <div><div class="role-card-title">I am a Parent or Guardian</div><div class="role-card-desc">View and book your child's lessons</div></div>
       </div>
       <div class="role-card" onclick="showScreen('login-staff')">
         <div class="role-card-icon">🐴</div>
@@ -290,8 +333,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 <div class="screen" id="screen-login-rider">
   <div class="login-card">
     <div class="login-logo">Stable<span>Mate</span></div>
-    <div class="login-sub">Select your name or type it</div>
-    <label class="login-label">Your name</label>
+    <div class="login-barn">Oasis Farm</div>
+    <label class="login-label">Select your name</label>
     <select class="login-select" id="rider-select"><option value="">— Select a rider —</option></select>
     <div class="login-divider">or type your name</div>
     <input type="text" class="login-input" id="rider-name-input" placeholder="Type your name...">
@@ -304,8 +347,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 <div class="screen" id="screen-login-parent">
   <div class="login-card">
     <div class="login-logo">Stable<span>Mate</span></div>
-    <div class="login-sub">Select your name as a parent or guardian</div>
-    <label class="login-label">Your name</label>
+    <div class="login-barn">Oasis Farm</div>
+    <label class="login-label">Select your name</label>
     <select class="login-select" id="parent-select"><option value="">— Select your name —</option></select>
     <div class="login-divider">or type your name</div>
     <input type="text" class="login-input" id="parent-name-input" placeholder="Type your name...">
@@ -318,7 +361,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 <div class="screen" id="screen-login-staff">
   <div class="login-card">
     <div class="login-logo">Stable<span>Mate</span></div>
-    <div class="login-sub">Enter your name to access the stable</div>
+    <div class="login-barn">Oasis Farm</div>
     <label class="login-label">Your name</label>
     <input type="text" class="login-input" id="staff-name-input" placeholder="Your name...">
     <button class="login-btn" onclick="enterStaff()">Enter Stable</button>
@@ -326,10 +369,15 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
   </div>
 </div>
 
-<!-- RIDER APP -->
+<!-- ══════════════════════════════════ -->
+<!--           RIDER APP               -->
+<!-- ══════════════════════════════════ -->
 <div class="screen" id="screen-rider-app">
   <div class="simple-topbar">
-    <div class="topbar-logo">Stable<span>Mate</span></div>
+    <div>
+      <div class="topbar-logo">Stable<span>Mate</span></div>
+      <div class="topbar-barn">Oasis Farm</div>
+    </div>
     <div class="topbar-user">
       <div class="topbar-avatar" id="rider-avatar">?</div>
       <div class="topbar-name" id="rider-topbar-name"></div>
@@ -340,10 +388,15 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
   <button class="book-fab" onclick="openSheet('rider-booking')">+ Book a Visit</button>
 </div>
 
-<!-- PARENT APP -->
+<!-- ══════════════════════════════════ -->
+<!--           PARENT APP              -->
+<!-- ══════════════════════════════════ -->
 <div class="screen" id="screen-parent-app">
   <div class="simple-topbar">
-    <div class="topbar-logo">Stable<span>Mate</span></div>
+    <div>
+      <div class="topbar-logo">Stable<span>Mate</span></div>
+      <div class="topbar-barn">Oasis Farm</div>
+    </div>
     <div class="topbar-user">
       <div class="topbar-avatar" id="parent-avatar">?</div>
       <div class="topbar-name" id="parent-topbar-name"></div>
@@ -356,18 +409,41 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 <!-- CHILD SCHEDULE -->
 <div class="screen" id="screen-child-schedule">
   <div class="simple-topbar">
-    <div class="topbar-logo">Stable<span>Mate</span></div>
+    <div>
+      <div class="topbar-logo">Stable<span>Mate</span></div>
+      <div class="topbar-barn">Oasis Farm</div>
+    </div>
+    <div class="topbar-user">
+      <button class="logout-btn" id="child-back-btn" onclick="showScreen('parent-app')">← Back</button>
+    </div>
+  </div>
+  <div class="simple-content" id="child-schedule-content"></div>
+  <button class="book-fab" id="child-book-fab" onclick="openChildBooking()" style="display:none">+ Book for <span id="child-book-name"></span></button>
+</div>
+
+<!-- ALL RIDERS VIEW -->
+<div class="screen" id="screen-all-riders">
+  <div class="simple-topbar">
+    <div>
+      <div class="topbar-logo">Stable<span>Mate</span></div>
+      <div class="topbar-barn">Oasis Farm</div>
+    </div>
     <div class="topbar-user">
       <button class="logout-btn" onclick="showScreen('parent-app')">← Back</button>
     </div>
   </div>
-  <div class="simple-content" id="child-schedule-content"></div>
+  <div class="simple-content" id="all-riders-content"></div>
 </div>
 
-<!-- STAFF APP -->
+<!-- ══════════════════════════════════ -->
+<!--           STAFF APP               -->
+<!-- ══════════════════════════════════ -->
 <div class="screen" id="screen-app">
   <div class="topbar">
-    <div class="topbar-logo">Stable<span>Mate</span></div>
+    <div>
+      <div class="topbar-logo">Stable<span>Mate</span></div>
+      <div class="topbar-barn">Oasis Farm</div>
+    </div>
     <div class="topbar-user">
       <div class="topbar-avatar" id="topbar-avatar">?</div>
       <div class="topbar-name" id="topbar-role"></div>
@@ -388,6 +464,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
         <div class="stat-card"><div class="stat-label">Week</div><div class="stat-value" id="stat-week">—</div></div>
         <div class="stat-card"><div class="stat-label">Riders</div><div class="stat-value" id="stat-riders">—</div></div>
       </div>
+      <div id="today-trainer-info"></div>
       <div class="schedule-card">
         <div class="schedule-header">
           <div class="schedule-title">Schedule</div>
@@ -403,6 +480,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
         <div class="cal-month-label" id="cal-label"></div>
         <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
       </div>
+      <div class="cal-legend" id="cal-legend"></div>
       <div class="cal-grid">
         <div class="cal-days-head">
           <div class="cal-day-head">S</div><div class="cal-day-head">M</div><div class="cal-day-head">T</div>
@@ -410,7 +488,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
         </div>
         <div class="cal-days" id="cal-days"></div>
       </div>
-      <div style="margin-top:16px" id="cal-day-detail"></div>
+      <div id="cal-day-detail"></div>
     </div>
     <!-- HERD -->
     <div class="panel" id="panel-horses">
@@ -467,23 +545,25 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
   </div>
 </div>
 
-<!-- STAFF BOOKING SHEET -->
+<!-- ══════════════════════ SHEETS ══════════════════════ -->
+
+<!-- STAFF BOOKING -->
 <div class="sheet-overlay" id="sheet-booking">
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title">New Booking</div>
     <div class="trainer-warning" id="trainer-warning"></div>
     <div class="form-group"><label class="form-label">Horse</label><select class="form-select" id="b-horse" onchange="checkTrainer()"></select></div>
-    <div class="form-group"><label class="form-label">Rider</label><select class="form-select" id="b-rider"><option value="">— Unassigned —</option></select></div>
+    <div class="form-group"><label class="form-label">Rider</label><select class="form-select" id="b-rider"></select></div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="b-date" onchange="checkTrainer()"></div>
       <div class="form-group"><label class="form-label">Start Time</label><select class="form-select" id="b-time" onchange="checkTrainer()"></select></div>
     </div>
     <div class="form-group"><label class="form-label">Duration</label>
       <select class="form-select" id="b-duration">
-        <option value="15">15 minutes</option><option value="30">30 minutes</option>
-        <option value="45">45 minutes</option><option value="60" selected>1 hour</option>
-        <option value="75">1 hr 15 min</option><option value="90">1 hr 30 min</option><option value="120">2 hours</option>
+        <option value="15">15 min</option><option value="30">30 min</option>
+        <option value="45">45 min</option><option value="60" selected>1 hour</option>
+        <option value="75">1h 15min</option><option value="90">1h 30min</option><option value="120">2 hours</option>
       </select>
     </div>
     <div class="form-group"><label class="form-label">Type</label>
@@ -496,26 +576,33 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
         <option value="competition">Competition Day</option>
       </select>
     </div>
+    <div class="form-group"><label class="form-label">Arena</label>
+      <select class="form-select" id="b-arena">
+        <option value="covered">Covered Arena</option>
+        <option value="lunging">Lunging Arena</option>
+      </select>
+    </div>
     <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="b-notes" placeholder="Optional notes..."></textarea></div>
-    <button class="btn btn-primary" onclick="saveBooking()">Save Booking</button>
+    <button class="btn btn-primary" id="b-save-btn" onclick="saveBooking()">Save Booking</button>
     <button class="btn btn-secondary" style="width:100%;margin-top:10px" onclick="closeSheet('booking')">Cancel</button>
   </div>
 </div>
 
-<!-- RIDER BOOKING SHEET -->
+<!-- RIDER BOOKING -->
 <div class="sheet-overlay" id="sheet-rider-booking">
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title">Book a Visit</div>
+    <div class="trainer-warning" id="rb-trainer-warning"></div>
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="rb-date"></div>
-      <div class="form-group"><label class="form-label">Start Time</label><select class="form-select" id="rb-time"></select></div>
+      <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="rb-date" onchange="checkRiderTrainer()"></div>
+      <div class="form-group"><label class="form-label">Start Time</label><select class="form-select" id="rb-time" onchange="checkRiderTrainer()"></select></div>
     </div>
     <div class="form-group"><label class="form-label">Duration</label>
       <select class="form-select" id="rb-duration">
-        <option value="15">15 minutes</option><option value="30">30 minutes</option>
-        <option value="45">45 minutes</option><option value="60" selected>1 hour</option>
-        <option value="75">1 hr 15 min</option><option value="90">1 hr 30 min</option><option value="120">2 hours</option>
+        <option value="15">15 min</option><option value="30">30 min</option>
+        <option value="45">45 min</option><option value="60" selected>1 hour</option>
+        <option value="75">1h 15min</option><option value="90">1h 30min</option><option value="120">2 hours</option>
       </select>
     </div>
     <div class="form-group"><label class="form-label">Horse</label>
@@ -526,6 +613,12 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
         <option value="lesson">Riding Lesson</option>
         <option value="arena-independent">Arena - Independent</option>
         <option value="arena-supervised">Arena - Supervised</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Arena</label>
+      <select class="form-select" id="rb-arena">
+        <option value="covered">Covered Arena</option>
+        <option value="lunging">Lunging Arena</option>
       </select>
     </div>
     <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="rb-notes" placeholder="Anything the trainer should know..."></textarea></div>
@@ -560,7 +653,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
   </div>
 </div>
 
-<!-- RIDER FORM SHEET -->
+<!-- RIDER FORM -->
 <div class="sheet-overlay" id="sheet-rider-form">
   <div class="sheet">
     <div class="sheet-handle"></div>
@@ -576,8 +669,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
         <option value="independent">Independent</option>
       </select>
     </div>
-    <div class="form-group"><label class="form-label">Parent / Guardian names (comma separated)</label>
-      <input type="text" class="form-input" id="r-parents" placeholder="Karen Jensen, Mike Jensen">
+    <div class="form-group"><label class="form-label">Parents / Guardians</label>
+      <input type="text" class="form-input" id="r-parents" placeholder="Henrik, Maria">
+      <div class="form-hint">Comma separated first names</div>
     </div>
     <button class="btn btn-primary" onclick="saveRider()">Add Rider</button>
     <button class="btn btn-secondary" style="width:100%;margin-top:10px" onclick="closeSheet('rider-form')">Cancel</button>
@@ -620,14 +714,28 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 <div class="toast" id="toast"></div>
 
 <script>
+const BARN_NAME='Oasis Farm';
 const SUPABASE_URL='https://rdyktbwkrcepojkiunwb.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkeWt0YndrcmNlcG9qa2l1bndiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NDk4NzgsImV4cCI6MjA5MDIyNTg3OH0.fkttT72Y9LzwcTPhgu3jZ6nD9dL5Jqc0KOhn9sgU44g';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+const ARENAS=[
+  {value:'covered',label:'Covered Arena',default:true},
+  {value:'lunging',label:'Lunging Arena',default:false},
+];
 
 const today=new Date();
 let calMonth=today.getMonth(),calYear=today.getFullYear();
 let horses=[],owners=[],riders=[],bookings=[],schedules=[];
 let currentUser=null,currentRole='rider';
+let currentChildId=null;
+
+// Trainer colors for calendar bands
+const TRAINER_COLORS={
+  'Colin':'#2d6a4f',
+  'Janeen':'#0c447c',
+  'default':'#8b6914'
+};
 
 const typeConfig={
   'lesson':{label:'Riding Lesson',cls:'ev-lesson',dot:'#3b6d11',supervised:true},
@@ -648,7 +756,24 @@ function getHorse(id){return horses.find(h=>h.id===id)}
 function getOwner(id){return owners.find(o=>o.id===id)}
 function getRider(id){return riders.find(r=>r.id===id)}
 function fmtDur(min){if(!min)return'';if(min<60)return min+'min';const h=Math.floor(min/60),m=min%60;return m?h+'h '+m+'min':h+'h'}
+function initials(name){return(name||'?').trim().split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();}
+function arenaLabel(val){const a=ARENAS.find(x=>x.value===val);return a?a.label:val||'Covered Arena';}
 
+// ── TRAINER HELPERS ──
+function getTrainersForDate(dateStr){
+  if(!dateStr)return[];
+  const dayName=days[new Date(dateStr+'T12:00:00').getDay()];
+  return schedules.filter(s=>s.day_of_week===dayName);
+}
+function isTrainerAvailable(dateStr,timeStr){
+  if(!dateStr||!timeStr)return{available:false,trainers:[]};
+  const dayName=days[new Date(dateStr+'T12:00:00').getDay()];
+  const av=schedules.filter(s=>s.day_of_week===dayName&&timeStr>=s.start_time&&timeStr<s.end_time);
+  return{available:av.length>0,trainers:[...new Set(av.map(s=>s.trainer_name))]};
+}
+function getUniqueTrainers(){return[...new Set(schedules.map(s=>s.trainer_name))];}
+
+// ── SCREENS ──
 function showScreen(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
@@ -686,7 +811,6 @@ function enterRider(){
   currentUser={name};currentRole='rider';saveSession();
   loadAll().then(()=>{setupRiderUI();showScreen('rider-app');});
 }
-
 function enterParent(){
   const sel=document.getElementById('parent-select').value;
   const typed=document.getElementById('parent-name-input').value.trim();
@@ -695,22 +819,18 @@ function enterParent(){
   currentUser={name};currentRole='parent';saveSession();
   loadAll().then(()=>{setupParentUI();showScreen('parent-app');});
 }
-
 function enterStaff(){
   const name=document.getElementById('staff-name-input').value.trim();
   if(!name){showToast('Please enter your name');return;}
   currentUser={name};currentRole='staff';saveSession();
   loadAll().then(()=>{setupStaffUI();showScreen('app');});
 }
-
 function signOut(){
   localStorage.removeItem('sm_session');
   currentUser=null;currentRole='rider';
-  horses=[];owners=[];riders=[];bookings=[];
+  horses=[];owners=[];riders=[];bookings=[];schedules=[];
   showScreen('splash');
 }
-
-function initials(name){return name.trim().split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();}
 
 function setupRiderUI(){
   document.getElementById('rider-avatar').textContent=initials(currentUser.name);
@@ -728,45 +848,7 @@ function setupStaffUI(){
   renderDash();
 }
 
-// ── TEST DATA ──
-function loadTestData(){
-  const t=fmtDate(today),t1=fmtDate(addDays(today,1)),t2=fmtDate(addDays(today,2)),t5=fmtDate(addDays(today,5)),t7=fmtDate(addDays(today,7));
-  owners=[
-    {id:1,first:'Sarah',last:'Jensen',email:'sarah@example.com',phone:'555-1234',level:'owner',notes:'',allowed_days:null},
-    {id:2,first:'Tom',last:'Bakker',email:'tom@example.com',phone:'555-5678',level:'partial-lease',notes:'',allowed_days:['Monday','Wednesday','Friday']},
-    {id:3,first:'Emma',last:'Lindqvist',email:'emma@example.com',phone:'555-9012',level:'full-lease',notes:'',allowed_days:null},
-  ];
-  riders=[
-    {id:1,first:'Emma',last:'Jensen',email:'ej@example.com',phone:'555-1111',level:'intermediate',parents:'Karen Jensen, Mike Jensen',approved_horses:[1,4]},
-    {id:2,first:'Lucas',last:'Jensen',email:'lj@example.com',phone:'555-2222',level:'beginner',parents:'Karen Jensen',approved_horses:[4]},
-    {id:3,first:'Astrid',last:'Bakker',email:'ab@example.com',phone:'555-3333',level:'advanced',parents:'Tom Bakker',approved_horses:[1,2,3]},
-    {id:4,first:'Noah',last:'Lindqvist',email:'nl@example.com',phone:'555-4444',level:'independent',parents:'',approved_horses:[2,3]},
-  ];
-  horses=[
-    {id:1,name:'Thunder',breed:'Warmblood',age:8,owner_id:1,access:'owner-allow',notes:'Calm, great for lessons',services:{}},
-    {id:2,name:'Bella',breed:'Friesian',age:5,owner_id:2,access:'partial-lease',notes:'Still in training',services:{}},
-    {id:3,name:'Storm',breed:'Arabian',age:11,owner_id:3,access:'owner-only',notes:'Competition horse',services:{lunge:true}},
-    {id:4,name:'Maple',breed:'Quarter Horse',age:14,owner_id:null,access:'barn',notes:'Very gentle, barn-owned',services:{turnout:true}},
-  ];
-  bookings=[
-    {id:1,horse_id:1,rider_id:1,date:t,time:'09:00',duration:60,type:'lesson',notes:'Weekly lesson'},
-    {id:2,horse_id:3,rider_id:3,date:t,time:'11:00',duration:45,type:'arena-independent',notes:''},
-    {id:3,horse_id:2,rider_id:null,date:t,time:'14:00',duration:60,type:'arena-supervised',notes:'Rider TBD'},
-    {id:4,horse_id:4,rider_id:null,date:t1,time:'10:00',duration:30,type:'vet',notes:'Annual checkup'},
-    {id:5,horse_id:1,rider_id:2,date:t1,time:'13:00',duration:60,type:'lesson',notes:''},
-    {id:6,horse_id:3,rider_id:3,date:t2,time:'09:00',duration:120,type:'competition',notes:'Regional show'},
-    {id:7,horse_id:4,rider_id:1,date:t5,time:'11:00',duration:60,type:'lesson',notes:''},
-    {id:8,horse_id:2,rider_id:null,date:t7,time:'09:00',duration:30,type:'farrier',notes:''},
-  ];
-  schedules=[
-    {id:1,trainer_name:'Anna',day_of_week:'Monday',start_time:'08:00',end_time:'16:00'},
-    {id:2,trainer_name:'Anna',day_of_week:'Wednesday',start_time:'08:00',end_time:'16:00'},
-    {id:3,trainer_name:'Anna',day_of_week:'Friday',start_time:'08:00',end_time:'16:00'},
-    {id:4,trainer_name:'Lars',day_of_week:'Tuesday',start_time:'09:00',end_time:'17:00'},
-    {id:5,trainer_name:'Lars',day_of_week:'Thursday',start_time:'09:00',end_time:'17:00'},
-  ];
-}
-
+// ── DATA ──
 async function loadAll(){
   try{
     const[ob,hb,rb,bb,sc]=await Promise.all([
@@ -783,8 +865,8 @@ async function loadAll(){
     bookings=bb.data||[];
     schedules=sc.data||[];
   }catch(e){
-    console.error('Supabase load error:',e);
-    showToast('Connection error - check console');
+    console.error('Load error:',e);
+    showToast('Connection error');
   }
   populateLoginDropdowns();
 }
@@ -792,7 +874,6 @@ async function loadAll(){
 function populateLoginDropdowns(){
   const rSel=document.getElementById('rider-select');
   const pSel=document.getElementById('parent-select');
-  // Clear existing options except placeholder
   while(rSel.options.length>1)rSel.remove(1);
   while(pSel.options.length>1)pSel.remove(1);
   riders.forEach(r=>{
@@ -807,19 +888,31 @@ function populateLoginDropdowns(){
 function renderRiderHome(){
   const name=currentUser.name;
   const todayStr=fmtDate(today);
-  const rider=riders.find(r=>r.first===name);
+  const rider=riders.find(r=>r.first===name||r.first+' '+(r.last||'')===name);
   const myB=rider?bookings.filter(b=>b.rider_id===rider.id&&b.date>=todayStr).sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date)):[];
   const next=myB[0];
+
+  // Today's trainers
+  const todayTrainers=getTrainersForDate(todayStr);
+  const trainerHtml=todayTrainers.length>0
+    ?todayTrainers.map(s=>`<div class="trainer-chip available"><div class="trainer-chip-dot" style="background:${TRAINER_COLORS[s.trainer_name]||TRAINER_COLORS.default}"></div>${s.trainer_name} · ${s.start_time}–${s.end_time}</div>`).join('')
+    :'<div class="trainer-chip unavailable"><div class="trainer-chip-dot" style="background:#ccc"></div>No trainer today</div>';
+
   let html=`<div class="rider-greeting">Hi, ${name.split(' ')[0]} 👋</div>
-  <div class="rider-date-sub">${today.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</div>`;
+  <div class="rider-date-sub">${today.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</div>
+  <div class="trainer-avail-row">${trainerHtml}</div>`;
+
   if(next){
     const h=getHorse(next.horse_id);const t=typeConfig[next.type]||{label:next.type};
     const dl=next.date===todayStr?'Today':new Date(next.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
-    html+=`<div class="next-up-card"><div class="next-up-label">▶ Next Visit</div>
+    html+=`<div class="next-up-card">
+      <div class="next-up-label">▶ Next Visit</div>
       <div class="next-up-horse">${h?h.name:'Unassigned'}</div>
-      <div class="next-up-detail">${t.label} · ${fmtDur(next.duration)}</div>
-      <div class="next-up-time">${dl} · ${next.time}</div></div>`;
+      <div class="next-up-detail">${t.label} · ${fmtDur(next.duration)} · ${arenaLabel(next.arena)}</div>
+      <div class="next-up-time">${dl} · ${next.time}</div>
+    </div>`;
   }
+
   if(myB.length===0){
     html+='<div class="empty"><div class="empty-icon">🐴</div><div class="empty-text">No upcoming visits booked</div></div>';
   } else {
@@ -827,13 +920,17 @@ function renderRiderHome(){
     myB.forEach(b=>{
       const h=getHorse(b.horse_id);const t=typeConfig[b.type]||{label:b.type,dot:'#888'};
       const dl=b.date===todayStr?'Today':new Date(b.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+      const trs=getTrainersForDate(b.date);
+      const trAvail=trs.length>0?trs.map(s=>s.trainer_name).join(', '):'No trainer';
       html+=`<div class="schedule-item">
         <div class="schedule-time">${b.time}</div>
         <div class="schedule-dot" style="background:${t.dot}"></div>
         <div class="schedule-info">
           <div class="schedule-horse">${h?h.name:'<span class="unassigned-badge">Unassigned</span>'}</div>
           <div class="schedule-detail">${dl} · ${t.label} · ${fmtDur(b.duration)}</div>
-        </div></div>`;
+          <div class="schedule-rider" style="color:var(--text-muted)">${arenaLabel(b.arena)} · ${trAvail}</div>
+        </div>
+      </div>`;
     });
     html+='</div>';
   }
@@ -845,80 +942,163 @@ function renderParentHome(){
   const name=currentUser.name;
   const todayStr=fmtDate(today);
   const myChildren=riders.filter(r=>r.parents&&r.parents.split(',').map(p=>p.trim()).includes(name));
+
+  // Today's trainers
+  const todayTrainers=getTrainersForDate(todayStr);
+  const trainerHtml=todayTrainers.length>0
+    ?todayTrainers.map(s=>`<div class="trainer-chip available"><div class="trainer-chip-dot" style="background:${TRAINER_COLORS[s.trainer_name]||TRAINER_COLORS.default}"></div>${s.trainer_name} · ${s.start_time}–${s.end_time}</div>`).join('')
+    :'<div class="trainer-chip unavailable"><div class="trainer-chip-dot" style="background:#ccc"></div>No trainer today</div>';
+
   let html=`<div class="rider-greeting">Hi, ${name.split(' ')[0]} 👋</div>
-  <div class="rider-date-sub">${today.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</div>`;
-  if(myChildren.length===0){
-    html+='<div class="empty"><div class="empty-icon">👧</div><div class="empty-text">No riders linked yet.<br>Contact the stable to get set up.</div></div>';
-  } else {
-    html+='<div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Your Children</div>';
+  <div class="rider-date-sub">${today.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</div>
+  <div class="trainer-avail-row">${trainerHtml}</div>`;
+
+  if(myChildren.length>0){
+    html+=`<div class="section-label">Your Children</div>`;
     myChildren.forEach(child=>{
       const cb=bookings.filter(b=>b.rider_id===child.id&&b.date>=todayStr).sort((a,b)=>a.date.localeCompare(b.date));
       const next=cb[0];const h=next?getHorse(next.horse_id):null;const t=next?(typeConfig[next.type]||{label:next.type}):null;
-      html+=`<div class="child-card" onclick="showChildSchedule(${child.id})">
-        <div class="child-name">${child.first} ${child.last}</div>
-        ${next?`<div class="child-next-hl">Next: ${next.date===todayStr?'Today':new Date(next.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})} · ${next.time}</div>
-        <div class="child-next">${h?h.name:'Unassigned'} · ${t?t.label:''}</div>`:'<div class="child-next">No upcoming visits</div>'}
+      html+=`<div class="child-card" onclick="showChildSchedule(${child.id},true)">
+        <div class="child-avatar">${child.first[0]}</div>
+        <div class="child-info">
+          <div class="child-name">${child.first}</div>
+          ${next
+            ?`<div class="child-next-hl">Next: ${next.date===todayStr?'Today':new Date(next.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})} · ${next.time}</div>
+             <div class="child-next">${h?h.name:'Unassigned'} · ${t?t.label:''}</div>`
+            :'<div class="child-next">No upcoming visits</div>'}
+        </div>
+        <div class="child-chevron">›</div>
       </div>`;
     });
   }
+
+  // All riders section
+  html+=`<div class="section-label" style="margin-top:20px">All Riders at ${BARN_NAME}</div>
+  <div class="child-card" onclick="showAllRiders()" style="background:var(--cream-dark)">
+    <div class="child-avatar" style="background:var(--sand)">◉</div>
+    <div class="child-info">
+      <div class="child-name">View All Riders</div>
+      <div class="child-next">${riders.length} riders · tap to browse schedules</div>
+    </div>
+    <div class="child-chevron">›</div>
+  </div>`;
+
   document.getElementById('parent-content').innerHTML=html;
 }
 
-function showChildSchedule(riderId){
+function showAllRiders(){
+  const todayStr=fmtDate(today);
+  let html=`<div class="rider-greeting">All Riders</div>
+  <div class="rider-date-sub" style="margin-bottom:20px">${BARN_NAME}</div>`;
+  if(riders.length===0){
+    html+='<div class="empty"><div class="empty-icon">🏇</div><div class="empty-text">No riders registered yet</div></div>';
+  } else {
+    riders.forEach(r=>{
+      const cb=bookings.filter(b=>b.rider_id===r.id&&b.date>=todayStr).sort((a,b)=>a.date.localeCompare(b.date));
+      const next=cb[0];const h=next?getHorse(next.horse_id):null;const t=next?(typeConfig[next.type]||{label:next.type}):null;
+      html+=`<div class="child-card" onclick="showChildSchedule(${r.id},false)">
+        <div class="child-avatar">${r.first[0]}</div>
+        <div class="child-info">
+          <div class="child-name">${r.first}</div>
+          ${next
+            ?`<div class="child-next-hl">Next: ${next.date===todayStr?'Today':new Date(next.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})} · ${next.time}</div>
+             <div class="child-next">${h?h.name:'Unassigned'} · ${t?t.label:''}</div>`
+            :'<div class="child-next">No upcoming visits</div>'}
+        </div>
+        <div class="child-chevron">›</div>
+      </div>`;
+    });
+  }
+  document.getElementById('all-riders-content').innerHTML=html;
+  showScreen('all-riders');
+}
+
+function showChildSchedule(riderId,canBook){
   const child=getRider(riderId);if(!child)return;
+  currentChildId=riderId;
   const todayStr=fmtDate(today);
   const cb=bookings.filter(b=>b.rider_id===child.id&&b.date>=todayStr).sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date));
-  let html=`<div class="rider-greeting">${child.first}'s Schedule</div>
-  <div class="rider-date-sub" style="margin-bottom:20px">${child.level} rider</div>`;
-  if(cb.length===0){html+='<div class="empty"><div class="empty-icon">◫</div><div class="empty-text">No upcoming visits</div></div>';}
-  else{
-    html+='<div class="schedule-card"><div class="schedule-header"><div class="schedule-title">Upcoming Lessons</div></div>';
+
+  let html=`<div class="rider-greeting">${child.first}</div>
+  <div class="rider-date-sub" style="margin-bottom:20px">${child.level} rider · ${BARN_NAME}</div>`;
+
+  if(cb.length===0){
+    html+='<div class="empty"><div class="empty-icon">◫</div><div class="empty-text">No upcoming visits</div></div>';
+  } else {
+    html+='<div class="schedule-card"><div class="schedule-header"><div class="schedule-title">Upcoming Visits</div></div>';
     cb.forEach(b=>{
       const h=getHorse(b.horse_id);const t=typeConfig[b.type]||{label:b.type,dot:'#888'};
       const dl=b.date===todayStr?'Today':new Date(b.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+      const trs=getTrainersForDate(b.date);
+      const trAvail=trs.length>0?trs.map(s=>s.trainer_name).join(', '):'No trainer';
       html+=`<div class="schedule-item">
         <div class="schedule-time">${b.time}</div>
         <div class="schedule-dot" style="background:${t.dot}"></div>
         <div class="schedule-info">
           <div class="schedule-horse">${h?h.name:'Unassigned'}</div>
           <div class="schedule-detail">${dl} · ${t.label} · ${fmtDur(b.duration)}</div>
-        </div></div>`;
+          <div class="schedule-rider" style="color:var(--text-muted)">${arenaLabel(b.arena)} · ${trAvail}</div>
+        </div>
+      </div>`;
     });
     html+='</div>';
   }
+
   document.getElementById('child-schedule-content').innerHTML=html;
+
+  // Show book button only for parent's own children
+  const fab=document.getElementById('child-book-fab');
+  const fabName=document.getElementById('child-book-name');
+  if(canBook){fab.style.display='block';if(fabName)fabName.textContent=child.first;}
+  else{fab.style.display='none';}
+
   showScreen('child-schedule');
 }
 
-// ── TRAINER CHECK ──
-function isTrainerAvailable(dateStr,timeStr){
-  if(!dateStr||!timeStr)return{available:false,trainers:[]};
-  const dayName=days[new Date(dateStr+'T12:00:00').getDay()];
-  const av=schedules.filter(s=>s.day_of_week===dayName&&timeStr>=s.start_time&&timeStr<s.end_time);
-  return{available:av.length>0,trainers:[...new Set(av.map(s=>s.trainer_name))]};
+function openChildBooking(){
+  openSheet('rider-booking');
+  // Pre-set the booking for the child
 }
+
+// ── TRAINER CHECK ──
 function checkTrainer(){
   const type=document.getElementById('b-type')?.value;
   const date=document.getElementById('b-date')?.value;
   const time=document.getElementById('b-time')?.value;
-  const warn=document.getElementById('trainer-warning');if(!warn)return;
-  const t=typeConfig[type];
-  const saveBtn=document.querySelector('#sheet-booking .btn-primary');
-  if(t&&t.supervised&&date&&time){
+  const warn=document.getElementById('trainer-warning');
+  const saveBtn=document.getElementById('b-save-btn');
+  if(!warn)return;
+  if(date&&time){
     const{available,trainers}=isTrainerAvailable(date,time);
+    const t=typeConfig[type];
     if(available){
-      warn.textContent='✓ '+trainers.join(' & ')+' will be available.';
-      warn.style.background='#e8f4ed';warn.style.color='#2d6a4f';
+      warn.textContent='✓ '+trainers.join(' & ')+' available at this time.';
+      warn.className='trainer-warning show ok';
       if(saveBtn){saveBtn.style.opacity='1';saveBtn.style.filter='';}
     } else {
-      warn.textContent='⚠️ No trainer scheduled — booking allowed but trainer must be arranged.';
-      warn.style.background='#faeeda';warn.style.color='#633806';
-      if(saveBtn){saveBtn.style.opacity='0.6';saveBtn.style.filter='grayscale(30%)';}
+      const msg=t&&t.supervised?'⚠️ No trainer scheduled — this session requires a trainer. Booking allowed but arrange coverage.':'ℹ️ No trainer scheduled at this time — booking allowed.';
+      warn.textContent=msg;
+      warn.className='trainer-warning show warn';
+      if(saveBtn){saveBtn.style.opacity='0.65';saveBtn.style.filter='grayscale(20%)';}
     }
-    warn.classList.add('show');
   } else {
-    warn.classList.remove('show');
+    warn.className='trainer-warning';
     if(saveBtn){saveBtn.style.opacity='1';saveBtn.style.filter='';}
+  }
+}
+
+function checkRiderTrainer(){
+  const date=document.getElementById('rb-date')?.value;
+  const time=document.getElementById('rb-time')?.value;
+  const warn=document.getElementById('rb-trainer-warning');
+  if(!warn||!date||!time)return;
+  const{available,trainers}=isTrainerAvailable(date,time);
+  if(available){
+    warn.textContent='✓ '+trainers.join(' & ')+' will be available.';
+    warn.className='trainer-warning show ok';
+  } else {
+    warn.textContent='ℹ️ No trainer scheduled at this time — staff will follow up.';
+    warn.className='trainer-warning show warn';
   }
 }
 
@@ -932,8 +1112,23 @@ function renderDash(){
   document.getElementById('stat-week').textContent=bookings.filter(b=>b.date>=todayStr&&b.date<=weekEnd).length;
   document.getElementById('stat-riders').textContent=riders.length;
   document.getElementById('dash-date').textContent=today.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-  const{available,trainers}=isTrainerAvailable(todayStr,'13:00');
-  document.getElementById('today-trainer-status').textContent=available?'Trainer: '+trainers.join(', '):'No trainer today';
+
+  // Trainer info card for today
+  const todayTrainers=getTrainersForDate(todayStr);
+  const trainerInfoEl=document.getElementById('today-trainer-info');
+  if(todayTrainers.length>0){
+    trainerInfoEl.innerHTML=`<div class="trainer-info-card">
+      <div class="trainer-info-title">Trainers Today</div>
+      ${todayTrainers.map(s=>`<div class="trainer-row">
+        <div class="trainer-dot" style="background:${TRAINER_COLORS[s.trainer_name]||TRAINER_COLORS.default}"></div>
+        <div><div class="trainer-name">${s.trainer_name}</div><div class="trainer-days">${s.start_time} – ${s.end_time}</div></div>
+      </div>`).join('')}
+    </div>`;
+    document.getElementById('today-trainer-status').textContent='';
+  } else {
+    trainerInfoEl.innerHTML='';
+    document.getElementById('today-trainer-status').textContent='No trainer today';
+  }
 
   // Next up
   const nowTime=String(today.getHours()).padStart(2,'0')+':'+String(today.getMinutes()).padStart(2,'0');
@@ -944,13 +1139,15 @@ function renderDash(){
     nextArea.innerHTML=`<div class="next-up-card">
       <div class="next-up-label">▶ Next Up</div>
       <div class="next-up-horse">${h?h.name:'Unassigned'}</div>
-      <div class="next-up-detail">${t.label} · ${fmtDur(nextB.duration)}${r?' · '+r.first:' · <span style="opacity:0.6">Rider unassigned</span>'}</div>
-      <div class="next-up-time">${nextB.time}</div></div>`;
+      <div class="next-up-detail">${t.label} · ${fmtDur(nextB.duration)} · ${arenaLabel(nextB.arena)}${r?' · '+r.first:' · <span style="opacity:0.6">Rider unassigned</span>'}</div>
+      <div class="next-up-time">${nextB.time}</div>
+    </div>`;
   } else nextArea.innerHTML='';
 
   const list=document.getElementById('today-list');
-  if(todayB.length===0){list.innerHTML='<div class="empty"><div class="empty-icon">◫</div><div class="empty-text">No bookings today</div></div>';}
-  else{
+  if(todayB.length===0){
+    list.innerHTML='<div class="empty"><div class="empty-icon">◫</div><div class="empty-text">No bookings today</div></div>';
+  } else {
     list.innerHTML=todayB.map(b=>{
       const h=getHorse(b.horse_id);const r=getRider(b.rider_id);const t=typeConfig[b.type]||{label:b.type,dot:'#888'};
       return`<div class="schedule-item">
@@ -958,8 +1155,8 @@ function renderDash(){
         <div class="schedule-dot" style="background:${t.dot}"></div>
         <div class="schedule-info">
           <div class="schedule-horse">${h?h.name:'Unknown'}${!b.rider_id?'<span class="unassigned-badge">No rider</span>':''}</div>
-          <div class="schedule-detail"><span class="ev-badge ${t.cls}">${t.label}</span> · ${fmtDur(b.duration)}</div>
-          ${r?`<div class="schedule-rider">${r.first} ${r.last}</div>`:''}
+          <div class="schedule-detail"><span class="ev-badge ${t.cls}">${t.label}</span> · ${fmtDur(b.duration)} · ${arenaLabel(b.arena)}</div>
+          ${r?`<div class="schedule-rider">${r.first}</div>`:''}
         </div>
         <button class="btn-danger-sm" onclick="deleteBooking(${b.id})">✕</button>
       </div>`;
@@ -971,19 +1168,49 @@ function renderDash(){
 // ── CALENDAR ──
 function renderCalendar(){
   document.getElementById('cal-label').textContent=new Date(calYear,calMonth,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+
+  // Build legend
+  const trainers=getUniqueTrainers();
+  const legendEl=document.getElementById('cal-legend');
+  if(legendEl){
+    legendEl.innerHTML=trainers.map(t=>`<div class="cal-legend-item">
+      <div class="cal-legend-band" style="background:${TRAINER_COLORS[t]||TRAINER_COLORS.default}"></div>${t}
+    </div>`).join('')+'<div class="cal-legend-item"><div class="cal-legend-band" style="background:var(--sand)"></div>No trainer</div>';
+  }
+
   const firstDay=new Date(calYear,calMonth,1).getDay();
   const dim=new Date(calYear,calMonth+1,0).getDate();
   const dip=new Date(calYear,calMonth,0).getDate();
-  const todayStr=fmtDate(today);let html='';
+  const todayStr=fmtDate(today);
+  let html='';
+
   for(let i=0;i<firstDay;i++)html+=`<div class="cal-day other-month"><div class="cal-day-num">${dip-firstDay+1+i}</div></div>`;
+
   for(let d=1;d<=dim;d++){
     const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const isT=ds===todayStr;
+    const dayTrainers=getTrainersForDate(ds);
     const dots=bookings.filter(b=>b.date===ds).slice(0,4).map(b=>`<div class="cal-dot" style="background:${(typeConfig[b.type]||{dot:'#888'}).dot}"></div>`).join('');
-    html+=`<div class="cal-day${isT?' today':''}" onclick="showCalDay('${ds}')"><div class="cal-day-num">${d}</div><div class="cal-dot-row">${dots}</div></div>`;
+
+    // Build trainer band
+    let bandHtml='';
+    if(dayTrainers.length>0){
+      const uniqueT=[...new Set(dayTrainers.map(s=>s.trainer_name))];
+      bandHtml=`<div class="trainer-band">${uniqueT.map(t=>`<div class="trainer-band-seg" style="background:${TRAINER_COLORS[t]||TRAINER_COLORS.default}"></div>`).join('')}</div>`;
+    } else {
+      bandHtml=`<div class="trainer-band"><div style="height:6px"></div></div>`;
+    }
+
+    html+=`<div class="cal-day${isT?' today':''}" onclick="showCalDay('${ds}')">
+      ${bandHtml}
+      <div class="cal-day-num">${d}</div>
+      <div class="cal-dot-row">${dots}</div>
+    </div>`;
   }
+
   const rem=(7-(firstDay+dim)%7)%7;
   for(let i=1;i<=rem;i++)html+=`<div class="cal-day other-month"><div class="cal-day-num">${i}</div></div>`;
+
   document.getElementById('cal-days').innerHTML=html;
   document.getElementById('cal-day-detail').innerHTML='';
 }
@@ -991,24 +1218,42 @@ function renderCalendar(){
 function showCalDay(dateStr){
   const dayB=bookings.filter(b=>b.date===dateStr).sort((a,b)=>a.time.localeCompare(b.time));
   const label=new Date(dateStr+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-  const{available,trainers}=isTrainerAvailable(dateStr,'09:00');
-  let html=`<div style="font-size:13px;font-weight:500;color:var(--earth);margin-bottom:4px">${label}</div>
-  <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px">${available?'Trainer: '+trainers.join(', '):'No trainer scheduled'}</div>`;
-  if(dayB.length===0)html+='<div style="font-size:13px;color:var(--text-muted);text-align:center;padding:16px">No bookings</div>';
-  else dayB.forEach(b=>{
-    const h=getHorse(b.horse_id);const r=getRider(b.rider_id);const t=typeConfig[b.type]||{label:b.type,cls:'ev-arena'};
-    html+=`<div class="booking-row">
-      <div class="booking-left">
-        <div class="booking-horse">${h?h.name:'Unknown'}</div>
-        <div class="booking-meta">${b.time} · ${t.label} · ${fmtDur(b.duration)}${r?' · '+r.first:' · Unassigned'}</div>
-      </div>
-      <span class="ev-badge ${t.cls}">${t.label}</span>
-    </div>`;
-  });
+  const dayTrainers=getTrainersForDate(dateStr);
+
+  let html=`<div style="font-size:13px;font-weight:500;color:var(--earth);margin-bottom:6px">${label}</div>`;
+
+  if(dayTrainers.length>0){
+    html+=`<div style="margin-bottom:12px">${dayTrainers.map(s=>`<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);margin-bottom:4px">
+      <div style="width:8px;height:8px;border-radius:50%;background:${TRAINER_COLORS[s.trainer_name]||TRAINER_COLORS.default}"></div>
+      ${s.trainer_name} · ${s.start_time}–${s.end_time}
+    </div>`).join('')}</div>`;
+  } else {
+    html+=`<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">No trainer scheduled</div>`;
+  }
+
+  if(dayB.length===0){
+    html+='<div style="font-size:13px;color:var(--text-muted);text-align:center;padding:16px">No bookings</div>';
+  } else {
+    dayB.forEach(b=>{
+      const h=getHorse(b.horse_id);const r=getRider(b.rider_id);const t=typeConfig[b.type]||{label:b.type,cls:'ev-arena'};
+      html+=`<div class="booking-row">
+        <div class="booking-left">
+          <div class="booking-horse">${h?h.name:'Unknown'}${!b.rider_id?'<span class="unassigned-badge" style="margin-left:6px">No rider</span>':''}</div>
+          <div class="booking-meta">${b.time} · ${t.label} · ${fmtDur(b.duration)} · ${arenaLabel(b.arena)}${r?' · '+r.first:''}</div>
+        </div>
+        <span class="ev-badge ${t.cls}">${t.label}</span>
+      </div>`;
+    });
+  }
   document.getElementById('cal-day-detail').innerHTML=html;
 }
 
-function changeMonth(dir){calMonth+=dir;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
+function changeMonth(dir){
+  calMonth+=dir;
+  if(calMonth>11){calMonth=0;calYear++;}
+  if(calMonth<0){calMonth=11;calYear--;}
+  renderCalendar();
+}
 
 // ── HERD ──
 function renderHorses(){
@@ -1026,7 +1271,7 @@ function renderHorses(){
           <div class="horse-name">${h.name}</div>
           <div class="horse-detail">${h.breed||'Unknown breed'}${h.age?' · '+h.age+' yrs':''}</div>
           <div class="horse-detail">${o?o.first:'Barn owned'}</div>
-          <span class="horse-badge ${aMap[h.access]||'badge-barn'}">${aLbl[h.access]||h.access}</span>
+          <span class="horse-badge ${aMap[h.access]||'badge-barn'}">${aLbl[h.access]||h.access||'Barn'}</span>
         </div>
         <div class="horse-actions">
           <button class="btn btn-secondary btn-sm" onclick="quickBook(${h.id})">Book</button>
@@ -1052,9 +1297,7 @@ async function toggleService(horseId,svc){
   const h=horses.find(x=>x.id===horseId);if(!h)return;
   if(!h.services)h.services={};
   h.services[svc]=!h.services[svc];
-  try{
-    await sb.from('horses').update({services:h.services}).eq('id',horseId);
-  }catch(e){console.error('Service update error:',e);}
+  try{await sb.from('horses').update({services:h.services}).eq('id',horseId);}catch(e){}
   showToast(`${svc.charAt(0).toUpperCase()+svc.slice(1)} ${h.services[svc]?'requested':'cancelled'} for ${h.name}`);
   renderHorses();
 }
@@ -1069,7 +1312,7 @@ function renderRiders(){
     return`<div class="person-card">
       <div class="person-header">
         <div class="person-avatar">${r.first.substring(0,2).toUpperCase()}</div>
-        <div style="flex:1"><div class="person-name">${r.first} ${r.last}</div><div class="person-sub">${r.level}${myH.length?' · '+myH.map(h=>h.name).join(', '):''}</div></div>
+        <div style="flex:1"><div class="person-name">${r.first}</div><div class="person-sub">${r.level}${myH.length?' · '+myH.map(h=>h.name).join(', '):''}</div></div>
         <button class="btn-danger-sm" onclick="deleteRider(${r.id})">✕</button>
       </div>
       <div class="person-field"><span class="person-field-label">Email</span><span class="person-field-val">${r.email||'—'}</span></div>
@@ -1090,7 +1333,7 @@ function renderOwners(){
     return`<div class="person-card">
       <div class="person-header">
         <div class="person-avatar">${o.first.substring(0,2).toUpperCase()}</div>
-        <div style="flex:1"><div class="person-name">${o.first} ${o.last}</div><div class="person-sub">${myH.map(h=>h.name).join(', ')||'No horse assigned'}</div></div>
+        <div style="flex:1"><div class="person-name">${o.first}</div><div class="person-sub">${myH.map(h=>h.name).join(', ')||'No horse assigned'}</div></div>
         <button class="btn-danger-sm" onclick="deleteOwner(${o.id})">✕</button>
       </div>
       <div class="person-field"><span class="person-field-label">Email</span><span class="person-field-val">${o.email||'—'}</span></div>
@@ -1100,7 +1343,7 @@ function renderOwners(){
   }).join('');
 }
 
-// ── BOOKINGS LIST ──
+// ── BOOKINGS ──
 function renderBookings(){
   const sorted=[...bookings].sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date));
   document.getElementById('bookings-sub').textContent=`${bookings.length} total`;
@@ -1111,7 +1354,7 @@ function renderBookings(){
     return`<div class="booking-row">
       <div class="booking-left">
         <div class="booking-horse">${h?h.name:'Unknown'}${!b.rider_id?'<span class="unassigned-badge" style="margin-left:6px">No rider</span>':''}</div>
-        <div class="booking-meta">${ds} · ${b.time} · ${fmtDur(b.duration)}${r?' · '+r.first:''}</div>
+        <div class="booking-meta">${ds} · ${b.time} · ${fmtDur(b.duration)} · ${arenaLabel(b.arena)}${r?' · '+r.first:''}</div>
       </div>
       <div class="booking-right">
         <span class="ev-badge ${t.cls}">${t.label}</span>
@@ -1150,13 +1393,15 @@ function openSheet(name){
     populateHorseSelect();populateRiderSelect();
     populateTimeSelect('b-time');
     const bd=document.getElementById('b-date');if(bd)bd.value=fmtDate(today);
-    document.getElementById('trainer-warning')?.classList.remove('show');
+    const warn=document.getElementById('trainer-warning');if(warn)warn.className='trainer-warning';
+    const saveBtn=document.getElementById('b-save-btn');if(saveBtn){saveBtn.style.opacity='1';saveBtn.style.filter='';}
   }
   if(name==='rider-booking'){
     populateTimeSelect('rb-time');
     const bd=document.getElementById('rb-date');if(bd)bd.value=fmtDate(today);
     const rh=document.getElementById('rb-horse');
-    if(rh){rh.innerHTML='<option value="">— Trainer will assign —</option>'+horses.map(h=>`<option value="${h.id}">${h.name}</option>`).join('');}
+    if(rh)rh.innerHTML='<option value="">— Trainer will assign —</option>'+horses.map(h=>`<option value="${h.id}">${h.name}</option>`).join('');
+    const warn=document.getElementById('rb-trainer-warning');if(warn)warn.className='trainer-warning';
   }
   if(name==='horse'){populateOwnerSelect('h-owner');}
   document.getElementById('sheet-'+name).classList.add('open');
@@ -1166,17 +1411,22 @@ document.querySelectorAll('.sheet-overlay').forEach(s=>{s.addEventListener('clic
 
 // ── SAVES ──
 async function saveBooking(){
-  const horseId=parseInt(document.getElementById('b-horse').value);
+  const horseId=parseInt(document.getElementById('b-horse').value)||null;
   const riderId=parseInt(document.getElementById('b-rider').value)||null;
   const date=document.getElementById('b-date').value;
   const time=document.getElementById('b-time').value;
   const duration=parseInt(document.getElementById('b-duration').value)||60;
   const type=document.getElementById('b-type').value;
+  const arena=document.getElementById('b-arena').value||'covered';
   const notes=document.getElementById('b-notes').value;
-  if(!horseId||!date){showToast('Please select a horse and date');return;}
-  const nb={id:Date.now(),horse_id:horseId,rider_id:riderId,date,time,duration,type,notes};
-  try{const{data,error}=await sb.from('bookings').insert({horse_id:horseId,rider_id:riderId,date,time,duration,type,notes}).select().single();if(!error&&data)bookings.push(data);else bookings.push(nb);}catch(e){bookings.push(nb);}
-  closeSheet('booking');document.getElementById('b-notes').value='';renderDash();showToast('Booking saved');
+  if(!date){showToast('Please select a date');return;}
+  const nb={id:Date.now(),horse_id:horseId,rider_id:riderId,date,time,duration,type,arena,notes};
+  try{
+    const{data,error}=await sb.from('bookings').insert({horse_id:horseId,rider_id:riderId,date,time,duration,type,arena,notes}).select().single();
+    if(!error&&data)bookings.push(data);else bookings.push(nb);
+  }catch(e){bookings.push(nb);}
+  closeSheet('booking');document.getElementById('b-notes').value='';
+  renderDash();showToast('Booking saved');
 }
 
 async function saveRiderBooking(){
@@ -1185,13 +1435,34 @@ async function saveRiderBooking(){
   const duration=parseInt(document.getElementById('rb-duration').value)||60;
   const horseId=parseInt(document.getElementById('rb-horse').value)||null;
   const type=document.getElementById('rb-type').value;
+  const arena=document.getElementById('rb-arena').value||'covered';
   const notes=document.getElementById('rb-notes').value;
   if(!date){showToast('Please select a date');return;}
-  const rider=riders.find(r=>r.first===currentUser.name);
-  const riderId=rider?rider.id:null;
-  const nb={id:Date.now(),horse_id:horseId,rider_id:riderId,date,time,duration,type,notes};
-  try{const{data,error}=await sb.from('bookings').insert({horse_id:horseId,rider_id:riderId,date,time,duration,type,notes}).select().single();if(!error&&data)bookings.push(data);else bookings.push(nb);}catch(e){bookings.push(nb);}
-  closeSheet('rider-booking');document.getElementById('rb-notes').value='';renderRiderHome();showToast('Visit booked!');
+
+  // Find rider by name or currentChildId
+  let riderId=null;
+  if(currentChildId){
+    riderId=currentChildId;
+  } else {
+    const rider=riders.find(r=>r.first===currentUser.name||r.first+' '+(r.last||'').trim()===currentUser.name);
+    riderId=rider?rider.id:null;
+  }
+
+  const nb={id:Date.now(),horse_id:horseId,rider_id:riderId,date,time,duration,type,arena,notes};
+  try{
+    const{data,error}=await sb.from('bookings').insert({horse_id:horseId,rider_id:riderId,date,time,duration,type,arena,notes}).select().single();
+    if(!error&&data)bookings.push(data);else bookings.push(nb);
+  }catch(e){bookings.push(nb);}
+  closeSheet('rider-booking');document.getElementById('rb-notes').value='';
+
+  if(currentChildId){
+    const child=getRider(currentChildId);
+    if(child)showChildSchedule(currentChildId,true);
+    currentChildId=null;
+  } else {
+    renderRiderHome();
+  }
+  showToast('Visit booked!');
 }
 
 async function saveHorse(){
@@ -1203,23 +1474,23 @@ async function saveHorse(){
   const notes=document.getElementById('h-notes').value.trim();
   if(!name){showToast('Please enter a horse name');return;}
   const nh={id:Date.now(),name,breed,age,owner_id,access,notes,services:{}};
-  try{const{data,error}=await sb.from('horses').insert({name,breed,age,owner_id,access,notes}).select().single();if(!error&&data)horses.push(data);else horses.push(nh);}catch(e){horses.push(nh);}
+  try{const{data,error}=await sb.from('horses').insert({name,breed,age,owner_id,access,notes}).select().single();if(!error&&data)horses.push({...data,services:{}});else horses.push(nh);}catch(e){horses.push(nh);}
   closeSheet('horse');['h-name','h-breed','h-age','h-notes'].forEach(id=>document.getElementById(id).value='');
   renderHorses();renderDash();showToast(name+' added');
 }
 
 async function saveRider(){
   const first=document.getElementById('r-first').value.trim();
-  const last=document.getElementById('r-last').value.trim();
   const email=document.getElementById('r-email').value.trim();
   const phone=document.getElementById('r-phone').value.trim();
   const level=document.getElementById('r-level').value;
   const parents=document.getElementById('r-parents').value.trim();
-  if(!first||!last){showToast('Please enter a name');return;}
-  const nr={id:Date.now(),first,last,email,phone,level,parents,approved_horses:[]};
-  try{const{data,error}=await sb.from('riders').insert({first,last,email,phone,level,parents}).select().single();if(!error&&data)riders.push(data);else riders.push(nr);}catch(e){riders.push(nr);}
-  closeSheet('rider-form');['r-first','r-last','r-email','r-phone','r-parents'].forEach(id=>document.getElementById(id).value='');
-  renderRiders();renderDash();showToast(first+' '+last+' added');
+  if(!first){showToast('Please enter a name');return;}
+  const nr={id:Date.now(),first,last:'',email,phone,level,parents,approved_horses:[]};
+  try{const{data,error}=await sb.from('riders').insert({first,last:'',email,phone,level,parents}).select().single();if(!error&&data)riders.push(data);else riders.push(nr);}catch(e){riders.push(nr);}
+  closeSheet('rider-form');['r-first','r-email','r-phone','r-parents'].forEach(id=>document.getElementById(id).value='');
+  renderRiders();renderDash();showToast(first+' added');
+  populateLoginDropdowns();
 }
 
 async function saveOwner(){
@@ -1239,16 +1510,27 @@ async function saveOwner(){
 // ── DELETES ──
 async function deleteBooking(id){if(!confirm('Remove this booking?'))return;try{await sb.from('bookings').delete().eq('id',id);}catch(e){}bookings=bookings.filter(b=>b.id!==id);renderDash();renderBookings();showToast('Booking removed');}
 async function deleteHorse(id){if(!confirm('Remove this horse?'))return;try{await sb.from('horses').delete().eq('id',id);}catch(e){}horses=horses.filter(h=>h.id!==id);renderHorses();renderDash();showToast('Horse removed');}
-async function deleteRider(id){if(!confirm('Remove this rider?'))return;try{await sb.from('riders').delete().eq('id',id);}catch(e){}riders=riders.filter(r=>r.id!==id);renderRiders();renderDash();showToast('Rider removed');}
+async function deleteRider(id){if(!confirm('Remove this rider?'))return;try{await sb.from('riders').delete().eq('id',id);}catch(e){}riders=riders.filter(r=>r.id!==id);renderRiders();renderDash();showToast('Rider removed');populateLoginDropdowns();}
 async function deleteOwner(id){if(!confirm('Remove this owner?'))return;try{await sb.from('owners').delete().eq('id',id);}catch(e){}owners=owners.filter(o=>o.id!==id);renderOwners();renderDash();showToast('Owner removed');}
 
 // ── HELPERS ──
-function populateHorseSelect(){const el=document.getElementById('b-horse');if(!el)return;el.innerHTML=horses.map(h=>`<option value="${h.id}">${h.name}</option>`).join('')||'<option>No horses yet</option>';}
+function populateHorseSelect(){const el=document.getElementById('b-horse');if(!el)return;el.innerHTML='<option value="">— No horse —</option>'+horses.map(h=>`<option value="${h.id}">${h.name}</option>`).join('');}
 function populateRiderSelect(){const el=document.getElementById('b-rider');if(!el)return;el.innerHTML='<option value="">— Unassigned —</option>'+riders.map(r=>`<option value="${r.id}">${r.first}</option>`).join('');}
 function populateOwnerSelect(id){const el=document.getElementById(id);if(!el)return;el.innerHTML='<option value="">Barn owned</option>'+owners.map(o=>`<option value="${o.id}">${o.first}</option>`).join('');}
-function quickBook(horseId){populateHorseSelect();populateRiderSelect();populateTimeSelect('b-time');document.getElementById('b-horse').value=horseId;const bd=document.getElementById('b-date');if(bd)bd.value=fmtDate(today);document.getElementById('sheet-booking').classList.add('open');}
+function quickBook(horseId){
+  populateHorseSelect();populateRiderSelect();populateTimeSelect('b-time');
+  document.getElementById('b-horse').value=horseId;
+  const bd=document.getElementById('b-date');if(bd)bd.value=fmtDate(today);
+  const warn=document.getElementById('trainer-warning');if(warn)warn.className='trainer-warning';
+  document.getElementById('sheet-booking').classList.add('open');
+}
 
-document.getElementById('o-level').addEventListener('change',function(){document.getElementById('o-days-group').style.display=this.value==='partial-lease'?'block':'none';});
+document.getElementById('o-level').addEventListener('change',function(){
+  document.getElementById('o-days-group').style.display=this.value==='partial-lease'?'block':'none';
+});
+
+// Need to add arena column to bookings in DB
+// Also run: alter table bookings add column if not exists arena text default 'covered';
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
 
