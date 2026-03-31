@@ -1158,7 +1158,7 @@ function buildWeekCalendar(highlightRiderIds){
     const allBookings=bookings.filter(b=>b.date===ds);
     const trainerColor=hasTrainer?(TRAINER_COLORS[trainerNames[0]]||TRAINER_COLORS.default):'transparent';
 
-    html+=`<div style="background:var(--white);border-radius:8px;border:1px solid ${isToday?'var(--earth)':'var(--sand)'};overflow:hidden;${isToday?'box-shadow:0 0 0 2px var(--earth)':''}">
+    html+=`<div style="background:var(--white);border-radius:8px;border:1px solid ${isToday?'var(--earth)':'var(--sand)'};overflow:hidden;${isToday?'box-shadow:0 0 0 2px var(--earth)':''}cursor:pointer" onclick="bookFromWeekCal('${ds}')">
       <div style="height:4px;background:${trainerColor};opacity:${hasTrainer?0.85:0}"></div>
       <div style="padding:4px 4px 2px;text-align:center">
         <div style="font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:${isToday?'var(--earth)':'var(--text-muted)'};font-weight:${isToday?'500':'400'}">${days7[d.getDay()]}</div>
@@ -1650,53 +1650,202 @@ function populateSearchDropdown(id){
 }
 
 function showHorseSchedule(horseId){
-  const horse=getHorse(horseId);if(!horse)return;
+  const horse=getHorse(parseInt(horseId));if(!horse)return;
   const todayStr=fmtDate(today);
-  const hBookings=bookings.filter(b=>b.horse_id===horse.id&&b.date>=todayStr).sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date));
+  const hBookings=bookings.filter(b=>parseInt(b.horse_id)===parseInt(horse.id)&&b.date>=todayStr)
+    .sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date));
   const o=getOwner(horse.owner_id);
-  let html=`<div class="rider-greeting">${horse.name}</div>
-  <div class="rider-date-sub" style="margin-bottom:6px">${horse.breed||''}${horse.age?' · '+horse.age+' yrs':''}${o?' · Owned by '+o.first:' · Barn horse'}</div>
-  <div style="margin-bottom:20px">`;
+  const sv=horse.services||{};
+  const aMap={'barn':'Barn Owned','owner-only':'Owner Only','owner-allow':'Owner - Shared','partial-lease':'Partial Lease','full-lease':'Full Lease'};
+
+  // Next booking
+  const next=hBookings[0];
+  const nextRider=next?getRider(next.rider_id):null;
+  const nextType=next?(typeConfig[next.type]||{label:next.type}):null;
+
+  // Upcoming riders (unique)
+  const upcomingRiderIds=[...new Set(hBookings.map(b=>b.rider_id).filter(Boolean).map(Number))];
+
+  let html=`
+  <!-- Header -->
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+    <div style="width:56px;height:56px;border-radius:50%;background:var(--cream-dark);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--earth);flex-shrink:0">${horse.name[0]}</div>
+    <div>
+      <div class="rider-greeting" style="margin-bottom:2px">${horse.name}</div>
+      <div style="font-size:13px;color:var(--text-muted)">${horse.breed||'Unknown breed'}${horse.age?' · '+horse.age+' yrs':''}${o?' · '+o.first:' · Barn horse'}</div>
+      <div style="margin-top:4px"><span style="font-size:10px;padding:2px 8px;border-radius:10px;background:var(--cream-dark);color:var(--text-muted)">${aMap[horse.access]||'Barn'}</span></div>
+    </div>
+  </div>`;
+
+  // Next up card
+  if(next){
+    const dl=next.date===todayStr?'Today':new Date(next.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+    html+=`<div class="next-up-card" style="margin-bottom:14px">
+      <div class="next-up-label">▶ Next Session</div>
+      <div class="next-up-horse">${nextRider?nextRider.first:'Unassigned'}</div>
+      <div class="next-up-detail">${nextType?nextType.label:''} · ${fmtDur(next.duration)} · ${arenaLabel(next.arena)}</div>
+      <div class="next-up-time">${dl} · ${next.time}</div>
+    </div>`;
+  }
+
+  // 7-day calendar for this horse
+  html+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--earth)">This Week</div>
+  </div>
+  <div style="margin-bottom:16px">${buildWeekCalendar(upcomingRiderIds)}</div>`;
+
+  // Services
+  html+=`<div class="schedule-card" style="margin-bottom:14px">
+    <div class="schedule-header"><div class="schedule-title">Services</div></div>
+    <div style="display:flex;gap:8px;padding:12px 16px">
+      <div style="flex:1;text-align:center;padding:8px;border-radius:8px;background:${sv.lunge?'var(--hay-light)':'var(--cream)'};border:1px solid ${sv.lunge?'var(--hay)':'var(--sand)'}">
+        <div style="font-size:18px">🔄</div><div style="font-size:11px;color:var(--text-mid);margin-top:2px">Lunge</div>
+        <div style="font-size:10px;color:${sv.lunge?'var(--earth-light)':'var(--text-muted)'};margin-top:2px">${sv.lunge?'Requested':'—'}</div>
+      </div>
+      <div style="flex:1;text-align:center;padding:8px;border-radius:8px;background:${sv.turnout?'var(--hay-light)':'var(--cream)'};border:1px solid ${sv.turnout?'var(--hay)':'var(--sand)'}">
+        <div style="font-size:18px">🌿</div><div style="font-size:11px;color:var(--text-mid);margin-top:2px">Turnout</div>
+        <div style="font-size:10px;color:${sv.turnout?'var(--earth-light)':'var(--text-muted)'};margin-top:2px">${sv.turnout?'Requested':'—'}</div>
+      </div>
+      <div style="flex:1;text-align:center;padding:8px;border-radius:8px;background:${sv.walker?'var(--hay-light)':'var(--cream)'};border:1px solid ${sv.walker?'var(--hay)':'var(--sand)'}">
+        <div style="font-size:18px">⭕</div><div style="font-size:11px;color:var(--text-mid);margin-top:2px">Walker</div>
+        <div style="font-size:10px;color:${sv.walker?'var(--earth-light)':'var(--text-muted)'};margin-top:2px">${sv.walker?'Requested':'—'}</div>
+      </div>
+    </div>
+  </div>`;
+
+  // Upcoming schedule
+  html+=`<div class="schedule-card" style="margin-bottom:14px">
+    <div class="schedule-header">
+      <div class="schedule-title">Upcoming Schedule</div>
+      <div class="schedule-meta">${hBookings.length} booking${hBookings.length!==1?'s':''}</div>
+    </div>`;
   if(hBookings.length===0){
-    html+='<div class="empty"><div class="empty-icon">🐴</div><div class="empty-text">No upcoming bookings for ${horse.name}</div></div>';
+    html+='<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px">No upcoming bookings</div>';
   } else {
-    html+='<div class="schedule-card"><div class="schedule-header"><div class="schedule-title">Upcoming Schedule</div></div>';
     hBookings.forEach(b=>{
       const r=getRider(b.rider_id);const t=typeConfig[b.type]||{label:b.type,dot:'#888'};
       const dl=b.date===todayStr?'Today':new Date(b.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+      const trs=getTrainersForDate(b.date);
+      const trAvail=trs.length>0?trs.map(s=>s.trainer_name).join(', '):'No trainer';
       html+=`<div class="schedule-item">
         <div class="schedule-time">${b.time}</div>
-        <div class="schedule-dot" style="background:${t.dot}"></div>
+        <div class="schedule-dot" style="background:${r?getRiderColor(r.id):t.dot}"></div>
         <div class="schedule-info">
-          <div class="schedule-horse">${r?r.first:'Unassigned'}</div>
+          <div class="schedule-horse">${r?r.first:'<span class="unassigned-badge">Unassigned</span>'}</div>
           <div class="schedule-detail">${dl} · ${t.label} · ${fmtDur(b.duration)}</div>
-          <div class="schedule-rider" style="color:var(--text-muted)">${arenaLabel(b.arena)}</div>
+          <div class="schedule-rider" style="color:var(--text-muted)">${arenaLabel(b.arena)} · ${trAvail}</div>
         </div>
       </div>`;
     });
-    html+='</div>';
   }
   html+='</div>';
-  // Show in child-schedule screen reusing it
+
+  // Notes
+  if(horse.notes){
+    html+=`<div style="background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:14px 16px;margin-bottom:14px">
+      <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Notes</div>
+      <div style="font-size:13px;color:var(--text)">${horse.notes}</div>
+    </div>`;
+  }
+
   document.getElementById('child-schedule-content').innerHTML=html;
   document.getElementById('child-book-fab').style.display='none';
   document.getElementById('child-back-btn').onclick=()=>{
     if(currentRole==='parent')showScreen('parent-app');
+    else if(currentRole==='staff')showScreen('app');
     else showScreen('rider-app');
   };
   showScreen('child-schedule');
 }
 
 function showRiderScheduleFromSearch(riderId){
-  // Parents can only book for own children
-  const r=getRider(riderId);if(!r)return;
+  const r=getRider(parseInt(riderId));if(!r)return;
   const isMyChild=currentRole==='parent'&&r.parents&&r.parents.split(',').map(p=>p.trim().toLowerCase()).includes(currentUser.name.trim().toLowerCase());
-  showChildSchedule(riderId, isMyChild);
-  // Update back button
+  const todayStr=fmtDate(today);
+  const myBookings=bookings.filter(b=>parseInt(b.rider_id)===parseInt(r.id)&&b.date>=todayStr)
+    .sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date));
+  const next=myBookings[0];
+  const nextHorse=next?getHorse(next.horse_id):null;
+  const nextType=next?(typeConfig[next.type]||{label:next.type}):null;
+  const rColor=getRiderColor(r.id);
+  const approvedHorses=(r.approved_horses||[]).map(id=>getHorse(id)).filter(Boolean);
+
+  let html=`
+  <!-- Header -->
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+    <div style="width:56px;height:56px;border-radius:50%;background:${rColor};display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:24px;color:white;flex-shrink:0">${r.first[0]}</div>
+    <div>
+      <div class="rider-greeting" style="margin-bottom:2px">${r.first}</div>
+      <div style="font-size:13px;color:var(--text-muted)">${r.level} rider${r.parents?' · Parents: '+r.parents:''}</div>
+      ${approvedHorses.length>0?`<div style="font-size:12px;color:var(--earth-light);margin-top:3px">🐴 ${approvedHorses.map(h=>h.name).join(', ')}</div>`:''}
+    </div>
+  </div>`;
+
+  // Next up
+  if(next){
+    const dl=next.date===todayStr?'Today':new Date(next.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+    html+=`<div class="next-up-card" style="margin-bottom:14px">
+      <div class="next-up-label">▶ Next Visit</div>
+      <div class="next-up-horse">${nextHorse?nextHorse.name:'Unassigned'}</div>
+      <div class="next-up-detail">${nextType?nextType.label:''} · ${fmtDur(next.duration)}</div>
+      <div class="next-up-time">${dl} · ${next.time}</div>
+    </div>`;
+  }
+
+  // 7-day calendar
+  html+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--earth)">This Week</div>
+  </div>
+  <div style="margin-bottom:16px">${buildWeekCalendar([parseInt(r.id)])}</div>`;
+
+  // Upcoming bookings
+  html+=`<div class="schedule-card" style="margin-bottom:14px">
+    <div class="schedule-header">
+      <div class="schedule-title">Upcoming Visits</div>
+      <div class="schedule-meta">${myBookings.length} upcoming</div>
+    </div>`;
+  if(myBookings.length===0){
+    html+='<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px">No upcoming visits</div>';
+  } else {
+    myBookings.forEach(b=>{
+      const h=getHorse(b.horse_id);const t=typeConfig[b.type]||{label:b.type,dot:'#888'};
+      const dl=b.date===todayStr?'Today':new Date(b.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+      const trs=getTrainersForDate(b.date);
+      const trAvail=trs.length>0?trs.map(s=>s.trainer_name).join(', '):'No trainer';
+      const canDel=isMyChild||(currentRole==='staff');
+      html+=`<div class="schedule-item">
+        <div class="schedule-time">${b.time}</div>
+        <div class="schedule-dot" style="background:${t.dot}"></div>
+        <div class="schedule-info">
+          <div class="schedule-horse">${h?h.name:'<span class="unassigned-badge">Unassigned</span>'}</div>
+          <div class="schedule-detail">${dl} · ${t.label} · ${fmtDur(b.duration)}</div>
+          <div class="schedule-rider" style="color:var(--text-muted)">${arenaLabel(b.arena)} · ${trAvail}</div>
+        </div>
+        ${canDel?`<button class="btn-danger-sm" onclick="deleteAnyBooking(${b.id})">✕</button>`:''}
+      </div>`;
+    });
+  }
+  html+='</div>';
+
+  document.getElementById('child-schedule-content').innerHTML=html;
+
+  // Show book button for own children or staff
+  const fab=document.getElementById('child-book-fab');
+  const fabName=document.getElementById('child-book-name');
+  if(isMyChild||currentRole==='staff'){
+    currentChildId=parseInt(r.id);
+    fab.style.display='block';
+    if(fabName)fabName.textContent=r.first;
+  } else {
+    fab.style.display='none';
+  }
+
   document.getElementById('child-back-btn').onclick=()=>{
     if(currentRole==='parent')showScreen('parent-app');
+    else if(currentRole==='staff')showScreen('app');
     else showScreen('rider-app');
   };
+  showScreen('child-schedule');
 }
 
 // ── TRAINER CHECK ──
@@ -2035,6 +2184,31 @@ function populateTimeSelect(id,def='09:00'){
   for(let h=6;h<=21;h++)for(let m=0;m<60;m+=15){
     const v=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
     const o=document.createElement('option');o.value=v;o.textContent=v;if(v===def)o.selected=true;sel.appendChild(o);
+  }
+}
+
+// ── BOOK FROM WEEK CALENDAR ──
+function bookFromWeekCal(dateStr){
+  // Open the appropriate booking sheet for the current role
+  if(currentRole==='staff'){
+    openSheet('booking');
+    const bd=document.getElementById('b-date');
+    if(bd){
+      bd.value=dateStr;
+      populateTimeSelect('b-time',getDefaultTimeForDate(dateStr));
+      checkTrainer();
+    }
+  } else {
+    // rider or parent
+    openSheet('rider-booking');
+    const bd=document.getElementById('rb-date');
+    if(bd){
+      bd.value=dateStr;
+      populateTimeSelect('rb-time',getDefaultTimeForDate(dateStr));
+      checkRiderTrainer();
+    }
+    // If parent, set currentChildId if viewing a specific child
+    // (currentChildId already set if coming from child schedule)
   }
 }
 
