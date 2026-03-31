@@ -776,6 +776,18 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
         <option value="lunging">Lunging Arena</option>
       </select>
     </div>
+    <div class="form-group"><label class="form-label">Repeat</label>
+      <select class="form-select" id="rb-recur" onchange="document.getElementById('rb-recur-until-group').style.display=this.value==='none'?'none':'block'">
+        <option value="none">One time only</option>
+        <option value="weekly">Every week</option>
+        <option value="biweekly">Every 2 weeks</option>
+        <option value="monthly">Every 4 weeks</option>
+      </select>
+    </div>
+    <div class="form-group" id="rb-recur-until-group" style="display:none">
+      <label class="form-label">Repeat Until</label>
+      <input type="date" class="form-input" id="rb-recur-until">
+    </div>
     <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="rb-notes" placeholder="Anything the trainer should know..."></textarea></div>
     <button class="btn btn-primary" onclick="saveRiderBooking()">Confirm Booking</button>
     <button class="btn btn-secondary" style="width:100%;margin-top:10px" onclick="closeSheet('rider-booking')">Cancel</button>
@@ -1330,7 +1342,8 @@ function renderRiderHome(){
   const todayStr=fmtDate(today);
   const nameLower=name.trim().toLowerCase();
   const rider=riders.find(r=>r.first.toLowerCase()===nameLower||(r.first+' '+(r.last||'')).toLowerCase()===nameLower);
-  const myB=rider?bookings.filter(b=>b.rider_id===rider.id&&b.date>=todayStr).sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date)):[];
+  const nowTimeRH=String(today.getHours()).padStart(2,'0')+':'+String(today.getMinutes()).padStart(2,'0');
+  const myB=rider?bookings.filter(b=>b.rider_id===rider.id&&(b.date>todayStr||(b.date===todayStr&&bookingEndTime(b)>nowTimeRH))).sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date)):[];
   const myBIds=myB.map(b=>b.id);
   const next=myB[0];
 
@@ -1480,7 +1493,8 @@ function renderParentHome(){
   if(myChildren.length>0){
     html+=`<div class="section-label">Your Children</div>`;
     myChildren.forEach(child=>{
-      const cb=bookings.filter(b=>b.rider_id===child.id&&b.date>=todayStr).sort((a,b)=>a.date.localeCompare(b.date));
+      const nowTimePH=String(today.getHours()).padStart(2,'0')+':'+String(today.getMinutes()).padStart(2,'0');
+      const cb=bookings.filter(b=>b.rider_id===child.id&&(b.date>todayStr||(b.date===todayStr&&bookingEndTime(b)>nowTimePH))).sort((a,b)=>a.date.localeCompare(b.date));
       const next=cb[0];const h=next?getHorse(next.horse_id):null;const t=next?(typeConfig[next.type]||{label:next.type}):null;
       html+=`<div class="child-card" onclick="showChildSchedule(${child.id},true)">
         <div class="child-avatar">${child.first[0]}</div>
@@ -1520,7 +1534,8 @@ function showAllRiders(){
     html+='<div class="empty"><div class="empty-icon">🏇</div><div class="empty-text">No riders registered yet</div></div>';
   } else {
     riders.forEach(r=>{
-      const cb=bookings.filter(b=>b.rider_id===r.id&&b.date>=todayStr).sort((a,b)=>a.date.localeCompare(b.date));
+      const nowTimeAR=String(today.getHours()).padStart(2,'0')+':'+String(today.getMinutes()).padStart(2,'0');
+      const cb=bookings.filter(b=>b.rider_id===r.id&&(b.date>todayStr||(b.date===todayStr&&bookingEndTime(b)>nowTimeAR))).sort((a,b)=>a.date.localeCompare(b.date));
       const next=cb[0];const h=next?getHorse(next.horse_id):null;const t=next?(typeConfig[next.type]||{label:next.type}):null;
       html+=`<div class="child-card" onclick="showChildSchedule(${r.id},false)">
         <div class="child-avatar">${r.first[0]}</div>
@@ -2747,6 +2762,12 @@ function openSheet(name){
       }
     }
     const warn=document.getElementById('rb-trainer-warning');if(warn)warn.className='trainer-warning';
+    // Set default recur-until to 3 months from now
+    const ru=document.getElementById('rb-recur-until');
+    if(ru){const d3m=addDays(today,90);ru.value=fmtDate(d3m);}
+    // Reset recur select
+    const recurSel=document.getElementById('rb-recur');
+    if(recurSel){recurSel.value='none';document.getElementById('rb-recur-until-group').style.display='none';}
   }
   if(name==='horse'){populateOwnerSelect('h-owner');}
   document.getElementById('sheet-'+name).classList.add('open');
@@ -2782,23 +2803,41 @@ async function saveRiderBooking(){
   const type=document.getElementById('rb-type').value;
   const arena=document.getElementById('rb-arena').value||'covered';
   const notes=document.getElementById('rb-notes').value;
+  const recur=document.getElementById('rb-recur').value;
+  const recurUntil=document.getElementById('rb-recur-until').value;
   if(!date){showToast('Please select a date');return;}
 
-  // Find rider by name or currentChildId
   let riderId=null;
-  if(currentChildId){
-    riderId=currentChildId;
-  } else {
-    const rider=riders.find(r=>r.first===currentUser.name||r.first+' '+(r.last||'').trim()===currentUser.name);
-    riderId=rider?rider.id:null;
+  if(currentChildId){riderId=currentChildId;}
+  else{const rider=riders.find(r=>r.first===currentUser.name||r.first+' '+(r.last||'').trim()===currentUser.name);riderId=rider?rider.id:null;}
+
+  // Build list of dates to book
+  const dates=[date];
+  if(recur!=='none'&&recurUntil&&recurUntil>date){
+    const intervalDays=recur==='weekly'?7:recur==='biweekly'?14:28;
+    let cur=new Date(date+'T12:00:00');
+    const until=new Date(recurUntil+'T12:00:00');
+    while(true){
+      cur.setDate(cur.getDate()+intervalDays);
+      if(cur>until)break;
+      dates.push(fmtDate(cur));
+    }
   }
 
-  const nb={id:Date.now(),horse_id:horseId,rider_id:riderId,date,time,duration,type,arena,notes};
-  try{
-    const{data,error}=await sb.from('bookings').insert({horse_id:horseId,rider_id:riderId,date,time,duration,type,arena,notes}).select().single();
-    if(!error&&data)bookings.push(data);else bookings.push(nb);
-  }catch(e){bookings.push(nb);}
-  closeSheet('rider-booking');document.getElementById('rb-notes').value='';
+  let saved=0;
+  for(const d of dates){
+    const nb={id:Date.now()+saved,horse_id:horseId,rider_id:riderId,date:d,time,duration,type,arena,notes};
+    try{
+      const{data,error}=await sb.from('bookings').insert({horse_id:horseId,rider_id:riderId,date:d,time,duration,type,arena,notes}).select().single();
+      if(!error&&data)bookings.push(data);else bookings.push(nb);
+    }catch(e){bookings.push(nb);}
+    saved++;
+  }
+
+  closeSheet('rider-booking');
+  document.getElementById('rb-notes').value='';
+  document.getElementById('rb-recur').value='none';
+  document.getElementById('rb-recur-until-group').style.display='none';
 
   if(currentChildId){
     const child=getRider(currentChildId);
@@ -2807,7 +2846,7 @@ async function saveRiderBooking(){
   } else {
     renderRiderHome();
   }
-  showToast('Visit booked!');
+  showToast(saved===1?'Visit booked!':saved+' visits booked!');
 }
 
 async function saveHorse(){
