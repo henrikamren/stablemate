@@ -2253,7 +2253,6 @@ function renderDash(){
   } else nextArea.innerHTML='';
 
   const list=document.getElementById('today-list');
-  const nowTime=String(today.getHours()).padStart(2,'0')+':'+String(today.getMinutes()).padStart(2,'0');
   const allPassed=todayB.length>0&&todayB.every(b=>bookingEndTime(b)<=nowTime);
   const tomStr=fmtDate(addDays(today,1));
   const tomB=bookings.filter(b=>b.date===tomStr).sort((a,b)=>a.time.localeCompare(b.time));
