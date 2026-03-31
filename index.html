@@ -426,7 +426,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
   <div class="login-card">
     <div class="login-logo">Stable<span>Mate</span></div>
     <div class="login-barn">Oasis Farm</div>
-    <label class="login-label">Your name</label>
+    <label class="login-label">Select your name</label>
+    <select class="login-select" id="staff-select"><option value="">— Select your name —</option></select>
+    <div class="login-divider">or type your name</div>
     <input type="text" class="login-input" id="staff-name-input" placeholder="Your name...">
     <button class="login-btn" onclick="enterStaff()">Enter Stable</button>
     <button class="login-back" onclick="showScreen('role')">← Back</button>
@@ -1017,8 +1019,10 @@ function enterParent(){
   }
 }
 function enterStaff(){
-  const name=document.getElementById('staff-name-input').value.trim();
-  if(!name){showToast('Please enter your name');return;}
+  const sel=document.getElementById('staff-select').value;
+  const typed=document.getElementById('staff-name-input').value.trim();
+  const name=typed||sel;
+  if(!name){showToast('Please select or enter your name');return;}
   currentUser={name};currentRole='staff';saveSession();
   if(horses.length===0){
     loadAll().then(()=>{setupStaffUI();showScreen('app');});
@@ -1077,14 +1081,25 @@ async function loadAll(){
 function populateLoginDropdowns(){
   const rSel=document.getElementById('rider-select');
   const pSel=document.getElementById('parent-select');
+  const sSel=document.getElementById('staff-select');
   while(rSel.options.length>1)rSel.remove(1);
   while(pSel.options.length>1)pSel.remove(1);
+  if(sSel)while(sSel.options.length>1)sSel.remove(1);
+  // Riders dropdown
   riders.forEach(r=>{
     const o=document.createElement('option');o.value=r.first;o.textContent=r.first;rSel.appendChild(o);
   });
+  // Parents dropdown
   const parentNames=new Map();
   riders.forEach(r=>{if(r.parents)r.parents.split(',').map(p=>p.trim()).filter(Boolean).forEach(p=>{if(!parentNames.has(p.toLowerCase()))parentNames.set(p.toLowerCase(),p);});});
   parentNames.forEach((display,key)=>{const o=document.createElement('option');o.value=display;o.textContent=display;pSel.appendChild(o);});
+  // Staff dropdown — pull unique trainer names from schedules
+  if(sSel){
+    const staffNames=[...new Set(schedules.map(s=>s.trainer_name))].sort();
+    staffNames.forEach(name=>{
+      const o=document.createElement('option');o.value=name;o.textContent=name;sSel.appendChild(o);
+    });
+  }
 }
 
 // ── WEATHER ──
