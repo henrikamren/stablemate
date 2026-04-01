@@ -266,7 +266,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 .loading-logo span{color:var(--hay);font-style:italic}
 .loading-barn{font-size:12px;color:var(--text-muted);letter-spacing:0.06em}
 
-/* ═══ RIDER / PARENT APP ═══ */ (rider/parent) */
+/* ═══ RIDER / PARENT APP ═══ */
 #screen-rider-app,#screen-parent-app,#screen-child-schedule,#screen-all-riders{flex-direction:column}
 .simple-topbar{background:var(--white);border-bottom:1px solid var(--sand);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding-top:env(safe-area-inset-top,0)}
 .simple-content{flex:1;overflow-y:auto;padding:20px 16px 110px;-webkit-overflow-scrolling:touch}
@@ -965,9 +965,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 
 <script>
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    [1] CONFIGURATION
-   ═══════════════════════════════════════════════════════════ */
+   =========================================================== */
 const BARN_NAME='Oasis Farm';
 const SUPABASE_URL='https://rdyktbwkrcepojkiunwb.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkeWt0YndrcmNlcG9qa2l1bndiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NDk4NzgsImV4cCI6MjA5MDIyNTg3OH0.fkttT72Y9LzwcTPhgu3jZ6nD9dL5Jqc0KOhn9sgU44g';
@@ -979,9 +979,9 @@ const ARENAS=[
 ];
 
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    [2] APPLICATION STATE
-   ═══════════════════════════════════════════════════════════ */
+   =========================================================== */
 const today=new Date();
 let calMonth=today.getMonth(),calYear=today.getFullYear();
 let horses=[],owners=[],riders=[],bookings=[],schedules=[],shows=[],lungeRequests=[];
@@ -1015,9 +1015,9 @@ const typeConfig={
 };
 
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    [3] UTILITIES
-   ═══════════════════════════════════════════════════════════ */
+   =========================================================== */
 const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 function fmtDate(d){return d.toISOString().split('T')[0]}
 function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r}
@@ -1035,9 +1035,9 @@ function fmtDur(min){if(!min)return'';if(min<60)return min+'min';const h=Math.fl
 function initials(name){return(name||'?').trim().split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();}
 function arenaLabel(val){const a=ARENAS.find(x=>x.value===val);return a?a.label:val||'Covered Arena';}
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    [4] TRAINER HELPERS
-   ═══════════════════════════════════════════════════════════ */ ──
+   =========================================================== */
 function getTrainersForDate(dateStr){
   if(!dateStr)return[];
   const dayName=days[new Date(dateStr+'T12:00:00').getDay()];
@@ -1051,18 +1051,18 @@ function isTrainerAvailable(dateStr,timeStr){
 }
 function getUniqueTrainers(){return[...new Set(schedules.map(s=>s.trainer_name))];}
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    [5] SCREEN & NAVIGATION
-   ═══════════════════════════════════════════════════════════ */ ──
+   =========================================================== */
 function showScreen(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
   document.getElementById('loading-screen').classList.add('hidden');
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    [6] AUTHENTICATION
-   ═══════════════════════════════════════════════════════════ */ ──
+   =========================================================== */
 function initAuth(){
   const saved=localStorage.getItem('sm_session');
   // Always preload data immediately so dropdowns are ready
@@ -1147,9 +1147,9 @@ function setupStaffUI(){
   renderDash();
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    [7] DATA LAYER
-   ═══════════════════════════════════════════════════════════ */ ──
+   =========================================================== */
 async function loadAll(){
   try{
     const[ob,hb,rb,bb,sc,sh,lr]=await Promise.all([
@@ -1191,7 +1191,7 @@ function populateLoginDropdowns(){
   const parentNames=new Map();
   riders.forEach(r=>{if(r.parents)r.parents.split(',').map(p=>p.trim()).filter(Boolean).forEach(p=>{if(!parentNames.has(p.toLowerCase()))parentNames.set(p.toLowerCase(),p);});});
   parentNames.forEach((display,key)=>{const o=document.createElement('option');o.value=display;o.textContent=display;pSel.appendChild(o);});
-  // Staff dropdown — pull unique trainer names from schedules
+  // Staff dropdown -- pull unique trainer names from schedules
   if(sSel){
     const staffNames=[...new Set(schedules.map(s=>s.trainer_name))].sort();
     staffNames.forEach(name=>{
@@ -1200,9 +1200,9 @@ function populateLoginDropdowns(){
   }
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    [8] WEATHER (Open-Meteo)
-   ═══════════════════════════════════════════════════════════ */ ──
+   =========================================================== */
 // Uses Open-Meteo (free, no API key, accurate)
 const WEATHER_CACHE={data:null,ts:0};
 const WX_LAT=37.3774,WX_LON=-122.2191;
@@ -1306,9 +1306,9 @@ function renderWeatherCard(data,el){
   </div>`;
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    [9] UI BUILDERS — Calendars
-   ═══════════════════════════════════════════════════════════ */ ──
+   =========================================================== */
 function buildWeekCalendar(highlightRiderIds){
   const todayStr=fmtDate(today);
   const days7=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -1365,7 +1365,7 @@ function buildWeekCalendar(highlightRiderIds){
   return html;
 }
 
-// ── RIDER DAY VIEW CALENDAR ──
+// -- RIDER DAY VIEW CALENDAR --
 function buildDayCalendar(dateStr, myBookingIds){
   const SLOT_H=48; // px per hour
   const START_H=7, END_H=18;
@@ -1424,9 +1424,9 @@ function buildDayCalendar(dateStr, myBookingIds){
   </div>`;
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    [10] RIDER VIEW
-   ═══════════════════════════════════════════════════════════ */ ──
+   =========================================================== */
 function renderRiderHome(){
   const name=currentUser.name;
   const todayStr=fmtDate(today);
@@ -1555,9 +1555,9 @@ function renderRiderHome(){
   }
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    [11] PARENT VIEW
-   ═══════════════════════════════════════════════════════════ */ ──
+   =========================================================== */
 function renderParentHome(){
   const name=currentUser.name;
   const todayStr=fmtDate(today);
@@ -1709,9 +1709,9 @@ function openChildBooking(){
   }
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    [12] PERMISSIONS
-   ═══════════════════════════════════════════════════════════ */ ──
+   =========================================================== */
 function canDeleteBooking(bookingId){
   // coerce to number for safe comparison
   const bid=parseInt(bookingId);
@@ -1752,9 +1752,9 @@ async function deleteAnyBooking(id){
   }
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    [13] BROWSE VIEWS (shared across roles)
-   ═══════════════════════════════════════════════════════════ */ ──
+   =========================================================== */
 function getBackScreen(){
   if(currentRole==='parent')return'parent-app';
   if(currentRole==='staff')return'app';
@@ -1949,9 +1949,9 @@ function showShowsDash(){
   showScreen('shows-dash');
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    [14] LUNGE REQUESTS
-   ═══════════════════════════════════════════════════════════ */
+   =========================================================== */
 function openLungeRequest(horseId){
   const h=getHorse(horseId);if(!h)return;
   document.getElementById('lr-horse-id').value=horseId;
@@ -2063,9 +2063,9 @@ function renderLungeRequests(){
   el.innerHTML=html;
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    [15] BOOKING FORM HELPERS
-   ═══════════════════════════════════════════════════════════ */ ──
+   =========================================================== */
 function onRbChildChange(){
   const childSel=document.getElementById('rb-child');
   const riderId=parseInt(childSel?.value)||null;
@@ -2087,9 +2087,9 @@ function onRbChildChange(){
   }
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    [16] SEARCH DROPDOWN
-   ═══════════════════════════════════════════════════════════ */ ──
+   =========================================================== */
 function toggleSearchDropdown(id){
   const dd=document.getElementById(id);
   if(!dd)return;
@@ -2111,7 +2111,7 @@ function toggleDDSection(bodyId){
   const body=document.getElementById(bodyId);
   if(!body)return;
   const isCollapsed=body.classList.contains('collapsed');
-  // Find arrow — bodyId ends in '-body', arrow ends in '-arrow'
+  // Find arrow -- bodyId ends in '-body', arrow ends in '-arrow'
   const arrowId=bodyId.replace('-body','-arrow');
   const arrow=document.getElementById(arrowId);
   if(isCollapsed){
@@ -2447,9 +2447,9 @@ function showRiderScheduleFromSearch(riderId){
   showScreen('child-schedule');
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    [17] TRAINER AVAILABILITY CHECKS
-   ═══════════════════════════════════════════════════════════ */ ──
+   =========================================================== */
 function checkTrainer(){
   const type=document.getElementById('b-type')?.value;
   const date=document.getElementById('b-date')?.value;
@@ -2491,9 +2491,9 @@ function checkRiderTrainer(){
   }
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    [18] STAFF DASHBOARD
-   ═══════════════════════════════════════════════════════════ */ ──
+   =========================================================== */
 function renderDash(){
   const todayStr=fmtDate(today);
   const todayB=bookings.filter(b=>b.date===todayStr).sort((a,b)=>a.time.localeCompare(b.time));
@@ -2584,9 +2584,9 @@ function renderDash(){
   populateHorseSelect();populateRiderSelect();
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    [19] MONTHLY CALENDAR
-   ═══════════════════════════════════════════════════════════ */
+   =========================================================== */
 function renderCalendar(){
   document.getElementById('cal-label').textContent=new Date(calYear,calMonth,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
 
@@ -2720,9 +2720,9 @@ function changeMonth(dir){
   renderCalendar();
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    [20] STAFF PANELS — Herd, Riders, Shows, Owners, Bookings
-   ═══════════════════════════════════════════════════════════ */ ──
+   =========================================================== */
 function renderHorses(){
   const count=horses.length;
   document.getElementById('horses-sub').textContent=count===0?'No horses yet':`${count} horse${count!==1?'s':''} in the stable`;
@@ -2947,9 +2947,9 @@ function renderBookings(){
   }).join('');
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    [21] PANEL SWITCHER
-   ═══════════════════════════════════════════════════════════ */
+   =========================================================== */
 function showPanel(name){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(n=>n.classList.remove('active'));
@@ -2965,9 +2965,9 @@ function showPanel(name){
   if(name==='home')renderDash();
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    [22] SHEETS, FORMS & TIME SELECTS
-   ═══════════════════════════════════════════════════════════ */ ──
+   =========================================================== */
 function getDefaultTimeForDate(dateStr){
   // Returns trainer start time if trainer is scheduled that day, else 09:00
   if(!dateStr)return'09:00';
@@ -2988,7 +2988,7 @@ function populateTimeSelect(id,def='09:00'){
   }
 }
 
-// ── BOOK FROM WEEK CALENDAR ──
+// -- BOOK FROM WEEK CALENDAR --
 function bookFromWeekCal(dateStr){
   // Open the appropriate booking sheet for the current role
   if(currentRole==='staff'){
@@ -3013,7 +3013,7 @@ function bookFromWeekCal(dateStr){
   }
 }
 
-// ── SHEETS ──
+// -- SHEETS --
 function openSheet(name){
   if(name==='booking'){
     populateHorseSelect();populateRiderSelect();
@@ -3093,9 +3093,9 @@ function openSheet(name){
 function closeSheet(name){document.getElementById('sheet-'+name).classList.remove('open');}
 document.querySelectorAll('.sheet-overlay').forEach(s=>{s.addEventListener('click',e=>{if(e.target===s)s.classList.remove('open');});});
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    [23] CRUD — Save Operations
-   ═══════════════════════════════════════════════════════════ */
+   =========================================================== */
 async function saveBooking(){
   const horseId=parseInt(document.getElementById('b-horse').value)||null;
   const riderId=parseInt(document.getElementById('b-rider').value)||null;
@@ -3236,9 +3236,9 @@ async function saveOwner(){
   renderOwners();renderDash();showToast(first+' added');
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    [24] SHOWS — CRUD & RSVP
-   ═══════════════════════════════════════════════════════════ */
+   =========================================================== */
 async function saveShow(){
   const name=document.getElementById('sh-name').value.trim();
   const date=document.getElementById('sh-date').value;
@@ -3249,7 +3249,7 @@ async function saveShow(){
   const horseIds=Array.from(document.getElementById('sh-horses').selectedOptions).map(o=>parseInt(o.value));
   const riderIds=Array.from(document.getElementById('sh-riders').selectedOptions).map(o=>parseInt(o.value));
   if(!name||!date){showToast('Please enter a name and date');return;}
-  // rsvps starts as empty object — riders respond yes/no/maybe
+  // rsvps starts as empty object -- riders respond yes/no/maybe
   const ns={id:Date.now(),name,date,end_date:endDate,location,division,notes,horse_ids:horseIds,rider_ids:riderIds,rsvps:{}};
   try{
     const{data,error}=await sb.from('shows').insert({name,date,end_date:endDate,location,division,notes,horse_ids:horseIds,rider_ids:riderIds,rsvps:{}}).select().single();
@@ -3341,7 +3341,7 @@ function showShowDetail(showId){
     <span style="background:var(--earth);color:var(--white);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500">${countdown}</span>
   </div>`;
 
-  // ── RSVP section for riders/parents ──
+  // -- RSVP section for riders/parents --
   if((currentRole==='rider'||currentRole==='parent')&&isFuture){
     const myStatus=getRsvpStatus(show);
     const riderName=currentRole==='parent'&&currentChildId?getRider(currentChildId)?.first:currentUser.name;
@@ -3363,7 +3363,7 @@ function showShowDetail(showId){
     </div>`;
   }
 
-  // ── RSVP summary for staff ──
+  // -- RSVP summary for staff --
   if(currentRole==='staff'&&showRiders.length>0){
     const going=showRiders.filter(r=>{const k=r.first+'_'+r.id;return rsvps[k]==='yes';});
     const maybe=showRiders.filter(r=>{const k=r.first+'_'+r.id;return rsvps[k]==='maybe';});
@@ -3415,9 +3415,9 @@ function showShowDetail(showId){
   showScreen('child-schedule');
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    [25] DELETE OPERATIONS
-   ═══════════════════════════════════════════════════════════ */
+   =========================================================== */
 async function deleteBooking(id){
   if(!confirm('Remove this booking?'))return;
   const b=bookings.find(x=>x.id===id);
@@ -3438,9 +3438,9 @@ async function deleteHorse(id){if(!confirm('Remove this horse?'))return;try{awai
 async function deleteRider(id){if(!confirm('Remove this rider?'))return;try{await sb.from('riders').delete().eq('id',id);}catch(e){console.error('Delete rider:',e)}riders=riders.filter(r=>r.id!==id);renderRiders();renderDash();showToast('Rider removed');populateLoginDropdowns();}
 async function deleteOwner(id){if(!confirm('Remove this owner?'))return;try{await sb.from('owners').delete().eq('id',id);}catch(e){console.error('Delete owner:',e)}owners=owners.filter(o=>o.id!==id);renderOwners();renderDash();showToast('Owner removed');}
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    [26] FORM POPULATION HELPERS
-   ═══════════════════════════════════════════════════════════ */
+   =========================================================== */
 function populateHorseSelect(){const el=document.getElementById('b-horse');if(!el)return;el.innerHTML='<option value="">— No horse —</option>'+horses.map(h=>`<option value="${h.id}">${h.name}</option>`).join('');}
 function populateRiderSelect(){const el=document.getElementById('b-rider');if(!el)return;el.innerHTML='<option value="">— Unassigned —</option>'+riders.map(r=>`<option value="${r.id}">${r.first}</option>`).join('');}
 function populateOwnerSelect(id){const el=document.getElementById(id);if(!el)return;el.innerHTML='<option value="">Barn owned</option>'+owners.map(o=>`<option value="${o.id}">${o.first}</option>`).join('');}
