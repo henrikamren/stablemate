@@ -608,9 +608,31 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 <!-- ══════════════════════════════════ -->
 <div class="screen" id="screen-app">
   <div class="topbar">
-    <div>
-      <div class="topbar-logo">Stable<span>Mate</span></div>
-      <div class="topbar-barn">Oasis Farm</div>
+    <div class="search-dropdown-wrap">
+      <button class="search-btn" onclick="toggleSearchDropdown('staff-dd')">🔍 Browse <span style="font-size:10px">▾</span></button>
+      <div class="search-dropdown" id="staff-dd">
+        <div class="search-dropdown-section" style="justify-content:space-between" onclick="toggleDDSection('staff-dd-horses-body')">
+          <span onclick="event.stopPropagation();showHorsesDash();closeAllDropdowns()" style="flex:1;cursor:pointer">🐴 Horses</span>
+          <span class="search-dropdown-section-arrow" id="staff-dd-horses-arrow" onclick="event.stopPropagation();toggleDDSection('staff-dd-horses-body')">▾</span>
+        </div>
+        <div class="search-dropdown-section-body" id="staff-dd-horses-body">
+          <div id="staff-dd-horses"></div>
+        </div>
+        <div class="search-dropdown-section" style="justify-content:space-between" onclick="toggleDDSection('staff-dd-riders-body')">
+          <span onclick="event.stopPropagation();showRidersDash();closeAllDropdowns()" style="flex:1;cursor:pointer">🏇 Riders</span>
+          <span class="search-dropdown-section-arrow" id="staff-dd-riders-arrow" onclick="event.stopPropagation();toggleDDSection('staff-dd-riders-body')">▾</span>
+        </div>
+        <div class="search-dropdown-section-body" id="staff-dd-riders-body">
+          <div id="staff-dd-riders"></div>
+        </div>
+        <div class="search-dropdown-section" style="justify-content:space-between" onclick="toggleDDSection('staff-dd-shows-body')">
+          <span onclick="event.stopPropagation();showShowsDash();closeAllDropdowns()" style="flex:1;cursor:pointer">🏆 Shows</span>
+          <span class="search-dropdown-section-arrow" id="staff-dd-shows-arrow" onclick="event.stopPropagation();toggleDDSection('staff-dd-shows-body')">▾</span>
+        </div>
+        <div class="search-dropdown-section-body" id="staff-dd-shows-body">
+          <div id="staff-dd-shows"></div>
+        </div>
+      </div>
     </div>
     <div class="topbar-user">
       <div class="topbar-avatar" id="topbar-avatar">?</div>
@@ -627,10 +649,10 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
       </div>
       <div id="next-up-area"></div>
       <div class="stats-row">
-        <div class="stat-card"><div class="stat-label">Horses</div><div class="stat-value" id="stat-horses">—</div></div>
-        <div class="stat-card"><div class="stat-label">Today</div><div class="stat-value" id="stat-today">—</div></div>
-        <div class="stat-card"><div class="stat-label">Week</div><div class="stat-value" id="stat-week">—</div></div>
-        <div class="stat-card"><div class="stat-label">Riders</div><div class="stat-value" id="stat-riders">—</div></div>
+        <div class="stat-card" style="cursor:pointer" onclick="showPanel('horses')"><div class="stat-label">Horses</div><div class="stat-value" id="stat-horses">—</div></div>
+        <div class="stat-card" style="cursor:pointer" onclick="showPanel('bookings')"><div class="stat-label">Today</div><div class="stat-value" id="stat-today">—</div></div>
+        <div class="stat-card" style="cursor:pointer" onclick="showPanel('calendar')"><div class="stat-label">Week</div><div class="stat-value" id="stat-week">—</div></div>
+        <div class="stat-card" style="cursor:pointer" onclick="showPanel('riders')"><div class="stat-label">Riders</div><div class="stat-value" id="stat-riders">—</div></div>
         <div class="stat-card" style="cursor:pointer" onclick="showPanel('lunge')"><div class="stat-label">Lunges</div><div class="stat-value" id="stat-lunge">—</div><div style="font-size:9px;color:var(--text-muted)">pending</div></div>
       </div>
       <div id="today-trainer-info"></div>
