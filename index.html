@@ -1427,15 +1427,14 @@ function buildDayCalendar(dateStr, myBookingIds){
     if(top<0||top>(totalH*SLOT_H))return;
     const h=getHorse(b.horse_id);const r=getRider(b.rider_id);const t=typeConfig[b.type]||{dot:'#888',label:b.type};
     const isMe=myBookingIds.includes(b.id);
+    const canAct=currentRole==='staff'||isMe;
     const bg=isMe?t.dot:'var(--sand)';
     const textColor=isMe?'white':'var(--text-muted)';
-    const deleteBtn=isMe?`<button onclick="deleteAnyBooking(${b.id})" style="background:none;border:none;color:${textColor};opacity:0.7;font-size:11px;cursor:pointer;padding:0;margin-left:4px">✕</button>`:'';
-    bookingBlocks+=`<div style="position:absolute;left:44px;right:4px;top:${top}px;height:${Math.max(height-2,20)}px;background:${bg};border-radius:6px;padding:3px 6px;overflow:hidden;z-index:1;display:flex;align-items:flex-start;justify-content:space-between">
+    bookingBlocks+=`<div onclick="${canAct?`showBookingPopup(${b.id},event)`:''}" style="position:absolute;left:44px;right:4px;top:${top}px;height:${Math.max(height-2,20)}px;background:${bg};border-radius:6px;padding:3px 6px;overflow:hidden;z-index:1;display:flex;align-items:flex-start;justify-content:space-between;${canAct?'cursor:pointer':''}">
       <div style="min-width:0;overflow:hidden">
         <div style="font-size:11px;font-weight:500;color:${textColor};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${h?h.name:(r?r.first:'Booking')}</div>
-        ${height>30?`<div style="font-size:10px;color:${textColor};opacity:0.85">${t.label}</div>`:''}
+        ${height>30?`<div style="font-size:10px;color:${textColor};opacity:0.85">${t.label}${r?' · '+r.first:''}</div>`:''}
       </div>
-      ${deleteBtn}
     </div>`;
   });
 
@@ -1444,6 +1443,43 @@ function buildDayCalendar(dateStr, myBookingIds){
     ${rows}
     ${bookingBlocks}
   </div>`;
+}
+
+function showBookingPopup(bookingId, event){
+  event.stopPropagation();
+  // Remove any existing popup
+  dismissBookingPopup();
+  const b=bookings.find(x=>x.id===bookingId);
+  if(!b)return;
+  const h=getHorse(b.horse_id);const r=getRider(b.rider_id);const t=typeConfig[b.type]||{label:b.type};
+  const todayStr=fmtDate(today);
+  const nowTime=String(today.getHours()).padStart(2,'0')+':'+String(today.getMinutes()).padStart(2,'0');
+  const passed=b.date<todayStr||(b.date===todayStr&&bookingEndTime(b)<=nowTime);
+  const dl=b.date===todayStr?'Today':new Date(b.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+
+  const popup=document.createElement('div');
+  popup.id='booking-popup';
+  popup.style.cssText='position:fixed;inset:0;z-index:150;display:flex;align-items:center;justify-content:center;background:rgba(20,8,4,0.4)';
+  popup.onclick=function(e){if(e.target===popup)dismissBookingPopup();};
+  popup.innerHTML=`<div style="background:var(--white);border-radius:14px;padding:20px;width:calc(100% - 48px);max-width:340px;box-shadow:0 8px 30px rgba(0,0,0,0.15)">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--earth);margin-bottom:12px">${h?h.name:'Booking'}</div>
+    <div style="font-size:13px;color:var(--text);margin-bottom:4px">${dl} at ${b.time} · ${fmtDur(b.duration)}</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">${t.label} · ${arenaLabel(b.arena)}</div>
+    ${r?`<div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Rider: ${r.first}</div>`:''}
+    ${b.notes?`<div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Notes: ${b.notes}</div>`:''}
+    ${passed?'<div style="font-size:12px;color:var(--text-muted);font-style:italic;margin-bottom:12px">This session has ended</div>':''}
+    <div style="display:flex;gap:8px;margin-top:14px">
+      ${!passed?`<button class="btn btn-secondary" style="flex:1;font-size:13px;padding:12px" onclick="dismissBookingPopup();editBookingFromRider(${b.id})">Edit</button>`:''}
+      ${!passed?`<button class="btn-danger-sm" style="flex:1;font-size:13px;padding:12px;border-radius:8px" onclick="dismissBookingPopup();deleteAnyBooking(${b.id})">Cancel</button>`:''}
+      <button class="btn btn-secondary" style="${passed?'flex:1;':''}font-size:13px;padding:12px" onclick="dismissBookingPopup()">Close</button>
+    </div>
+  </div>`;
+  document.body.appendChild(popup);
+}
+
+function dismissBookingPopup(){
+  const el=document.getElementById('booking-popup');
+  if(el)el.remove();
 }
 
 /* ===========================================================
