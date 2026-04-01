@@ -888,7 +888,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 <div class="sheet-overlay" id="sheet-rider-form">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">Add Rider</div>
+    <div class="sheet-title" id="rider-form-title">Add Rider</div>
     <div class="form-group"><label class="form-label">Name</label><input type="text" class="form-input" id="r-first" placeholder="Emma"></div>
     <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="r-email" placeholder="emma@example.com"></div>
     <div class="form-group"><label class="form-label">Phone</label><input type="tel" class="form-input" id="r-phone" placeholder="555-0000"></div>
@@ -900,11 +900,15 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
         <option value="independent">Independent</option>
       </select>
     </div>
+    <div class="form-group"><label class="form-label">Approved Horses</label>
+      <select class="form-select" id="r-horses" multiple style="min-height:90px"></select>
+      <div class="form-hint">Hold Ctrl / Cmd to select multiple</div>
+    </div>
     <div class="form-group"><label class="form-label">Parents / Guardians</label>
       <input type="text" class="form-input" id="r-parents" placeholder="Henrik, Maria">
       <div class="form-hint">Comma separated first names</div>
     </div>
-    <button class="btn btn-primary" onclick="saveRider()">Add Rider</button>
+    <button class="btn btn-primary" id="rider-form-save-btn" onclick="saveRider()">Add Rider</button>
     <button class="btn btn-secondary" style="width:100%;margin-top:10px" onclick="closeSheet('rider-form')">Cancel</button>
   </div>
 </div>
@@ -1590,7 +1594,7 @@ function renderRiderHome(){
       html+=`<div id="rider-more-bookings" style="display:none"><div class="schedule-card" style="margin-bottom:12px">
         <div class="schedule-header"><div class="schedule-title">Later</div><div class="schedule-meta">${restB.length} more</div></div>`;
       restB.forEach(b=>{ html+=renderBookingItem(b, true); });
-      html+='</div></div>';
+      html+=`</div><button class="btn btn-secondary" style="width:100%;margin-bottom:16px;font-size:12px;padding:10px" onclick="document.getElementById('rider-more-bookings').style.display='none';document.getElementById('rider-expand-btn').style.display='block'">Collapse</button></div>`;
       html+=`<button id="rider-expand-btn" class="btn btn-secondary" style="width:100%;margin-bottom:16px;font-size:12px;padding:10px" onclick="document.getElementById('rider-more-bookings').style.display='block';this.style.display='none'">Show ${restB.length} more session${restB.length!==1?'s':''}</button>`;
     }
   }
@@ -1734,8 +1738,8 @@ function showChildSchedule(riderId,canBook){
   currentChildId=riderId;
   const todayStr=fmtDate(today);
   const nowTime=String(today.getHours()).padStart(2,'0')+':'+String(today.getMinutes()).padStart(2,'0');
-  // Include today's sessions even if passed (so they show with strikethrough)
-  const cb=bookings.filter(b=>b.rider_id===child.id&&b.date>=todayStr).sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date));
+  // Only show future and currently-active bookings
+  const cb=bookings.filter(b=>b.rider_id===child.id&&(b.date>todayStr||(b.date===todayStr&&bookingEndTime(b)>nowTime))).sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date));
 
   let html=`<div class="rider-greeting">${child.first}</div>
   <div class="rider-date-sub" style="margin-bottom:20px">${child.level} rider · ${BARN_NAME}</div>`;
@@ -1743,23 +1747,22 @@ function showChildSchedule(riderId,canBook){
   if(cb.length===0){
     html+='<div class="empty"><div class="empty-icon">◫</div><div class="empty-text">No upcoming visits</div></div>';
   } else {
-    html+='<div class="schedule-card"><div class="schedule-header"><div class="schedule-title">Visits</div></div>';
+    html+='<div class="schedule-card"><div class="schedule-header"><div class="schedule-title">Upcoming Visits</div></div>';
     cb.forEach(b=>{
       const h=getHorse(b.horse_id);const t=typeConfig[b.type]||{label:b.type,dot:'#888'};
       const dl=b.date===todayStr?'Today':new Date(b.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
       const trs=getTrainersForDate(b.date);
       const trAvail=trs.length>0?trs.map(s=>s.trainer_name).join(', '):'No trainer';
-      const passed=b.date<todayStr||(b.date===todayStr&&bookingEndTime(b)<=nowTime);
       const showActions=canBook;
-      html+=`<div class="schedule-item" style="${passed?'opacity:0.45':''}">
-        <div class="schedule-time" style="${passed?'text-decoration:line-through':''}">${b.time}</div>
-        <div class="schedule-dot" style="background:${passed?'#ccc':t.dot}"></div>
-        <div class="schedule-info" style="${passed?'text-decoration:line-through':''}">
+      html+=`<div class="schedule-item">
+        <div class="schedule-time">${b.time}</div>
+        <div class="schedule-dot" style="background:${t.dot}"></div>
+        <div class="schedule-info">
           <div class="schedule-horse">${h?h.name:'Unassigned'}</div>
           <div class="schedule-detail">${dl} · ${t.label} · ${fmtDur(b.duration)}</div>
           <div class="schedule-rider" style="color:var(--text-muted)">${arenaLabel(b.arena)} · ${trAvail}</div>
         </div>
-        ${showActions&&!passed?`<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+        ${showActions?`<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
           <button class="btn btn-secondary btn-sm" style="font-size:10px;padding:5px 8px" onclick="editBookingFromRider(${b.id})">Edit</button>
           <button class="btn-danger-sm" style="font-size:10px;padding:5px 8px" onclick="deleteAnyBooking(${b.id})">Cancel</button>
         </div>`:''}
@@ -2614,7 +2617,7 @@ function renderDash(){
 
   // Next up
   const nowTime=String(today.getHours()).padStart(2,'0')+':'+String(today.getMinutes()).padStart(2,'0');
-  const nextB=todayB.find(b=>b.time>=nowTime)||todayB[0];
+  const nextB=todayB.find(b=>bookingEndTime(b)>nowTime);
   const nextArea=document.getElementById('next-up-area');
   if(nextB){
     const h=getHorse(nextB.horse_id);const r=getRider(nextB.rider_id);const t=typeConfig[nextB.type]||{label:nextB.type};
@@ -2627,23 +2630,21 @@ function renderDash(){
   } else nextArea.innerHTML='';
 
   const list=document.getElementById('today-list');
-  const allPassed=todayB.length>0&&todayB.every(b=>bookingEndTime(b)<=nowTime);
+  const activeToday=todayB.filter(b=>bookingEndTime(b)>nowTime);
   const tomStr=fmtDate(addDays(today,1));
   const tomB=bookings.filter(b=>b.date===tomStr).sort((a,b)=>a.time.localeCompare(b.time));
 
-  if(todayB.length===0&&tomB.length===0){
-    list.innerHTML='<div class="empty"><div class="empty-icon">◫</div><div class="empty-text">No bookings today or tomorrow</div></div>';
+  if(activeToday.length===0&&tomB.length===0){
+    list.innerHTML='<div class="empty"><div class="empty-icon">◫</div><div class="empty-text">No upcoming bookings today or tomorrow</div></div>';
   } else {
     let html='';
-    if(todayB.length>0){
-      if(allPassed)html+=`<div style="padding:8px 16px;font-size:11px;color:var(--text-muted);letter-spacing:0.06em">TODAY — COMPLETED</div>`;
-      html+=todayB.map(b=>{
+    if(activeToday.length>0){
+      html+=activeToday.map(b=>{
         const h=getHorse(b.horse_id);const r=getRider(b.rider_id);const t=typeConfig[b.type]||{label:b.type,dot:'#888'};
-        const passed=bookingEndTime(b)<=nowTime;
-        return`<div class="schedule-item" style="${passed?'opacity:0.45':''}">
-          <div class="schedule-time" style="${passed?'text-decoration:line-through':''}">${b.time}</div>
-          <div class="schedule-dot" style="background:${passed?'#ccc':t.dot}"></div>
-          <div class="schedule-info" style="${passed?'text-decoration:line-through':''}">
+        return`<div class="schedule-item">
+          <div class="schedule-time">${b.time}</div>
+          <div class="schedule-dot" style="background:${t.dot}"></div>
+          <div class="schedule-info">
             <div class="schedule-horse">${h?h.name:'Unknown'}${!b.rider_id?'<span class="unassigned-badge">No rider</span>':''}</div>
             <div class="schedule-detail"><span class="ev-badge ${t.cls}">${t.label}</span> · ${fmtDur(b.duration)} · ${arenaLabel(b.arena)}</div>
             ${r?`<div class="schedule-rider">${r.first}</div>`:''}
@@ -2652,8 +2653,8 @@ function renderDash(){
         </div>`;
       }).join('');
     }
-    if(allPassed&&tomB.length>0){
-      html+=`<div style="padding:8px 16px 4px;font-size:11px;color:var(--earth);font-weight:500;letter-spacing:0.06em;border-top:1px solid var(--cream-dark)">TOMORROW</div>`;
+    if(tomB.length>0){
+      html+=`<div style="padding:8px 16px 4px;font-size:11px;color:var(--earth);font-weight:500;letter-spacing:0.06em;${activeToday.length>0?'border-top:1px solid var(--cream-dark)':''}">TOMORROW</div>`;
       html+=tomB.map(b=>{
         const h=getHorse(b.horse_id);const r=getRider(b.rider_id);const t=typeConfig[b.type]||{label:b.type,dot:'#888'};
         return`<div class="schedule-item">
@@ -2931,7 +2932,10 @@ function renderRiders(){
           <div class="person-sub">${r.level}${myH.length?' · '+myH.map(h=>h.name).join(', '):''}</div>
           ${r.parents?`<div class="person-sub">Parents: ${r.parents}</div>`:''}
         </div>
-        <button class="btn-danger-sm" onclick="event.stopPropagation();deleteRider(${r.id})">✕</button>
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          <button class="btn btn-secondary btn-sm" style="font-size:10px;padding:5px 8px" onclick="event.stopPropagation();openEditRider(${r.id})">Edit</button>
+          <button class="btn-danger-sm" onclick="event.stopPropagation();deleteRider(${r.id})">✕</button>
+        </div>
       </div>
       ${miniWeek}
       ${next?`<div style="background:var(--cream);border-radius:6px;padding:6px 10px;font-size:11px;color:var(--text-muted);display:flex;justify-content:space-between;align-items:center">
@@ -3268,6 +3272,15 @@ function openSheet(name){
     if(recurSel){recurSel.value='none';document.getElementById('rb-recur-until-group').style.display='none';}
   }
   if(name==='horse'){populateOwnerSelect('h-owner');}
+  if(name==='rider-form'){
+    // Populate horse select for new rider (edit mode populates separately)
+    const sheetEl=document.getElementById('sheet-rider-form');
+    if(!sheetEl?.dataset.editId){
+      populateRiderHorseSelect([]);
+      document.getElementById('rider-form-title').textContent='Add Rider';
+      document.getElementById('rider-form-save-btn').textContent='Add Rider';
+    }
+  }
   document.getElementById('sheet-'+name).classList.add('open');
 }
 function closeSheet(name){document.getElementById('sheet-'+name).classList.remove('open');}
@@ -3440,17 +3453,57 @@ async function saveHorse(){
   renderHorses();renderDash();showToast(name+' added');
 }
 
+function populateRiderHorseSelect(selectedIds){
+  const el=document.getElementById('r-horses');if(!el)return;
+  el.innerHTML=horses.map(h=>`<option value="${h.id}" ${(selectedIds||[]).map(Number).includes(parseInt(h.id))?'selected':''}>${h.name}</option>`).join('');
+}
+
+function openEditRider(riderId){
+  const r=riders.find(x=>parseInt(x.id)===parseInt(riderId));
+  if(!r)return;
+  document.getElementById('rider-form-title').textContent='Edit Rider';
+  document.getElementById('rider-form-save-btn').textContent='Save Changes';
+  document.getElementById('r-first').value=r.first||'';
+  document.getElementById('r-email').value=r.email||'';
+  document.getElementById('r-phone').value=r.phone||'';
+  document.getElementById('r-level').value=r.level||'beginner';
+  document.getElementById('r-parents').value=r.parents||'';
+  populateRiderHorseSelect(r.approved_horses||[]);
+  document.getElementById('sheet-rider-form').dataset.editId=riderId;
+  openSheet('rider-form');
+}
+
 async function saveRider(){
   const first=document.getElementById('r-first').value.trim();
   const email=document.getElementById('r-email').value.trim();
   const phone=document.getElementById('r-phone').value.trim();
   const level=document.getElementById('r-level').value;
   const parents=document.getElementById('r-parents').value.trim();
+  const approved_horses=Array.from(document.getElementById('r-horses').selectedOptions).map(o=>parseInt(o.value));
   if(!first){showToast('Please enter a name');return;}
-  const nr={id:Date.now(),first,last:'',email,phone,level,parents,approved_horses:[]};
-  try{const{data,error}=await sb.from('riders').insert({first,last:'',email,phone,level,parents}).select().single();if(!error&&data)riders.push(data);else riders.push(nr);}catch(e){riders.push(nr);}
-  closeSheet('rider-form');['r-first','r-email','r-phone','r-parents'].forEach(id=>document.getElementById(id).value='');
-  renderRiders();renderDash();showToast(first+' added');
+
+  const sheetEl=document.getElementById('sheet-rider-form');
+  const editId=sheetEl?.dataset.editId?parseInt(sheetEl.dataset.editId):null;
+
+  if(editId){
+    // Update existing rider
+    const patch={first,email,phone,level,parents,approved_horses};
+    try{await sb.from('riders').update(patch).eq('id',editId);}catch(e){console.error('Update rider:',e);}
+    const idx=riders.findIndex(r=>parseInt(r.id)===editId);
+    if(idx>=0)riders[idx]={...riders[idx],...patch};
+    delete sheetEl.dataset.editId;
+    closeSheet('rider-form');
+    renderRiders();renderDash();showToast(first+' updated');
+  } else {
+    // Add new rider
+    const nr={id:Date.now(),first,last:'',email,phone,level,parents,approved_horses};
+    try{const{data,error}=await sb.from('riders').insert({first,last:'',email,phone,level,parents,approved_horses}).select().single();if(!error&&data)riders.push(data);else riders.push(nr);}catch(e){riders.push(nr);}
+    closeSheet('rider-form');
+    renderRiders();renderDash();showToast(first+' added');
+  }
+  ['r-first','r-email','r-phone','r-parents'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('rider-form-title').textContent='Add Rider';
+  document.getElementById('rider-form-save-btn').textContent='Add Rider';
   populateLoginDropdowns();
 }
 
