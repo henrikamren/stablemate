@@ -1340,7 +1340,7 @@ function buildWeekCalendar(highlightRiderIds){
     const allBookings=bookings.filter(b=>b.date===ds);
     const trainerColor=hasTrainer?(TRAINER_COLORS[trainerNames[0]]||TRAINER_COLORS.default):'transparent';
 
-    html+=`<div style="background:var(--white);border-radius:8px;border:1px solid ${isToday?'var(--earth)':'var(--sand)'};overflow:hidden;${isToday?'box-shadow:0 0 0 2px var(--earth)':''}cursor:pointer" onclick="bookFromWeekCal('${ds}')">
+    html+=`<div style="background:var(--white);border-radius:8px;border:1px solid ${isToday?'var(--earth)':'var(--sand)'};overflow:hidden;${isToday?'box-shadow:0 0 0 2px var(--earth)':''}cursor:pointer" onclick="showWeekDayDetail('${ds}')">
       <div style="height:4px;background:${trainerColor};opacity:${hasTrainer?0.85:0}"></div>
       <div style="padding:4px 4px 2px;text-align:center">
         <div style="font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:${isToday?'var(--earth)':'var(--text-muted)'};font-weight:${isToday?'500':'400'}">${days7[d.getDay()]}</div>
@@ -1584,8 +1584,18 @@ function renderParentHome(){
 
   if(myChildren.length>0){
     html+=`<div class="section-label">Your Children</div>`;
-    myChildren.forEach(child=>{
-      const nowTimePH=String(today.getHours()).padStart(2,'0')+':'+String(today.getMinutes()).padStart(2,'0');
+    const nowTimePH=String(today.getHours()).padStart(2,'0')+':'+String(today.getMinutes()).padStart(2,'0');
+    // Sort children by next lesson: earliest first, no upcoming last
+    const childrenSorted=myChildren.slice().sort((a,b)=>{
+      const aNext=bookings.filter(bk=>bk.rider_id===a.id&&(bk.date>todayStr||(bk.date===todayStr&&bookingEndTime(bk)>nowTimePH))).sort((x,y)=>x.date===y.date?x.time.localeCompare(y.time):x.date.localeCompare(y.date))[0];
+      const bNext=bookings.filter(bk=>bk.rider_id===b.id&&(bk.date>todayStr||(bk.date===todayStr&&bookingEndTime(bk)>nowTimePH))).sort((x,y)=>x.date===y.date?x.time.localeCompare(y.time):x.date.localeCompare(y.date))[0];
+      if(!aNext&&!bNext)return 0;
+      if(!aNext)return 1;
+      if(!bNext)return -1;
+      if(aNext.date!==bNext.date)return aNext.date.localeCompare(bNext.date);
+      return aNext.time.localeCompare(bNext.time);
+    });
+    childrenSorted.forEach(child=>{
       const cb=bookings.filter(b=>b.rider_id===child.id&&(b.date>todayStr||(b.date===todayStr&&bookingEndTime(b)>nowTimePH))).sort((a,b)=>a.date.localeCompare(b.date));
       const next=cb[0];const h=next?getHorse(next.horse_id):null;const t=next?(typeConfig[next.type]||{label:next.type}):null;
       html+=`<div class="child-card" onclick="showChildSchedule(${child.id},true)">
@@ -1650,6 +1660,8 @@ function showChildSchedule(riderId,canBook){
   const child=getRider(riderId);if(!child)return;
   currentChildId=riderId;
   const todayStr=fmtDate(today);
+  const nowTime=String(today.getHours()).padStart(2,'0')+':'+String(today.getMinutes()).padStart(2,'0');
+  // Include today's sessions even if passed (so they show with strikethrough)
   const cb=bookings.filter(b=>b.rider_id===child.id&&b.date>=todayStr).sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date));
 
   let html=`<div class="rider-greeting">${child.first}</div>
@@ -1658,22 +1670,23 @@ function showChildSchedule(riderId,canBook){
   if(cb.length===0){
     html+='<div class="empty"><div class="empty-icon">◫</div><div class="empty-text">No upcoming visits</div></div>';
   } else {
-    html+='<div class="schedule-card"><div class="schedule-header"><div class="schedule-title">Upcoming Visits</div></div>';
+    html+='<div class="schedule-card"><div class="schedule-header"><div class="schedule-title">Visits</div></div>';
     cb.forEach(b=>{
       const h=getHorse(b.horse_id);const t=typeConfig[b.type]||{label:b.type,dot:'#888'};
       const dl=b.date===todayStr?'Today':new Date(b.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
       const trs=getTrainersForDate(b.date);
       const trAvail=trs.length>0?trs.map(s=>s.trainer_name).join(', '):'No trainer';
-      const showDel=canBook; // canBook means this is parent's own child
-      html+=`<div class="schedule-item">
-        <div class="schedule-time">${b.time}</div>
-        <div class="schedule-dot" style="background:${t.dot}"></div>
-        <div class="schedule-info">
+      const passed=b.date<todayStr||(b.date===todayStr&&bookingEndTime(b)<=nowTime);
+      const showActions=canBook;
+      html+=`<div class="schedule-item" style="${passed?'opacity:0.45':''}">
+        <div class="schedule-time" style="${passed?'text-decoration:line-through':''}">${b.time}</div>
+        <div class="schedule-dot" style="background:${passed?'#ccc':t.dot}"></div>
+        <div class="schedule-info" style="${passed?'text-decoration:line-through':''}">
           <div class="schedule-horse">${h?h.name:'Unassigned'}</div>
           <div class="schedule-detail">${dl} · ${t.label} · ${fmtDur(b.duration)}</div>
           <div class="schedule-rider" style="color:var(--text-muted)">${arenaLabel(b.arena)} · ${trAvail}</div>
         </div>
-        ${showDel?`<button class="btn-danger-sm" onclick="deleteAnyBooking(${b.id})">✕</button>`:''}
+        ${showActions&&!passed?`<button class="btn-danger-sm" onclick="deleteAnyBooking(${b.id})">Cancel</button>`:''}
       </div>`;
     });
     html+='</div>';
@@ -2986,6 +2999,96 @@ function populateTimeSelect(id,def='09:00'){
     const v=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
     const o=document.createElement('option');o.value=v;o.textContent=v;if(v===def)o.selected=true;sel.appendChild(o);
   }
+}
+
+// -- WEEK CALENDAR DAY DETAIL --
+function showWeekDayDetail(dateStr){
+  const dayB=bookings.filter(b=>b.date===dateStr).sort((a,b)=>a.time.localeCompare(b.time));
+  const label=new Date(dateStr+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  const dayTrainers=getTrainersForDate(dateStr);
+  const todayStr=fmtDate(today);
+  const nowTime=String(today.getHours()).padStart(2,'0')+':'+String(today.getMinutes()).padStart(2,'0');
+  const nameLower=(currentUser?.name||'').trim().toLowerCase();
+  const me=riders.find(r=>r.first.toLowerCase()===nameLower);
+  const myChildren=currentRole==='parent'?riders.filter(r=>r.parents&&r.parents.split(',').map(p=>p.trim().toLowerCase()).includes(nameLower)):[];
+  const myChildIds=myChildren.map(c=>parseInt(c.id));
+  const meId=me?parseInt(me.id):null;
+
+  let html=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <div style="font-size:13px;font-weight:500;color:var(--earth)">${label}</div>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-secondary btn-sm" onclick="bookFromWeekCal('${dateStr}')">+ Book</button>
+      <button class="btn btn-secondary btn-sm" onclick="closeWeekDayDetail()">Close</button>
+    </div>
+  </div>`;
+
+  if(dayTrainers.length>0){
+    html+=`<div style="margin-bottom:10px">${dayTrainers.map(s=>`<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);margin-bottom:3px">
+      <div style="width:8px;height:8px;border-radius:50%;background:${TRAINER_COLORS[s.trainer_name]||TRAINER_COLORS.default}"></div>
+      ${s.trainer_name} -- ${s.start_time}--${s.end_time}
+    </div>`).join('')}</div>`;
+  } else {
+    html+=`<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">No trainer scheduled</div>`;
+  }
+
+  if(dayB.length===0){
+    html+=`<div style="font-size:13px;color:var(--text-muted);text-align:center;padding:12px">No bookings this day</div>`;
+  } else {
+    dayB.forEach(b=>{
+      const h=getHorse(b.horse_id);const r=getRider(b.rider_id);const t=typeConfig[b.type]||{label:b.type,dot:'#888',cls:'ev-arena'};
+      const passed=b.date<todayStr||(b.date===todayStr&&bookingEndTime(b)<=nowTime);
+      const isOwn=currentRole==='staff'||(currentRole==='rider'&&meId&&parseInt(b.rider_id)===meId)||(currentRole==='parent'&&myChildIds.includes(parseInt(b.rider_id)));
+      html+=`<div class="booking-row" style="${passed?'opacity:0.5':''}">
+        <div class="booking-left">
+          <div class="booking-horse" style="${passed?'text-decoration:line-through':''}">${h?h.name:'Unknown'}${r?' -- '+r.first:''}</div>
+          <div class="booking-meta" style="${passed?'text-decoration:line-through':''}">${b.time} -- ${t.label} -- ${fmtDur(b.duration)} -- ${arenaLabel(b.arena)}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <span class="ev-badge ${t.cls}">${t.label}</span>
+          ${isOwn?`<div style="display:flex;gap:4px">
+            <button class="btn-danger-sm" onclick="deleteFromWeekDay(${b.id},'${dateStr}')">Cancel</button>
+          </div>`:''}
+        </div>
+      </div>`;
+    });
+  }
+
+  // Insert into the appropriate content area
+  let container=document.getElementById('week-day-detail');
+  if(!container){
+    container=document.createElement('div');
+    container.id='week-day-detail';
+    container.style.cssText='background:var(--cream-dark);border-radius:10px;border:1px solid var(--sand);padding:14px 16px;margin-bottom:16px';
+    // Find the week calendar container and insert after it
+    const contentEl=currentRole==='rider'?document.getElementById('rider-content')
+      :currentRole==='parent'?document.getElementById('parent-content')
+      :document.getElementById('panel-home');
+    if(contentEl){
+      // Try to find existing detail, or append
+      const existing=contentEl.querySelector('#week-day-detail');
+      if(existing){existing.innerHTML=html;return;}
+      contentEl.appendChild(container);
+    }
+  }
+  container.innerHTML=html;
+  container.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function closeWeekDayDetail(){
+  const el=document.getElementById('week-day-detail');
+  if(el)el.remove();
+}
+
+async function deleteFromWeekDay(id, dateStr){
+  if(!canDeleteBooking(id)){showToast('You cannot cancel this booking');return;}
+  if(!confirm('Cancel this booking?'))return;
+  try{await sb.from('bookings').delete().eq('id',id);}catch(e){}
+  bookings=bookings.filter(b=>b.id!==id);
+  showWeekDayDetail(dateStr);
+  if(currentRole==='staff'){renderDash();renderBookings();}
+  else if(currentRole==='rider'){renderRiderHome();}
+  else if(currentRole==='parent'){renderParentHome();}
+  showToast('Booking cancelled');
 }
 
 // -- BOOK FROM WEEK CALENDAR --
