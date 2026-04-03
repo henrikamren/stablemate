@@ -73,6 +73,16 @@ function showChildSchedule(riderId,canBook){
   let html=`<div class="rider-greeting">${child.first}</div>
   <div class="rider-date-sub" style="margin-bottom:20px">${child.level} rider · ${BARN_NAME}</div>`;
 
+  // Away From Barn entries for this child
+  if(typeof buildRiderAfbList==='function')html+=buildRiderAfbList(child.id);
+
+  // AFB button for parents
+  if(canBook){
+    html+=`<button class="btn btn-secondary" style="width:100%;margin-bottom:16px;font-size:12px;padding:10px;display:flex;align-items:center;justify-content:center;gap:6px" onclick="currentChildId=${child.id};openAfbSheet()">
+      🏠 Mark ${child.first} Away From Barn
+    </button>`;
+  }
+
   if(cb.length===0){
     html+='<div class="empty"><div class="empty-icon">◫</div><div class="empty-text">No upcoming visits</div></div>';
   } else {

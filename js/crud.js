@@ -50,6 +50,15 @@ async function saveBooking(){
   if(!date){showToast('Please select a date');return;}
   const editId=document.getElementById('sheet-booking')?.dataset.editId?parseInt(document.getElementById('sheet-booking').dataset.editId):null;
   if(isHorseDoubleBooked(horseId,date,time,duration,editId)){showToast('This horse is already booked at that time');return;}
+  // Check AFB/HNR conflicts
+  if(typeof checkBookingConflicts==='function'){
+    const{warnings,canProceed}=checkBookingConflicts(riderId,horseId,date,time);
+    if(warnings.length>0){
+      const msgs=warnings.map(w=>w.message).join('\n');
+      if(!canProceed){showToast(msgs);return;}
+      if(!confirm(msgs+'\n\nProceed anyway?'))return;
+    }
+  }
   const nb={id:Date.now(),horse_id:horseId,rider_id:riderId,date,time,duration,type,arena,notes};
   try{
     const{data,error}=await sb.from('bookings').insert({horse_id:horseId,rider_id:riderId,date,time,duration,type,arena,notes}).select().single();
@@ -90,6 +99,7 @@ async function saveRiderBooking(){
   // Double-booking check
   if(isHorseDoubleBooked(horseId,date,time,duration,editId)){showToast('This horse is already booked at that time');return;}
 
+  // Check AFB/HNR conflicts
   let riderId=null;
   if(currentRole==='parent'){
     // Use child selector value
@@ -103,6 +113,16 @@ async function saveRiderBooking(){
   } else {
     const rider=riders.find(r=>r.first===currentUser.name||r.first+' '+(r.last||'').trim()===currentUser.name);
     riderId=rider?rider.id:null;
+  }
+
+  // AFB/HNR conflict check (now that riderId is known)
+  if(typeof checkBookingConflicts==='function'){
+    const{warnings,canProceed}=checkBookingConflicts(riderId,horseId,date,time);
+    if(warnings.length>0){
+      const msgs=warnings.map(w=>w.message).join('\n');
+      if(!canProceed){showToast(msgs);return;}
+      if(!confirm(msgs+'\n\nProceed anyway?'))return;
+    }
   }
 
   // Build list of dates to book
@@ -252,6 +272,9 @@ async function saveShow(){
     const{data,error}=await sb.from('shows').insert({name,date,end_date:endDate,location,division,notes,horse_ids:horseIds,rider_ids:riderIds,rsvps:{}}).select().single();
     if(!error&&data)shows.push(data);else shows.push(ns);
   }catch(e){shows.push(ns);}
+  // Auto-create Away From Barn entries for riders in this show
+  const savedShow=shows[shows.length-1];
+  if(typeof syncShowAfb==='function')await syncShowAfb(savedShow);
   closeSheet('show');
   ['sh-name','sh-date','sh-end-date','sh-location','sh-class','sh-notes'].forEach(id=>document.getElementById(id).value='');
   showToast(name+' added');

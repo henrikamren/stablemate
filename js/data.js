@@ -28,6 +28,10 @@ async function loadAll(){
     shows=sh.data||[];
     lungeRequests=lr.data||[];
 
+    // Load Away From Barn and Horse Not Rideable entries
+    if(typeof loadAfbEntries==='function')await loadAfbEntries();
+    if(typeof loadHnrEntries==='function')await loadHnrEntries();
+
     // Mirror onto globalThis for test introspection and console access
     globalThis.owners=owners;
     globalThis.horses=horses;
@@ -36,6 +40,8 @@ async function loadAll(){
     globalThis.schedules=schedules;
     globalThis.shows=shows;
     globalThis.lungeRequests=lungeRequests;
+    globalThis.afbEntries=typeof afbEntries!=='undefined'?afbEntries:[];
+    globalThis.hnrEntries=typeof hnrEntries!=='undefined'?hnrEntries:[];
     globalThis.appReady=true;
   }catch(e){
     console.error('Load error:',e);

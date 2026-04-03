@@ -1,0 +1,114 @@
+<!-- ===========================================================
+     AFB & HNR Sheet Templates
+     Insert these inside the main HTML body alongside existing sheets
+     =========================================================== -->
+
+<!-- AWAY FROM BARN SHEET -->
+<div id="sheet-afb" class="sheet-overlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div id="afb-sheet-title" class="sheet-title">Away From Barn</div>
+
+    <!-- Rider selector (staff & parent only) -->
+    <div id="afb-rider-group" class="field-group" style="display:none">
+      <label class="field-label">Rider</label>
+      <select id="afb-rider" class="field-select"></select>
+    </div>
+
+    <!-- Date range -->
+    <div class="field-group">
+      <label class="field-label">Start Date</label>
+      <input type="date" id="afb-start-date" class="field-input">
+    </div>
+    <div class="field-group">
+      <label class="field-label">End Date</label>
+      <input type="date" id="afb-end-date" class="field-input">
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Same as start date for single day</div>
+    </div>
+
+    <!-- All day toggle (hidden for multi-day ranges) -->
+    <div id="afb-all-day-group" class="field-group">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <input type="checkbox" id="afb-all-day" checked style="width:18px;height:18px;accent-color:var(--earth)">
+        <span class="field-label" style="margin-bottom:0">All Day</span>
+      </label>
+    </div>
+
+    <!-- Time pickers (shown only for single-day partial) -->
+    <div id="afb-time-group" style="display:none">
+      <div style="display:flex;gap:10px">
+        <div class="field-group" style="flex:1">
+          <label class="field-label">From</label>
+          <select id="afb-start-time" class="field-select"></select>
+        </div>
+        <div class="field-group" style="flex:1">
+          <label class="field-label">Until</label>
+          <select id="afb-end-time" class="field-select"></select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reason -->
+    <div class="field-group">
+      <label class="field-label">Reason (optional)</label>
+      <input type="text" id="afb-reason" class="field-input" placeholder="e.g. Family trip, Doctor appt">
+    </div>
+
+    <button id="afb-save-btn" class="btn btn-primary" style="width:100%;margin-top:16px" onclick="saveAfb()">Save</button>
+  </div>
+</div>
+
+<!-- HORSE NOT RIDEABLE SHEET -->
+<div id="sheet-hnr" class="sheet-overlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div id="hnr-sheet-title" class="sheet-title">Horse Not Rideable</div>
+
+    <!-- Horse selector -->
+    <div class="field-group">
+      <label class="field-label">Horse</label>
+      <select id="hnr-horse" class="field-select"></select>
+    </div>
+
+    <!-- Date range -->
+    <div class="field-group">
+      <label class="field-label">Start Date</label>
+      <input type="date" id="hnr-start-date" class="field-input">
+    </div>
+    <div class="field-group">
+      <label class="field-label">End Date</label>
+      <input type="date" id="hnr-end-date" class="field-input">
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Same as start date for single day</div>
+    </div>
+
+    <!-- All day toggle -->
+    <div id="hnr-all-day-group" class="field-group">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <input type="checkbox" id="hnr-all-day" checked style="width:18px;height:18px;accent-color:var(--earth)">
+        <span class="field-label" style="margin-bottom:0">All Day</span>
+      </label>
+    </div>
+
+    <!-- Time pickers -->
+    <div id="hnr-time-group" style="display:none">
+      <div style="display:flex;gap:10px">
+        <div class="field-group" style="flex:1">
+          <label class="field-label">From</label>
+          <select id="hnr-start-time" class="field-select"></select>
+        </div>
+        <div class="field-group" style="flex:1">
+          <label class="field-label">Until</label>
+          <select id="hnr-end-time" class="field-select"></select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reason -->
+    <div class="field-group">
+      <label class="field-label">Reason (optional)</label>
+      <input type="text" id="hnr-reason" class="field-input" placeholder="e.g. Lame, Farrier, Rest day">
+    </div>
+
+    <button id="hnr-save-btn" class="btn btn-primary" style="width:100%;margin-top:16px" onclick="saveHnr()">Save</button>
+  </div>
+</div>

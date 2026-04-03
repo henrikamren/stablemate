@@ -439,6 +439,7 @@
       </select>
     </div>
     <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="b-notes" placeholder="Optional notes..."></textarea></div>
+    <div id="b-conflict-warning"></div>
     <button class="btn btn-primary" id="b-save-btn" onclick="saveBooking()">Save Booking</button>
     <button class="btn btn-secondary" style="width:100%;margin-top:10px" onclick="closeSheet('booking')">Cancel</button>
   </div>
@@ -496,6 +497,7 @@
       <input type="date" class="form-input" id="rb-recur-until">
     </div>
     <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="rb-notes" placeholder="Anything the trainer should know..."></textarea></div>
+    <div id="rb-conflict-warning"></div>
     <button class="btn btn-primary" onclick="saveRiderBooking()">Confirm Booking</button>
     <button class="btn btn-secondary" style="width:100%;margin-top:10px" onclick="closeSheet('rider-booking')">Cancel</button>
   </div>
@@ -632,6 +634,84 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- AWAY FROM BARN SHEET -->
+<div id="sheet-afb" class="sheet-overlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div id="afb-sheet-title" class="sheet-title">Away From Barn</div>
+    <div id="afb-rider-group" class="form-group" style="display:none">
+      <label class="form-label">Rider</label>
+      <select id="afb-rider" class="form-select"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Start Date</label>
+      <input type="date" id="afb-start-date" class="form-input">
+    </div>
+    <div class="form-group">
+      <label class="form-label">End Date</label>
+      <input type="date" id="afb-end-date" class="form-input">
+      <div class="form-hint">Same as start date for single day</div>
+    </div>
+    <div id="afb-all-day-group" class="form-group">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <input type="checkbox" id="afb-all-day" checked style="width:18px;height:18px;accent-color:var(--earth)">
+        <span class="form-label" style="margin-bottom:0">All Day</span>
+      </label>
+    </div>
+    <div id="afb-time-group" style="display:none">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">From</label><select id="afb-start-time" class="form-select"></select></div>
+        <div class="form-group"><label class="form-label">Until</label><select id="afb-end-time" class="form-select"></select></div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Reason (optional)</label>
+      <input type="text" id="afb-reason" class="form-input" placeholder="e.g. Family trip, Doctor appt">
+    </div>
+    <button id="afb-save-btn" class="btn btn-primary" style="width:100%" onclick="saveAfb()">Save</button>
+    <button class="btn btn-secondary" style="width:100%;margin-top:10px" onclick="closeSheet('afb')">Cancel</button>
+  </div>
+</div>
+
+<!-- HORSE NOT RIDEABLE SHEET -->
+<div id="sheet-hnr" class="sheet-overlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div id="hnr-sheet-title" class="sheet-title">Horse Not Rideable</div>
+    <div class="form-group">
+      <label class="form-label">Horse</label>
+      <select id="hnr-horse" class="form-select"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Start Date</label>
+      <input type="date" id="hnr-start-date" class="form-input">
+    </div>
+    <div class="form-group">
+      <label class="form-label">End Date</label>
+      <input type="date" id="hnr-end-date" class="form-input">
+      <div class="form-hint">Same as start date for single day</div>
+    </div>
+    <div id="hnr-all-day-group" class="form-group">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <input type="checkbox" id="hnr-all-day" checked style="width:18px;height:18px;accent-color:var(--earth)">
+        <span class="form-label" style="margin-bottom:0">All Day</span>
+      </label>
+    </div>
+    <div id="hnr-time-group" style="display:none">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">From</label><select id="hnr-start-time" class="form-select"></select></div>
+        <div class="form-group"><label class="form-label">Until</label><select id="hnr-end-time" class="form-select"></select></div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Reason (optional)</label>
+      <input type="text" id="hnr-reason" class="form-input" placeholder="e.g. Lame, Farrier, Rest day">
+    </div>
+    <button id="hnr-save-btn" class="btn btn-primary" style="width:100%" onclick="saveHnr()">Save</button>
+    <button class="btn btn-secondary" style="width:100%;margin-top:10px" onclick="closeSheet('hnr')">Cancel</button>
+  </div>
+</div>
+
 
 <!-- JS modules loaded in dependency order -->
 <script src="js/config.js"></script>
@@ -641,6 +721,8 @@
 <script src="js/weather.js"></script>
 <script src="js/permissions.js"></script>
 <script src="js/ui-shared.js"></script>
+<script src="js/afb-data.js"></script>
+<script src="js/afb-ui.js"></script>
 <script src="js/ui-rider.js"></script>
 <script src="js/ui-parent.js"></script>
 <script src="js/ui-browse.js"></script>

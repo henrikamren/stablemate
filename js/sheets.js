@@ -39,6 +39,10 @@ function showWeekDayDetail(dateStr){
 
   html+=buildTrainerDetail(dateStr);
 
+  // Show AFB and HNR entries for this day
+  if(typeof buildAfbDayDetail==='function')html+=buildAfbDayDetail(dateStr);
+  if(typeof buildHnrDayDetail==='function')html+=buildHnrDayDetail(dateStr);
+
   if(dayB.length===0){
     html+=`<div style="font-size:13px;color:var(--text-muted);text-align:center;padding:12px">No bookings this day</div>`;
   } else {
@@ -121,8 +125,15 @@ function openSheet(name){
       dateEl.onchange=function(){
         populateTimeSelect('b-time',getDefaultTimeForDate(this.value));
         checkTrainer();
+        if(typeof updateBookingConflictWarnings==='function')updateBookingConflictWarnings('b');
       };
     }
+    // Wire live AFB/HNR conflict warnings
+    ['b-rider','b-horse','b-time'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el)el.addEventListener('change',()=>{if(typeof updateBookingConflictWarnings==='function')updateBookingConflictWarnings('b');});
+    });
+    const cw=document.getElementById('b-conflict-warning');if(cw)cw.innerHTML='';
   }
   if(name==='rider-booking'){
     const bd=document.getElementById('rb-date');if(bd)bd.value=fmtDate(today);
@@ -132,8 +143,15 @@ function openSheet(name){
       rdateEl.onchange=function(){
         populateTimeSelect('rb-time',getDefaultTimeForDate(this.value));
         checkRiderTrainer();
+        if(typeof updateBookingConflictWarnings==='function')updateBookingConflictWarnings('rb');
       };
     }
+    // Wire live AFB/HNR conflict warnings
+    ['rb-horse','rb-time'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el)el.addEventListener('change',()=>{if(typeof updateBookingConflictWarnings==='function')updateBookingConflictWarnings('rb');});
+    });
+    const rcw=document.getElementById('rb-conflict-warning');if(rcw)rcw.innerHTML='';
     const childGroup=document.getElementById('rb-child-group');
     const childSel=document.getElementById('rb-child');
     const titleEl=document.getElementById('rb-sheet-title');

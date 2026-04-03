@@ -1,0 +1,16 @@
+{
+  "name": "stablemate-tests",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "npx playwright test",
+    "test:afb": "npx playwright test tests/afb.spec.js",
+    "test:hnr": "npx playwright test tests/hnr.spec.js",
+    "test:cross": "npx playwright test tests/cross-feature.spec.js",
+    "test:headed": "npx playwright test --headed",
+    "test:ui": "npx playwright test --ui"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.45.0"
+  }
+}

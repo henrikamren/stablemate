@@ -197,6 +197,9 @@ function showHorseSchedule(horseId){
     </div>
   </div>`;
 
+  // Horse Not Rideable entries
+  if(typeof buildHorseHnrList==='function')html+=buildHorseHnrList(horse.id);
+
   // Upcoming schedule
   html+=`<div class="schedule-card" style="margin-bottom:14px">
     <div class="schedule-header">
@@ -221,6 +224,13 @@ function showHorseSchedule(horseId){
     const myReq=lungeRequests.find(r=>parseInt(r.horse_id)===parseInt(horse.id)&&r.status==='pending');
     html+=`<button class="lunge-request-btn ${myReq?'requested':''}" onclick="${myReq?'':'openLungeRequest('+horse.id+')'}">
       🔄 ${myReq?'Lunge Requested — Pending':'Request a Lunge'}
+    </button>`;
+  }
+
+  // Not Rideable button for staff
+  if(currentRole==='staff'){
+    html+=`<button class="btn btn-secondary" style="width:100%;margin-top:8px;margin-bottom:8px;font-size:12px;padding:10px;display:flex;align-items:center;justify-content:center;gap:6px" onclick="openHnrSheet();setTimeout(()=>{document.getElementById('hnr-horse').value=${horse.id}},50)">
+      🚫 Mark Not Rideable
     </button>`;
   }
 
@@ -271,6 +281,9 @@ function showRiderScheduleFromSearch(riderId){
   // 7-day calendar
   html+=buildSectionHeader('This Week');
   html+=`<div style="margin-bottom:16px">${buildWeekCalendar([parseInt(r.id)])}</div>`;
+
+  // Away From Barn entries
+  if(typeof buildRiderAfbList==='function')html+=buildRiderAfbList(r.id);
 
   // Upcoming bookings
   html+=`<div class="schedule-card" style="margin-bottom:14px">
@@ -486,8 +499,11 @@ function showCalDay(dateStr){
 
   html+=buildTrainerDetail(dateStr);
 
+  // AFB and HNR entries for this day
+  if(typeof buildAfbDayDetail==='function')html+=buildAfbDayDetail(dateStr);
+  if(typeof buildHnrDayDetail==='function')html+=buildHnrDayDetail(dateStr);
+
   if(dayB.length===0){
-    html+=`<div style="font-size:13px;color:var(--text-muted);text-align:center;padding:12px">No bookings</div>`;
   } else {
     dayB.forEach(b=>{
       const passed=b.date<todayStr||(b.date===todayStr&&bookingEndTime(b)<=nowTimeStr());
@@ -587,6 +603,9 @@ function renderHorses(){
         <button class="service-btn ${sv.turnout?'requested':''}" onclick="toggleService(${h.id},'turnout')"><span class="service-btn-icon">🌿</span>Turnout</button>
         <button class="service-btn ${sv.walker?'requested':''}" onclick="toggleService(${h.id},'walker')"><span class="service-btn-icon">⭕</span>Walker</button>
       </div>
+      ${(typeof getHnrForHorseOnDate==='function'&&getHnrForHorseOnDate(h.id,todayStr).length>0)
+        ?`<div style="margin-top:8px;padding:6px 10px;background:rgba(192,57,43,0.08);border-radius:6px;border-left:3px solid #c0392b;font-size:11px;color:#c0392b" onclick="event.stopPropagation()">🚫 Currently Not Rideable</div>`
+        :`<button class="btn btn-secondary" style="width:100%;margin-top:8px;font-size:11px;padding:8px;display:flex;align-items:center;justify-content:center;gap:4px" onclick="event.stopPropagation();openHnrSheet();document.getElementById('hnr-horse').value=${h.id}">🚫 Mark Not Rideable</button>`}
     </div>`;
   }).join('');
 }

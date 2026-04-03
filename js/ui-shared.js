@@ -329,6 +329,8 @@ function buildWeekCalendar(highlightRiderIds, weekOffset){
         <div style="font-size:13px;font-weight:${isToday?'600':'500'};width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:50%;margin:1px auto;${isToday?'background:var(--earth);color:var(--white)':'color:var(--text-muted)'}">${d.getDate()}</div>
       </div>
       <div style="padding:2px 4px 5px;display:flex;flex-direction:column;gap:2px;min-height:24px">
+        ${typeof buildAfbIndicator==='function'?buildAfbIndicator(ds,highlightRiderIds):''}
+        ${typeof buildHnrIndicator==='function'?buildHnrIndicator(ds,[]):''}
         ${myBookings.map(b=>{
           const rColor=getRiderColor(b.rider_id);
           const r=getRider(b.rider_id);

@@ -24,6 +24,16 @@ function renderRiderHome(){
     html+=buildNextUpFromBooking(next,{label:'Next Visit'});
   }
 
+  // Away From Barn entries for this rider
+  if(rider&&typeof buildRiderAfbList==='function'){
+    html+=buildRiderAfbList(rider.id);
+  }
+
+  // Away From Barn quick-add button
+  html+=`<button class="btn btn-secondary" style="width:100%;margin-bottom:16px;font-size:12px;padding:10px;display:flex;align-items:center;justify-content:center;gap:6px" onclick="openAfbSheet()">
+    🏠 Mark Away From Barn
+  </button>`;
+
   // Booking list header
   html+=buildSectionHeader('Upcoming',`${myB.length} scheduled`);
 
