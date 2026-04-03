@@ -26,27 +26,11 @@ function showHorsesDash(){
       const serviceIcons=[sv.lunge?'🔄':'',sv.turnout?'🌿':'',sv.walker?'⭕':''].filter(Boolean).join(' ');
       const aMap={'barn':'Barn','owner-only':'Owner Only','owner-allow':'Owner+','partial-lease':'Partial','full-lease':'Lease'};
 
-      // Mini 7-day
-      const days7=['S','M','T','W','T','F','S'];
-      let miniWeek='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:8px">';
-      for(let i=0;i<7;i++){
-        const d=addDays(today,i);const ds=fmtDate(d);
-        const isToday=ds===todayStr;
-        const dayBs=hBookings.filter(b=>b.date===ds);
-        const hasTrainer=getTrainersForDate(ds).length>0;
-        const trColor=hasTrainer?(TRAINER_COLORS[getTrainersForDate(ds)[0]?.trainer_name]||TRAINER_COLORS.default):'transparent';
-        miniWeek+=`<div style="text-align:center">
-          <div style="font-size:8px;color:var(--text-muted)">${days7[d.getDay()]}</div>
-          <div style="width:28px;height:28px;border-radius:6px;margin:2px auto;background:${isToday?'var(--cream-dark)':'var(--cream)'};border:1px solid ${isToday?'var(--earth)':'var(--sand)'};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;overflow:hidden;position:relative">
-            ${hasTrainer?`<div style="position:absolute;top:0;left:0;right:0;height:3px;background:${trColor};opacity:0.8"></div>`:''}
-            ${dayBs.length>0
-              ?dayBs.slice(0,2).map(b=>{const r=getRider(b.rider_id);const col=r?getRiderColor(r.id):(typeConfig[b.type]||{dot:'#888'}).dot;return`<div style="width:18px;height:6px;border-radius:2px;background:${col}"></div>`;}).join('')
-              :'<div style="width:5px;height:5px;border-radius:50%;background:var(--sand)"></div>'}
-          </div>
-          <div style="font-size:8px;color:var(--text-muted)">${d.getDate()}</div>
-        </div>`;
-      }
-      miniWeek+='</div>';
+      const miniWeek=buildMiniWeek({
+        filterFn:(b,ds)=>parseInt(b.horse_id)===parseInt(h.id)&&b.date===ds&&isFutureBooking(b),
+        dotFn:b=>{const r=getRider(b.rider_id);return r?getRiderColor(r.id):(typeConfig[b.type]||{dot:'#888'}).dot;},
+        cellSize:28,chipHeight:6,chipWidth:'18px',trainerBar:3,margin:'margin-top:8px'
+      });
 
       html+=`<div style="background:var(--white);border-radius:12px;border:1px solid var(--sand);padding:14px 16px;margin-bottom:12px;cursor:pointer" onclick="showHorseSchedule(${h.id})">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
@@ -60,7 +44,7 @@ function showHorsesDash(){
             </div>
           </div>
           ${next?`<div style="text-align:right;flex-shrink:0">
-            <div style="font-size:11px;color:var(--earth-light);font-weight:500">${next.date===todayStr?'Today':new Date(next.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
+            <div style="font-size:11px;color:var(--earth-light);font-weight:500">${friendlyDate(next.date)}</div>
             <div style="font-size:11px;color:var(--text-muted)">${next.time}${nextR?' · '+nextR.first:''}</div>
           </div>`:'<div style="font-size:11px;color:var(--text-muted)">No upcoming</div>'}
         </div>
@@ -89,32 +73,14 @@ function showRidersDash(){
       const next=myB[0];
       const nextH=next?getHorse(next.horse_id):null;
       const approvedH=(r.approved_horses||[]).map(id=>getHorse(id)).filter(Boolean);
-      const nowTimeR=String(today.getHours()).padStart(2,'0')+':'+String(today.getMinutes()).padStart(2,'0');
 
-      // Mini 7-day
-      const days7=['S','M','T','W','T','F','S'];
-      let miniWeek='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:8px">';
-      for(let i=0;i<7;i++){
-        const d=addDays(today,i);const ds=fmtDate(d);
-        const isToday=ds===todayStr;
-        const dayBs=myB.filter(b=>b.date===ds);
-        const hasTrainer=getTrainersForDate(ds).length>0;
-        const trColor=hasTrainer?(TRAINER_COLORS[getTrainersForDate(ds)[0]?.trainer_name]||TRAINER_COLORS.default):'transparent';
-        miniWeek+=`<div style="text-align:center">
-          <div style="font-size:8px;color:var(--text-muted)">${days7[d.getDay()]}</div>
-          <div style="width:28px;height:28px;border-radius:6px;margin:2px auto;background:${isToday?'var(--cream-dark)':'var(--cream)'};border:1px solid ${isToday?'var(--earth)':'var(--sand)'};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;overflow:hidden;position:relative">
-            ${hasTrainer?`<div style="position:absolute;top:0;left:0;right:0;height:3px;background:${trColor};opacity:0.8"></div>`:''}
-            ${dayBs.length>0
-              ?dayBs.slice(0,2).map(b=>{const h=getHorse(b.horse_id);return`<div style="width:18px;height:6px;border-radius:2px;background:${rColor}"></div>`;}).join('')
-              :'<div style="width:5px;height:5px;border-radius:50%;background:var(--sand)"></div>'}
-          </div>
-          <div style="font-size:8px;color:var(--text-muted)">${d.getDate()}</div>
-        </div>`;
-      }
-      miniWeek+='</div>';
+      const miniWeek=buildMiniWeek({
+        filterFn:(b,ds)=>parseInt(b.rider_id)===parseInt(r.id)&&b.date===ds&&isFutureBooking(b),
+        dotFn:()=>rColor,
+        cellSize:28,chipHeight:6,chipWidth:'18px',trainerBar:3,margin:'margin-top:8px'
+      });
 
       const isMyChild=currentRole==='parent'&&r.parents&&r.parents.split(',').map(p=>p.trim().toLowerCase()).includes(currentUser.name.trim().toLowerCase());
-      const canBook=isMyChild||currentRole==='staff';
 
       html+=`<div style="background:var(--white);border-radius:12px;border:1px solid var(--sand);padding:14px 16px;margin-bottom:12px;cursor:pointer" onclick="showRiderScheduleFromSearch(${r.id})">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
@@ -125,7 +91,7 @@ function showRidersDash(){
             ${r.parents?`<div style="font-size:11px;color:var(--text-muted);margin-top:2px">👨‍👧 ${r.parents}</div>`:''}
           </div>
           ${next?`<div style="text-align:right;flex-shrink:0">
-            <div style="font-size:11px;color:var(--earth-light);font-weight:500">${next.date===todayStr?'Today':new Date(next.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
+            <div style="font-size:11px;color:var(--earth-light);font-weight:500">${friendlyDate(next.date)}</div>
             <div style="font-size:11px;color:var(--text-muted)">${next.time}${nextH?' · '+nextH.name:''}</div>
           </div>`:'<div style="font-size:11px;color:var(--text-muted)">No upcoming</div>'}
         </div>
@@ -151,7 +117,7 @@ function showShowsDash(){
     html+=`<button class="btn btn-secondary btn-sm" style="margin-bottom:16px;width:100%" onclick="openShowSheet()">+ Add Show</button>`;
   }
 
-  function showCard(s, isPast){
+  function browseShowCard(s, isPast){
     const d=new Date(s.date+'T12:00:00');
     const dl=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
     const showRiders=(s.rider_ids||[]).map(id=>getRider(id)).filter(Boolean);
@@ -180,18 +146,18 @@ function showShowsDash(){
   if(upcoming.length===0){
     html+='<div class="empty" style="padding:32px 20px"><div class="empty-icon">🏆</div><div class="empty-text">No upcoming shows</div></div>';
   } else {
-    html+=upcoming.map(s=>showCard(s,false)).join('');
+    html+=upcoming.map(s=>browseShowCard(s,false)).join('');
   }
 
   if(past.length>0){
     html+=`<div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin:20px 0 10px">Past Shows</div>`;
-    html+=past.map(s=>showCard(s,true)).join('');
+    html+=past.map(s=>browseShowCard(s,true)).join('');
   }
 
   document.getElementById('shows-dash-content').innerHTML=html;
   document.getElementById('shows-dash-back').onclick=()=>showScreen(getBackScreen());
   const fab=document.getElementById('shows-add-fab');
-  if(fab)fab.style.display=currentRole==='staff'?'none':'none'; // handled by inline button
+  if(fab)fab.style.display='none';
   showScreen('shows-dash');
 }
 
@@ -215,7 +181,6 @@ async function saveLungeRequest(){
   const notes=document.getElementById('lr-notes').value.trim();
   if(!horseId||!date){showToast('Please select a date');return;}
 
-  // Find requester
   let requestedBy=currentUser?.name||'Unknown';
   let riderId=null;
   if(currentRole==='rider'){
@@ -239,7 +204,6 @@ async function saveLungeRequest(){
 async function acceptLungeRequest(id){
   const req=lungeRequests.find(r=>r.id===id||parseInt(r.id)===parseInt(id));
   if(!req)return;
-  // Create a booking from the request
   const nb={id:Date.now(),horse_id:req.horse_id,rider_id:req.rider_id,date:req.date,time:req.time,duration:60,type:'lunge',arena:'covered',notes:'Lunge: '+req.requested_by+(req.notes?' · '+req.notes:'')};
   try{
     const{data,error}=await sb.from('bookings').insert({horse_id:req.horse_id,rider_id:req.rider_id,date:req.date,time:req.time,duration:60,type:'lunge',arena:'covered',notes:nb.notes}).select().single();
@@ -273,7 +237,7 @@ function renderLungeRequests(){
     html+=`<div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Pending (${pending.length})</div>`;
     pending.forEach(req=>{
       const h=getHorse(req.horse_id);
-      const d=new Date(req.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+      const d=friendlyDate(req.date);
       html+=`<div class="request-card">
         <div class="request-card-header">
           <div>
@@ -294,7 +258,7 @@ function renderLungeRequests(){
     html+=`<div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin:16px 0 10px">Recent</div>`;
     recent.forEach(req=>{
       const h=getHorse(req.horse_id);
-      const d=new Date(req.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+      const d=friendlyDate(req.date);
       html+=`<div class="request-card" style="opacity:0.7">
         <div class="request-card-header">
           <div>

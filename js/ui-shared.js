@@ -1,5 +1,283 @@
 /* ===========================================================
-   [9] UI BUILDERS — Calendars
+   [9] UI BUILDERS — Shared Helpers & Calendars
+   =========================================================== */
+
+// ── Tiny helpers used everywhere ──────────────────────────────
+
+/** Current HH:MM string for the local clock */
+function nowTimeStr(){
+  return String(today.getHours()).padStart(2,'0')+':'+String(today.getMinutes()).padStart(2,'0');
+}
+
+/** Human-friendly date label: "Today" or "Wed, Mar 5" */
+function friendlyDate(dateStr, opts){
+  opts=opts||{weekday:'short',month:'short',day:'numeric'};
+  const todayStr=fmtDate(today);
+  if(dateStr===todayStr) return 'Today';
+  return new Date(dateStr+'T12:00:00').toLocaleDateString('en-US',opts);
+}
+
+/** Long date label: "Wednesday, March 5" */
+function friendlyDateLong(dateStr){
+  return new Date(dateStr+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+}
+
+// ── Trainer chips row ─────────────────────────────────────────
+
+/** Renders the trainer availability chip strip for a given date */
+function buildTrainerChips(dateStr){
+  const dayTrainers=getTrainersForDate(dateStr);
+  if(dayTrainers.length>0){
+    return dayTrainers.map(s=>
+      `<div class="trainer-chip available"><div class="trainer-chip-dot" style="background:${TRAINER_COLORS[s.trainer_name]||TRAINER_COLORS.default}"></div>${s.trainer_name} · ${s.start_time}–${s.end_time}</div>`
+    ).join('');
+  }
+  return '<div class="trainer-chip unavailable"><div class="trainer-chip-dot" style="background:#ccc"></div>No trainer today</div>';
+}
+
+/** Renders trainer dots for a calendar day detail view */
+function buildTrainerDetail(dateStr){
+  const dayTrainers=getTrainersForDate(dateStr);
+  if(dayTrainers.length>0){
+    return `<div style="margin-bottom:10px">${dayTrainers.map(s=>
+      `<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);margin-bottom:3px">
+        <div style="width:8px;height:8px;border-radius:50%;background:${TRAINER_COLORS[s.trainer_name]||TRAINER_COLORS.default}"></div>
+        ${s.trainer_name} · ${s.start_time}–${s.end_time}
+      </div>`).join('')}</div>`;
+  }
+  return '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">No trainer scheduled</div>';
+}
+
+// ── Next-up card ──────────────────────────────────────────────
+
+/**
+ * Renders the "▶ Next …" hero card.
+ * @param {object} opts
+ *   headline  – e.g. horse name or rider name
+ *   label     – "Next Visit" | "Next Up" | "Next Session"
+ *   detail    – second line (type · duration · arena)
+ *   timeLine  – third line (date · time)
+ *   style     – extra CSS for wrapper (optional)
+ */
+function buildNextUpCard(opts){
+  if(!opts) return '';
+  return `<div class="next-up-card"${opts.style?' style="'+opts.style+'"':''}>
+    <div class="next-up-label">▶ ${opts.label||'Next Up'}</div>
+    <div class="next-up-horse">${opts.headline}</div>
+    <div class="next-up-detail">${opts.detail}</div>
+    <div class="next-up-time">${opts.timeLine}</div>
+  </div>`;
+}
+
+/** Convenience: build a next-up card from a booking object */
+function buildNextUpFromBooking(b, opts){
+  if(!b) return '';
+  opts=opts||{};
+  const h=getHorse(b.horse_id);
+  const r=getRider(b.rider_id);
+  const t=typeConfig[b.type]||{label:b.type};
+  const headline=opts.showRider?(r?r.first:'Unassigned'):(h?h.name:'Unassigned');
+  return buildNextUpCard({
+    headline,
+    label:opts.label||'Next Visit',
+    detail:`${t.label} · ${fmtDur(b.duration)} · ${arenaLabel(b.arena)}${opts.showRider?'':(r?' · '+r.first:'')}`,
+    timeLine:`${friendlyDate(b.date)} · ${b.time}`,
+    style:opts.style||''
+  });
+}
+
+// ── Schedule item (single booking row in a card) ──────────────
+
+/**
+ * Renders one schedule-item row.
+ * @param {object} b       booking record
+ * @param {object} opts
+ *   showDate   – prepend friendly date to detail line
+ *   showActions – render Edit / Cancel buttons
+ *   actionEdit – onclick string for edit   (default: editBookingFromRider)
+ *   actionDel  – onclick string for cancel (default: deleteAnyBooking)
+ *   passed     – boolean, grey-out if true (auto-detected when omitted)
+ *   dotColor   – override for the schedule-dot
+ */
+function buildScheduleItem(b, opts){
+  opts=opts||{};
+  const h=getHorse(b.horse_id);
+  const r=getRider(b.rider_id);
+  const t=typeConfig[b.type]||{label:b.type,dot:'#888'};
+  const trs=getTrainersForDate(b.date);
+  const trAvail=trs.length>0?trs.map(s=>s.trainer_name).join(', '):'No trainer';
+  const todayStr=fmtDate(today);
+  const passed=opts.passed!==undefined?opts.passed:(b.date<todayStr||(b.date===todayStr&&bookingEndTime(b)<=nowTimeStr()));
+  const dl=opts.showDate?(friendlyDate(b.date)+' · '):'';
+  const dot=opts.dotColor||t.dot;
+
+  const editFn=opts.actionEdit||`editBookingFromRider(${b.id})`;
+  const delFn=opts.actionDel||`deleteAnyBooking(${b.id})`;
+
+  return `<div class="schedule-item" style="${passed?'opacity:0.45':''}">
+    <div class="schedule-time" style="${passed?'text-decoration:line-through':''}">${b.time}</div>
+    <div class="schedule-dot" style="background:${passed?'#ccc':dot}"></div>
+    <div class="schedule-info" style="${passed?'text-decoration:line-through':''}">
+      <div class="schedule-horse">${h?h.name:'<span class="unassigned-badge">Unassigned</span>'}${opts.showRiderName&&r?' – '+r.first:''}</div>
+      <div class="schedule-detail">${dl}${t.label} · ${fmtDur(b.duration)}</div>
+      <div class="schedule-rider" style="color:var(--text-muted)">${arenaLabel(b.arena)} · ${trAvail}</div>
+    </div>
+    ${opts.showActions&&!passed?`<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+      <button class="btn btn-secondary btn-sm" style="font-size:10px;padding:5px 8px" onclick="event.stopPropagation();${editFn}">Edit</button>
+      <button class="btn-danger-sm" style="font-size:10px;padding:5px 8px" onclick="event.stopPropagation();${delFn}">Cancel</button>
+    </div>`:''}
+    ${opts.showDelete&&!passed?`<button class="btn-danger-sm" onclick="${delFn}">✕</button>`:''}
+  </div>`;
+}
+
+// ── Booking row (compact, used in week-day detail & cal-day) ──
+
+/**
+ * Renders a compact booking-row (horse – rider, meta line, badge, actions).
+ * @param {object} b       booking
+ * @param {object} opts
+ *   showActions – show Edit/Cancel
+ *   actionEdit – onclick for edit
+ *   actionDel  – onclick for cancel
+ */
+function buildBookingRow(b, opts){
+  opts=opts||{};
+  const h=getHorse(b.horse_id);
+  const r=getRider(b.rider_id);
+  const t=typeConfig[b.type]||{label:b.type,dot:'#888',cls:'ev-arena'};
+  const todayStr=fmtDate(today);
+  const passed=opts.passed!==undefined?opts.passed:(b.date<todayStr||(b.date===todayStr&&bookingEndTime(b)<=nowTimeStr()));
+
+  return `<div class="booking-row" style="${passed?'opacity:0.5':''}">
+    <div class="booking-left">
+      <div class="booking-horse" style="${passed?'text-decoration:line-through':''}">${h?h.name:'Unknown'}${r?' – '+r.first:''}${!b.rider_id?'<span class="unassigned-badge" style="margin-left:6px">No rider</span>':''}</div>
+      <div class="booking-meta" style="${passed?'text-decoration:line-through':''}">${b.time} – ${t.label} – ${fmtDur(b.duration)} – ${arenaLabel(b.arena)}${opts.showDateInMeta?' · '+friendlyDate(b.date):''}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+      <span class="ev-badge ${t.cls}">${t.label}</span>
+      ${opts.showActions&&!passed?`<div style="display:flex;gap:4px">
+        ${opts.actionEdit?`<button class="btn btn-secondary btn-sm" style="font-size:10px;padding:5px 8px" onclick="${opts.actionEdit}">Edit</button>`:''}
+        ${opts.actionDel?`<button class="btn-danger-sm" style="font-size:10px;padding:5px 8px" onclick="${opts.actionDel}">Cancel</button>`:''}
+      </div>`:''}
+    </div>
+  </div>`;
+}
+
+// ── Staff schedule item (dashboard today/tomorrow list) ───────
+
+function buildStaffScheduleItem(b){
+  const h=getHorse(b.horse_id);
+  const r=getRider(b.rider_id);
+  const t=typeConfig[b.type]||{label:b.type,dot:'#888',cls:'ev-arena'};
+  return `<div class="schedule-item">
+    <div class="schedule-time">${b.time}</div>
+    <div class="schedule-dot" style="background:${t.dot}"></div>
+    <div class="schedule-info">
+      <div class="schedule-horse">${h?h.name:'Unknown'}${!b.rider_id?'<span class="unassigned-badge">No rider</span>':''}</div>
+      <div class="schedule-detail"><span class="ev-badge ${t.cls}">${t.label}</span> · ${fmtDur(b.duration)} · ${arenaLabel(b.arena)}</div>
+      ${r?`<div class="schedule-rider">${r.first}</div>`:''}
+    </div>
+    <button class="btn-danger-sm" onclick="deleteBooking(${b.id})">✕</button>
+  </div>`;
+}
+
+// ── Mini 7-day week strip ─────────────────────────────────────
+
+/**
+ * Renders a compact 7-day strip showing bookings for a single entity.
+ * @param {object} opts
+ *   filterFn(booking,dateStr)  – return true to include a booking on that day
+ *   dotFn(booking)             – return CSS color string for the pip
+ *   cellSize   – px width/height of each cell (default 24, browse uses 28)
+ *   chipHeight – px height of each pip (default 5, staff cards use 4/6)
+ *   chipWidth  – CSS width of pip (default '14px')
+ *   maxPips    – max visible booking pips per cell (default 2)
+ *   trainerBar – height of trainer-color top bar (default 2, browse uses 3)
+ */
+function buildMiniWeek(opts){
+  opts=opts||{};
+  const todayStr=fmtDate(today);
+  const days7=['S','M','T','W','T','F','S'];
+  const cellSz=opts.cellSize||24;
+  const chipH=opts.chipHeight||5;
+  const chipW=opts.chipWidth||'14px';
+  const maxP=opts.maxPips||2;
+  const trBar=opts.trainerBar||2;
+  const filterFn=opts.filterFn||(()=>false);
+  const dotFn=opts.dotFn||(b=>{const t=typeConfig[b.type]||{dot:'#888'};return t.dot;});
+
+  let html=`<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;${opts.margin||'margin-top:8px'}">`;
+  for(let i=0;i<7;i++){
+    const d=addDays(today,i);
+    const ds=fmtDate(d);
+    const isToday=ds===todayStr;
+    const dayBs=bookings.filter(b=>filterFn(b,ds));
+    const hasTrainer=getTrainersForDate(ds).length>0;
+    const trColor=hasTrainer?(TRAINER_COLORS[getTrainersForDate(ds)[0]?.trainer_name]||TRAINER_COLORS.default):'transparent';
+    html+=`<div style="text-align:center">
+      <div style="font-size:8px;color:var(--text-muted);margin-bottom:1px">${days7[d.getDay()]}</div>
+      <div style="width:${cellSz}px;height:${cellSz}px;border-radius:${cellSz>24?6:5}px;margin:${cellSz>24?'2px':'0'} auto;background:${isToday?'var(--cream-dark)':'var(--cream)'};border:1px solid ${isToday?'var(--earth)':'var(--sand)'};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;overflow:hidden;position:relative${cellSz>24?';padding:2px 1px':''}">
+        ${hasTrainer?`<div style="position:absolute;top:0;left:0;right:0;height:${trBar}px;background:${trColor};opacity:0.8"></div>`:''}
+        ${dayBs.length>0
+          ?dayBs.slice(0,maxP).map(b=>`<div style="width:${chipW};height:${chipH}px;border-radius:2px;background:${dotFn(b)}"></div>`).join('')
+          :`<div style="width:${cellSz>24?5:4}px;height:${cellSz>24?5:4}px;border-radius:50%;background:var(--sand)"></div>`}
+      </div>
+      <div style="font-size:8px;color:var(--text-muted);margin-top:1px">${d.getDate()}</div>
+    </div>`;
+  }
+  html+='</div>';
+  return html;
+}
+
+// ── Section header ────────────────────────────────────────────
+
+/**
+ * Cormorant-styled section header with optional right-side meta text.
+ *   buildSectionHeader('This Week','Next 7 days')
+ */
+function buildSectionHeader(title, meta, style){
+  return `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;${style||''}">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--earth)">${title}</div>
+    ${meta?`<div style="font-size:11px;color:var(--text-muted)">${meta}</div>`:''}
+  </div>`;
+}
+
+// ── Child / rider card (parent "Your Children", "All Riders") ─
+
+/**
+ * A compact card for a rider showing avatar, name, next booking.
+ * @param {object} rider  – rider record
+ * @param {object} opts
+ *   onclick     – click handler string
+ *   showBadge   – extra badge html (e.g. "Your child")
+ *   style       – extra CSS for the card wrapper
+ */
+function buildChildCard(rider, opts){
+  opts=opts||{};
+  const todayStr=fmtDate(today);
+  const now=nowTimeStr();
+  const cb=bookings.filter(b=>b.rider_id===rider.id&&(b.date>todayStr||(b.date===todayStr&&bookingEndTime(b)>now)))
+    .sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date));
+  const next=cb[0];
+  const h=next?getHorse(next.horse_id):null;
+  const t=next?(typeConfig[next.type]||{label:next.type}):null;
+
+  return `<div class="child-card" onclick="${opts.onclick||''}"${opts.style?' style="'+opts.style+'"':''}>
+    <div class="child-avatar">${rider.first[0]}</div>
+    <div class="child-info">
+      <div class="child-name">${rider.first}${opts.showBadge||''}</div>
+      ${next
+        ?`<div class="child-next-hl">Next: ${friendlyDate(next.date)} · ${next.time}</div>
+           <div class="child-next">${h?h.name:'Unassigned'} · ${t?t.label:''}</div>`
+        :'<div class="child-next">No upcoming visits</div>'}
+    </div>
+    <div class="child-chevron">›</div>
+  </div>`;
+}
+
+
+/* ===========================================================
+   [9b] UI BUILDERS — Calendars
    =========================================================== */
 function buildWeekCalendar(highlightRiderIds, weekOffset){
   if(typeof weekOffset==='undefined')weekOffset=currentWeekOffset||0;
@@ -72,7 +350,6 @@ function buildWeekCalendar(highlightRiderIds, weekOffset){
 function changeWeekOffset(dir){
   currentWeekOffset+=dir;
   if(currentWeekOffset<0)currentWeekOffset=0;
-  // Re-render the current view
   if(currentRole==='rider')renderRiderHome();
   else if(currentRole==='parent')renderParentHome();
   else if(currentRole==='staff'){renderDash();}
@@ -80,7 +357,7 @@ function changeWeekOffset(dir){
 
 // -- RIDER DAY VIEW CALENDAR --
 function buildDayCalendar(dateStr, myBookingIds){
-  const SLOT_H=48; // px per hour
+  const SLOT_H=48;
   const START_H=7, END_H=18;
   const totalH=END_H-START_H;
   const dayTrainers=getTrainersForDate(dateStr);
@@ -95,7 +372,6 @@ function buildDayCalendar(dateStr, myBookingIds){
     </div>`;
   }
 
-  // Build trainer band behind slots
   let trainerBg='';
   dayTrainers.forEach(s=>{
     const sh=parseInt(s.start_time.split(':')[0]);
@@ -109,7 +385,6 @@ function buildDayCalendar(dateStr, myBookingIds){
     }
   });
 
-  // Build booking blocks
   let bookingBlocks='';
   dayBookings.forEach(b=>{
     const [bh,bm]=b.time.split(':').map(Number);
@@ -138,15 +413,12 @@ function buildDayCalendar(dateStr, myBookingIds){
 
 function showBookingPopup(bookingId, event){
   event.stopPropagation();
-  // Remove any existing popup
   dismissBookingPopup();
   const b=bookings.find(x=>x.id===bookingId);
   if(!b)return;
   const h=getHorse(b.horse_id);const r=getRider(b.rider_id);const t=typeConfig[b.type]||{label:b.type};
   const todayStr=fmtDate(today);
-  const nowTime=String(today.getHours()).padStart(2,'0')+':'+String(today.getMinutes()).padStart(2,'0');
-  const passed=b.date<todayStr||(b.date===todayStr&&bookingEndTime(b)<=nowTime);
-  const dl=b.date===todayStr?'Today':new Date(b.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  const passed=b.date<todayStr||(b.date===todayStr&&bookingEndTime(b)<=nowTimeStr());
 
   const popup=document.createElement('div');
   popup.id='booking-popup';
@@ -154,7 +426,7 @@ function showBookingPopup(bookingId, event){
   popup.onclick=function(e){if(e.target===popup)dismissBookingPopup();};
   popup.innerHTML=`<div style="background:var(--white);border-radius:14px;padding:20px;width:calc(100% - 48px);max-width:340px;box-shadow:0 8px 30px rgba(0,0,0,0.15)">
     <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--earth);margin-bottom:12px">${h?h.name:'Booking'}</div>
-    <div style="font-size:13px;color:var(--text);margin-bottom:4px">${dl} at ${b.time} · ${fmtDur(b.duration)}</div>
+    <div style="font-size:13px;color:var(--text);margin-bottom:4px">${friendlyDate(b.date)} at ${b.time} · ${fmtDur(b.duration)}</div>
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">${t.label} · ${arenaLabel(b.arena)}</div>
     ${r?`<div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Rider: ${r.first}</div>`:''}
     ${b.notes?`<div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Notes: ${b.notes}</div>`:''}
