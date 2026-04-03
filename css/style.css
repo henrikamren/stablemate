@@ -1,0 +1,356 @@
+/* ═══ DESIGN TOKENS ═══ */
+:root{
+  --earth:#2c1810;--earth-mid:#4a2c1e;--earth-light:#6b4c35;
+  --hay:#c8a96e;--hay-light:#e8d5a3;--hay-dark:#8b6914;
+  --cream:#faf6ef;--cream-dark:#f0e8d8;--sand:#e8dcc8;
+  --white:#fdfaf5;--text:#2a1a0e;--text-mid:#5c3d2e;--text-muted:#8c7060;
+  --danger:#c0392b;--success:#2d6a4f;
+  --trainer-band:#2d6a4f;
+  --nav-h:72px;--safe-bottom:env(safe-area-inset-bottom,0px);
+}
+
+/* ═══ RESET & BASE ═══ */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);color:var(--text);overflow:hidden;position:fixed;width:100%}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;background:var(--cream)}
+.screen.active{display:flex}
+
+/* ═══ SPLASH SCREEN ═══ */
+#screen-splash{background:var(--earth);align-items:center;justify-content:flex-end}
+.splash-bg{position:absolute;inset:0;background-image:url('splash.jpeg');background-size:cover;background-position:center top;opacity:0.55}
+.splash-grain{position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");opacity:0.4}
+.splash-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(20,8,4,0.95) 0%,rgba(20,8,4,0.6) 50%,rgba(20,8,4,0.2) 100%)}
+.splash-content{position:relative;z-index:2;padding:0 32px calc(56px + var(--safe-bottom));width:100%;text-align:left}
+.splash-eyebrow{font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:var(--hay);margin-bottom:8px;font-weight:400;opacity:0;animation:fadeUp 0.8s ease 0.2s forwards}
+.splash-barn{font-size:13px;color:rgba(255,255,255,0.5);font-weight:300;margin-bottom:6px;opacity:0;animation:fadeUp 0.8s ease 0.4s forwards;letter-spacing:0.06em}
+.splash-title{font-family:'Cormorant Garamond',serif;font-size:64px;font-weight:300;color:var(--white);line-height:1;margin-bottom:8px;opacity:0;animation:fadeUp 0.8s ease 0.5s forwards}
+.splash-title span{color:var(--hay);font-style:italic}
+.splash-sub{font-size:14px;color:rgba(255,255,255,0.6);font-weight:300;margin-bottom:40px;opacity:0;animation:fadeUp 0.8s ease 0.7s forwards}
+.splash-btn{display:block;width:100%;padding:18px;background:var(--hay);color:var(--earth);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;border:none;cursor:pointer;border-radius:4px;opacity:0;animation:fadeUp 0.8s ease 0.9s forwards;transition:background 0.2s}
+.splash-btn:active{background:var(--hay-light)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* ═══ ROLE SELECT ═══ */
+#screen-role{justify-content:center;align-items:center;padding:32px}
+.role-logo{font-family:'Cormorant Garamond',serif;font-size:30px;color:var(--earth);text-align:center;margin-bottom:2px}
+.role-logo span{color:var(--hay);font-style:italic}
+.role-barn{font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:6px;letter-spacing:0.06em}
+.role-sub{font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:28px}
+.role-cards{display:flex;flex-direction:column;gap:10px;width:100%;max-width:340px}
+.role-card{background:var(--white);border:1px solid var(--sand);border-radius:12px;padding:16px 20px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:14px}
+.role-card:active{background:var(--cream-dark)}
+.role-card-icon{font-size:24px;flex-shrink:0}
+.role-card-title{font-size:14px;font-weight:500;color:var(--earth)}
+.role-card-desc{font-size:11px;color:var(--text-muted);margin-top:2px}
+.role-back{margin-top:20px;background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;text-decoration:underline}
+
+/* ═══ LOGIN SCREENS ═══ */
+#screen-login-rider,#screen-login-parent,#screen-login-staff{justify-content:center;align-items:center;padding:32px}
+.login-card{width:100%;max-width:380px;text-align:center}
+.login-logo{font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:300;color:var(--earth);margin-bottom:2px}
+.login-logo span{color:var(--hay);font-style:italic}
+.login-barn{font-size:11px;color:var(--text-muted);margin-bottom:28px;letter-spacing:0.06em}
+.login-label{display:block;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;text-align:left}
+.login-input{width:100%;padding:14px 16px;border:1px solid var(--sand);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:16px;color:var(--text);background:var(--white);outline:none;transition:border-color 0.2s;margin-bottom:16px}
+.login-input:focus{border-color:var(--hay)}
+.login-select{width:100%;padding:14px 16px;border:1px solid var(--sand);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:16px;color:var(--text);background:var(--white);outline:none;margin-bottom:12px;appearance:none;-webkit-appearance:none}
+.login-divider{font-size:12px;color:var(--text-muted);margin-bottom:12px}
+.login-btn{width:100%;padding:16px;background:var(--earth);color:var(--white);border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:background 0.2s;margin-bottom:12px}
+.login-btn:active{background:var(--earth-mid)}
+.login-back{background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;text-decoration:underline;margin-top:8px}
+
+/* ═══ TOP BAR ═══ */
+.topbar{background:var(--white);border-bottom:1px solid var(--sand);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding-top:env(safe-area-inset-top,0)}
+.topbar-logo{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--earth);font-weight:400}
+.topbar-logo span{color:var(--hay);font-style:italic}
+.topbar-barn{font-size:10px;color:var(--text-muted);letter-spacing:0.06em;margin-top:1px}
+.topbar-user{display:flex;align-items:center;gap:8px}
+.topbar-avatar{width:30px;height:30px;border-radius:50%;background:var(--hay);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--earth);flex-shrink:0}
+.topbar-name{font-size:11px;color:var(--text-muted)}
+.logout-btn{font-size:11px;color:var(--text-muted);background:none;border:none;cursor:pointer;padding:4px 8px}
+
+/* ═══ PANELS ═══ */
+.panels{flex:1;overflow:hidden;position:relative}
+.panel{position:absolute;inset:0;overflow-y:auto;padding:20px 16px calc(var(--nav-h) + var(--safe-bottom) + 20px);display:none;-webkit-overflow-scrolling:touch}
+.panel.active{display:block}
+
+/* ═══ BOTTOM NAV ═══ */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + var(--safe-bottom));background:var(--white);border-top:1px solid var(--sand);display:flex;align-items:flex-start;padding-top:10px;padding-bottom:var(--safe-bottom);z-index:50}
+.nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:4px 0;border:none;background:none;color:var(--text-muted);transition:color 0.15s}
+.nav-tab.active{color:var(--earth)}
+.nav-tab-icon{font-size:20px;line-height:1}
+.nav-tab-label{font-size:9px;letter-spacing:0.04em;font-weight:400}
+.nav-tab.active .nav-tab-label{font-weight:500}
+.nav-indicator{width:4px;height:4px;border-radius:50%;background:var(--hay);opacity:0;transition:opacity 0.15s;margin-top:2px}
+.nav-tab.active .nav-indicator{opacity:1}
+
+/* ═══ SECTION HEADINGS ═══ */
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.section-title{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--earth);font-weight:400}
+.section-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+
+/* ═══ STATS ROW ═══ */
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:16px}
+.stat-card{background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:10px 6px;text-align:center}
+.stat-label{font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:2px}
+.stat-value{font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--earth);line-height:1}
+
+/* ═══ NEXT UP CARD ═══ */
+.next-up-card{background:var(--earth);border-radius:12px;padding:16px 18px;margin-bottom:14px;color:var(--white)}
+.next-up-label{font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--hay);margin-bottom:6px}
+.next-up-horse{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--white);line-height:1;margin-bottom:4px}
+.next-up-detail{font-size:13px;color:rgba(255,255,255,0.7)}
+.next-up-time{font-size:12px;color:var(--hay);margin-top:6px;font-weight:500}
+
+/* ═══ TRAINER INFO ═══ */
+.trainer-band{height:6px;border-radius:3px;margin-bottom:2px;display:flex;gap:2px}
+.trainer-band-seg{flex:1;border-radius:2px;background:var(--trainer-band);opacity:0.85}
+
+/* ═══ SCHEDULE CARDS ═══ */
+.schedule-card{background:var(--white);border-radius:10px;border:1px solid var(--sand);overflow:hidden;margin-bottom:16px}
+.schedule-header{padding:12px 16px;border-bottom:1px solid var(--cream-dark);display:flex;align-items:center;justify-content:space-between}
+.schedule-title{font-size:13px;font-weight:500;color:var(--earth)}
+.schedule-meta{font-size:11px;color:var(--text-muted)}
+.schedule-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--cream-dark)}
+.schedule-item:last-child{border-bottom:none}
+.schedule-time{font-size:12px;font-weight:500;color:var(--earth);min-width:44px}
+.schedule-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.schedule-info{flex:1;min-width:0}
+.schedule-horse{font-size:14px;color:var(--text);font-weight:400}
+.schedule-detail{font-size:11px;color:var(--text-muted);margin-top:1px}
+.schedule-rider{font-size:11px;color:var(--earth-light);font-weight:500;margin-top:1px}
+.unassigned-badge{font-size:10px;background:#faeeda;color:#633806;padding:2px 7px;border-radius:8px;margin-left:6px;font-weight:normal}
+
+/* TRAINER INFO CARD */
+.trainer-info-card{background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:14px 16px;margin-bottom:14px}
+.trainer-info-title{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px}
+.trainer-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.trainer-row:last-child{margin-bottom:0}
+.trainer-dot{width:10px;height:10px;border-radius:50%;background:var(--trainer-band);flex-shrink:0}
+.trainer-name{font-size:14px;font-weight:500;color:var(--earth)}
+.trainer-days{font-size:11px;color:var(--text-muted);margin-top:1px}
+
+/* ═══ EVENT BADGES ═══ */
+.ev-badge{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:500;white-space:nowrap}
+.ev-lesson{background:#e8f0e0;color:#3b6d11}
+.ev-arena{background:#e8dcc8;color:#6b4c35}
+.ev-vet{background:#fdecea;color:#8b2020}
+.ev-farrier{background:#e8f4fd;color:#0c447c}
+.ev-competition{background:#faeeda;color:#633806}
+.ev-lunge{background:#f0e8ff;color:#5b2d8e}
+.ev-turnout{background:#e0f4e8;color:#1a5c35}
+.ev-walker{background:#fff3e0;color:#8c4a00}
+
+/* ═══ HORSE CARDS ═══ */
+.horse-card{background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:16px;margin-bottom:10px}
+.horse-card-top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.horse-avatar{width:44px;height:44px;border-radius:50%;background:var(--cream-dark);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--earth);flex-shrink:0}
+.horse-name{font-size:15px;font-weight:500;color:var(--earth)}
+.horse-detail{font-size:12px;color:var(--text-muted);margin-top:2px}
+.horse-badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:10px;margin-top:4px}
+.badge-barn{background:#e8f0e0;color:#2d6a4f}
+.badge-owned{background:#faeeda;color:#633806}
+.badge-owner-only{background:#fdecea;color:#8b2020}
+.badge-full-lease{background:#e8f4fd;color:#0c447c}
+.badge-partial-lease{background:#f0e8ff;color:#5b2d8e}
+.horse-actions{margin-left:auto;display:flex;gap:6px;flex-shrink:0}
+
+/* ═══ SERVICE BUTTONS ═══ */
+.service-row{display:flex;gap:8px}
+.service-btn{flex:1;padding:9px 6px;border-radius:8px;border:1px solid var(--sand);background:var(--cream);font-size:11px;font-weight:500;color:var(--text-mid);cursor:pointer;text-align:center;transition:all 0.15s;font-family:'DM Sans',sans-serif}
+.service-btn:active{background:var(--sand)}
+.service-btn.requested{background:var(--hay-light);border-color:var(--hay);color:var(--earth)}
+.service-btn-icon{font-size:18px;display:block;margin-bottom:3px}
+
+/* ═══ PERSON CARDS ═══ */
+.person-card{background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:16px;margin-bottom:10px}
+.person-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.person-avatar{width:40px;height:40px;border-radius:50%;background:#e8f0e0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;color:#2d6a4f;flex-shrink:0}
+.person-name{font-size:14px;font-weight:500;color:var(--earth)}
+.person-sub{font-size:12px;color:var(--text-muted)}
+.person-field{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--cream-dark);font-size:12px}
+.person-field:last-child{border-bottom:none}
+.person-field-label{color:var(--text-muted)}
+.person-field-val{color:var(--text);text-align:right}
+
+/* ═══ BOOKING ROWS ═══ */
+.booking-row{background:var(--white);border-radius:8px;border:1px solid var(--sand);padding:12px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px}
+.booking-left{flex:1;min-width:0}
+.booking-horse{font-size:14px;font-weight:500;color:var(--earth)}
+.booking-meta{font-size:12px;color:var(--text-muted);margin-top:2px}
+.booking-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+
+/* ═══ CALENDAR ═══ */
+.cal-nav-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.cal-nav-btn{width:36px;height:36px;border-radius:8px;border:1px solid var(--sand);background:var(--white);font-size:18px;color:var(--earth-light);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.cal-month-label{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--earth)}
+.cal-grid{background:var(--white);border-radius:10px;border:1px solid var(--sand);overflow:hidden;margin-bottom:12px}
+.cal-days-head{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--sand)}
+.cal-day-head{padding:8px 4px;text-align:center;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted)}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr)}
+.cal-day{min-height:56px;padding:4px;border-right:1px solid var(--cream-dark);border-bottom:1px solid var(--cream-dark);cursor:pointer}
+.cal-day:nth-child(7n){border-right:none}
+.cal-day-num{font-size:12px;color:var(--text-muted);width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:50%;margin-bottom:2px}
+.cal-day.today .cal-day-num{background:var(--earth);color:var(--white)}
+.cal-day.other-month .cal-day-num{color:var(--sand)}
+.cal-dot-row{display:flex;gap:2px;flex-wrap:wrap;padding:0 2px}
+.cal-dot{width:5px;height:5px;border-radius:50%}
+/* Trainer band legend */
+.cal-legend{display:flex;align-items:center;gap:16px;margin-bottom:14px;flex-wrap:wrap}
+.cal-legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted)}
+.cal-legend-band{width:20px;height:6px;border-radius:3px}
+
+/* ═══ SHEETS ═══ */
+.sheet-overlay{position:fixed;inset:0;background:rgba(20,8,4,0.5);z-index:100;display:none;align-items:flex-end}
+.sheet-overlay.open{display:flex}
+.sheet{background:var(--white);border-radius:20px 20px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding:20px 20px calc(20px + var(--safe-bottom));animation:slideUp 0.3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet-handle{width:36px;height:4px;background:var(--sand);border-radius:2px;margin:0 auto 20px}
+.sheet-title{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--earth);margin-bottom:20px}
+
+/* ═══ FORMS ═══ */
+.form-label{display:block;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;font-weight:500}
+.form-input,.form-select{width:100%;padding:12px 14px;border:1px solid var(--sand);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:16px;color:var(--text);background:var(--white);outline:none;transition:border-color 0.2s;appearance:none;-webkit-appearance:none}
+.form-input:focus,.form-select:focus{border-color:var(--hay)}
+.form-group{margin-bottom:12px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-textarea{width:100%;padding:12px 14px;border:1px solid var(--sand);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:16px;color:var(--text);background:var(--white);outline:none;resize:none;min-height:72px;transition:border-color 0.2s}
+.form-textarea:focus{border-color:var(--hay)}
+.form-hint{font-size:11px;color:var(--text-muted);margin-top:4px}
+
+/* ═══ TRAINER WARNING ═══ */
+.trainer-warning{border-radius:8px;padding:12px 14px;font-size:13px;margin-bottom:12px;display:none;line-height:1.5}
+.trainer-warning.show{display:block}
+.trainer-warning.warn{background:#faeeda;color:#633806}
+.trainer-warning.ok{background:#e8f4ed;color:#2d6a4f}
+
+/* ═══ BUTTONS ═══ */
+.btn{padding:14px 20px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all 0.15s;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn-primary{background:var(--earth);color:var(--white);width:100%}
+.btn-primary:active{background:var(--earth-mid)}
+.btn-secondary{background:var(--cream-dark);color:var(--earth)}
+.btn-sm{padding:8px 14px;font-size:12px}
+.btn-danger-sm{background:#fdecea;color:var(--danger);padding:8px 14px;font-size:12px;border-radius:6px;border:none;font-family:'DM Sans',sans-serif;cursor:pointer}
+
+/* ═══ EMPTY STATE & TOAST ═══ */
+.empty{text-align:center;padding:48px 20px;color:var(--text-muted)}
+.empty-icon{font-size:36px;opacity:0.3;margin-bottom:10px}
+.empty-text{font-size:14px}
+
+/* TOAST */
+.toast{position:fixed;bottom:calc(var(--nav-h) + var(--safe-bottom) + 12px);left:16px;right:16px;background:var(--earth);color:var(--white);padding:14px 18px;border-radius:10px;font-size:13px;z-index:200;transform:translateY(20px);opacity:0;transition:all 0.3s;text-align:center;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+
+/* ═══ LOADING SCREEN ═══ */
+.loading-screen{position:fixed;inset:0;background:var(--cream);display:flex;align-items:center;justify-content:center;z-index:300;transition:opacity 0.4s;flex-direction:column;gap:6px}
+.loading-screen.hidden{opacity:0;pointer-events:none}
+.loading-logo{font-family:'Cormorant Garamond',serif;font-size:32px;color:var(--earth)}
+.loading-logo span{color:var(--hay);font-style:italic}
+.loading-barn{font-size:12px;color:var(--text-muted);letter-spacing:0.06em}
+
+/* ═══ RIDER / PARENT APP ═══ */
+#screen-rider-app,#screen-parent-app,#screen-child-schedule,#screen-all-riders{flex-direction:column}
+.simple-topbar{background:var(--white);border-bottom:1px solid var(--sand);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding-top:env(safe-area-inset-top,0)}
+.simple-content{flex:1;overflow-y:auto;padding:20px 16px 110px;-webkit-overflow-scrolling:touch}
+.rider-greeting{font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--earth);margin-bottom:4px}
+.rider-date-sub{font-size:12px;color:var(--text-muted);margin-bottom:20px}
+.book-fab{position:fixed;bottom:calc(var(--safe-bottom) + 16px);left:16px;right:16px;padding:18px;background:var(--earth);color:var(--white);border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;z-index:50}
+.book-fab:active{background:var(--earth-mid)}
+
+/* ═══ CHILD / RIDER CARDS ═══ */
+.child-card{background:var(--white);border-radius:12px;border:1px solid var(--sand);padding:16px;margin-bottom:10px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:12px}
+.child-card:active{background:var(--cream-dark)}
+.child-avatar{width:40px;height:40px;border-radius:50%;background:var(--hay-light);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--earth);flex-shrink:0}
+.child-info{flex:1;min-width:0}
+.child-name{font-size:15px;font-weight:500;color:var(--earth)}
+.child-next-hl{font-size:12px;color:var(--earth-light);font-weight:500;margin-top:2px}
+.child-next{font-size:12px;color:var(--text-muted)}
+.child-chevron{color:var(--text-muted);font-size:16px}
+
+/* ═══ LARGE FONT MODE ═══ */
+/* Rider large font */
+.large-font .rider-greeting{font-size:34px}
+.large-font .rider-date-sub{font-size:15px}
+.large-font .schedule-horse{font-size:18px}
+.large-font .schedule-detail{font-size:14px}
+.large-font .schedule-rider{font-size:13px}
+.large-font .schedule-time{font-size:15px}
+.large-font .next-up-horse{font-size:30px}
+.large-font .next-up-detail{font-size:16px}
+.large-font .next-up-time{font-size:15px}
+.large-font .trainer-chip{font-size:15px;padding:8px 16px}
+/* Parent extra-large font */
+.xl-font .rider-greeting{font-size:42px}
+.xl-font .rider-date-sub{font-size:18px}
+.xl-font .child-name{font-size:26px}
+.xl-font .child-next-hl{font-size:19px}
+.xl-font .child-next{font-size:17px}
+.xl-font .schedule-horse{font-size:22px}
+.xl-font .schedule-detail{font-size:17px}
+.xl-font .schedule-rider{font-size:16px}
+.xl-font .schedule-time{font-size:18px}
+.xl-font .next-up-horse{font-size:36px}
+.xl-font .next-up-detail{font-size:19px}
+.xl-font .next-up-time{font-size:18px}
+.xl-font .trainer-chip{font-size:18px;padding:10px 18px}
+.xl-font .section-label{font-size:17px}
+.xl-font .trainer-name{font-size:20px}
+.xl-font .trainer-days{font-size:17px}
+.xl-font .weather-temp{font-size:40px}
+.xl-font .weather-cond{font-size:15px}
+.xl-font .weather-day-name{font-size:13px}
+.xl-font .weather-day-high{font-size:17px}
+.xl-font .btn-danger-sm{font-size:15px;padding:10px 18px}
+
+/* ═══ WEATHER CARD ═══ */
+.weather-card{background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.weather-left{display:flex;align-items:center;gap:12px}
+.weather-icon{font-size:28px}
+.weather-temp{font-family:'Cormorant Garamond',serif;font-size:32px;color:var(--earth);line-height:1}
+.weather-cond{font-size:12px;color:var(--text-muted);margin-top:2px}
+.weather-forecast{display:flex;gap:10px;overflow-x:auto;padding-bottom:2px}
+.weather-day{text-align:center;flex-shrink:0}
+.weather-day-name{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em}
+.weather-day-high{font-size:13px;font-weight:500;color:var(--earth);margin-top:2px}
+.weather-day-rain{font-size:10px;color:#0c447c;margin-top:1px}
+
+/* ═══ LUNGE REQUESTS ═══ */
+.lunge-request-btn{width:100%;padding:12px;border-radius:8px;border:none;background:#f0e8ff;color:#5b2d8e;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;transition:all 0.15s}
+.lunge-request-btn:active{background:#e0d0ff}
+.lunge-request-btn.requested{background:#e8f4ed;color:#2d6a4f}
+.lunge-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:500}
+.lunge-badge.pending{background:#f0e8ff;color:#5b2d8e}
+.lunge-badge.accepted{background:#e8f4ed;color:#2d6a4f}
+.lunge-badge.declined{background:#fdecea;color:#c0392b}
+.request-card{background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:14px 16px;margin-bottom:10px}
+.request-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.request-card-name{font-size:14px;font-weight:500;color:var(--earth)}
+.request-card-meta{font-size:12px;color:var(--text-muted);margin-top:2px}
+.request-actions{display:flex;gap:8px;margin-top:10px}
+
+/* ═══ SEARCH DROPDOWN ═══ */
+.search-dropdown-wrap{position:relative}
+.search-btn{background:none;border:1px solid var(--sand);border-radius:8px;padding:6px 10px;font-size:13px;color:var(--earth);cursor:pointer;display:flex;align-items:center;gap:6px;font-family:'DM Sans',sans-serif}
+.search-btn:active{background:var(--cream-dark)}
+.search-dropdown{position:absolute;top:calc(100% + 6px);left:0;right:0;min-width:220px;background:var(--white);border:1px solid var(--sand);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.12);z-index:200;overflow:hidden;display:none}
+.search-dropdown.open{display:block}
+.search-dropdown-section{padding:10px 14px 8px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--cream-dark);user-select:none}
+.search-dropdown-section:active{background:var(--cream-dark)}
+.search-dropdown-section-arrow{font-size:10px;transition:transform 0.2s}
+.search-dropdown-section-body{overflow:hidden;transition:max-height 0.25s ease}
+.search-dropdown-section-body.collapsed{max-height:0!important}
+.search-dropdown-item{padding:10px 14px;font-size:14px;color:var(--text);cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--cream-dark)}
+.search-dropdown-item:last-child{border-bottom:none}
+.search-dropdown-item:active{background:var(--cream-dark)}
+.search-dropdown-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.search-dropdown-sub{font-size:11px;color:var(--text-muted);margin-top:1px}
+
+/* ═══ SECTION LABEL ═══ */
+.section-label{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;margin-top:4px}
+
+/* ═══ TRAINER AVAILABILITY INLINE ═══ */
+.trainer-avail-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.trainer-chip{padding:6px 12px;border-radius:20px;font-size:12px;font-weight:500;display:flex;align-items:center;gap:6px}
+.trainer-chip.available{background:#e8f4ed;color:#2d6a4f}
+.trainer-chip.unavailable{background:var(--cream-dark);color:var(--text-muted)}
+.trainer-chip-dot{width:7px;height:7px;border-radius:50%}
