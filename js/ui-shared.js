@@ -365,12 +365,16 @@ function buildDayCalendar(dateStr, myBookingIds){
   const dayTrainers=getTrainersForDate(dateStr);
   const dayBookings=bookings.filter(b=>b.date===dateStr).sort((a,b)=>a.time.localeCompare(b.time));
 
+  const canBook=currentRole==='rider'||currentRole==='parent'||currentRole==='staff';
   let rows='';
   for(let h=START_H;h<=END_H;h++){
     const label=h===0?'12am':h<12?h+'am':h===12?'12pm':(h-12)+'pm';
+    const timeStr=String(h).padStart(2,'0')+':00';
+    const slotClick=canBook?`onclick="openBookingAtTime('${dateStr}','${timeStr}')"`:' ';
+    const slotCursor=canBook?'cursor:pointer;':'';
     rows+=`<div style="display:flex;align-items:flex-start;min-height:${SLOT_H}px;border-top:1px solid var(--cream-dark);position:relative">
       <div style="width:44px;font-size:10px;color:var(--text-muted);padding-top:3px;flex-shrink:0">${label}</div>
-      <div style="flex:1;position:relative;min-height:${SLOT_H}px" id="cal-slot-${h}"></div>
+      <div ${slotClick} style="${slotCursor}flex:1;position:relative;min-height:${SLOT_H}px" id="cal-slot-${h}"></div>
     </div>`;
   }
 

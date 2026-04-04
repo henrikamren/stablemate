@@ -112,6 +112,18 @@ function bookFromWeekCal(dateStr){
   }
 }
 
+function openBookingAtTime(dateStr, timeStr){
+  if(currentRole==='staff'){
+    openSheet('booking');
+    const bd=document.getElementById('b-date');
+    if(bd){bd.value=dateStr;populateTimeSelect('b-time',timeStr);checkTrainer();}
+  } else {
+    openSheet('rider-booking');
+    const bd=document.getElementById('rb-date');
+    if(bd){bd.value=dateStr;populateTimeSelect('rb-time',timeStr);checkRiderTrainer();}
+  }
+}
+
 // -- SHEETS --
 function openSheet(name){
   if(name==='booking'){
