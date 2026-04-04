@@ -267,6 +267,8 @@ function showHorseSchedule(horseId){
     showScreen('child-schedule');
   }
 }
+
+function showRiderSchedule(riderId){
   const r=getRider(parseInt(riderId));if(!r)return;
   const isMyChild=currentRole==='parent'&&r.parents&&r.parents.split(',').map(p=>p.trim().toLowerCase()).includes(currentUser.name.trim().toLowerCase());
   const todayStr=fmtDate(today);

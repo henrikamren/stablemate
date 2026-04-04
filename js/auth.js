@@ -29,8 +29,8 @@ async function initAuth(){
       launchApp();
     } else {
       // Auth user exists but no profile — create one (edge case: manual signup via Supabase dashboard)
-      await createProfileForAuthUser(session.user);
-      launchApp();
+      const created=await createProfileForAuthUser(session.user);
+      if(created){launchApp();}else{showScreen('splash');showToast('Account setup failed — please sign in again');}
     }
   } else {
     showScreen('splash');
@@ -58,7 +58,7 @@ async function initAuth(){
 
 async function loadUserProfile(authId){
   try{
-    const{data,error}=await sb.from('user_profiles').select('*').eq('auth_id',authId).single();
+    const{data,error}=await sb.from('user_profiles').select('*').eq('auth_id',authId).maybeSingle();
     if(!error&&data)return data;
   }catch(e){}
   return null;
