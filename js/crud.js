@@ -278,7 +278,7 @@ async function saveRider(){
   ['r-first','r-email','r-phone','r-parents'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('rider-form-title').textContent='Add Rider';
   document.getElementById('rider-form-save-btn').textContent='Add Rider';
-  populateLoginDropdowns();
+  
 }
 
 async function saveOwner(){
@@ -467,14 +467,19 @@ function showShowDetail(showId){
     html+=`<button class="btn btn-secondary" style="width:100%;margin-top:4px" onclick="deleteShow(${show.id});showScreen('app')">Remove Show</button>`;
   }
 
-  document.getElementById('child-schedule-content').innerHTML=html;
-  document.getElementById('child-book-fab').style.display='none';
-  document.getElementById('child-back-btn').onclick=()=>{
-    if(currentRole==='parent')showScreen('parent-app');
-    else if(currentRole==='staff')showScreen('app');
-    else showScreen('rider-app');
-  };
-  showScreen('child-schedule');
+  // Render detail — inline for rider/parent, separate screen for staff
+  if(currentRole==='rider'&&typeof showRiderDetailPanel==='function'){
+    showRiderDetailPanel(html);
+  } else if(currentRole==='parent'&&typeof showParentDetailPanel==='function'){
+    showParentDetailPanel(html);
+  } else {
+    document.getElementById('child-schedule-content').innerHTML=html;
+    document.getElementById('child-book-fab').style.display='none';
+    document.getElementById('child-back-btn').onclick=()=>{
+      showScreen('app');
+    };
+    showScreen('child-schedule');
+  }
 }
 
 /* ===========================================================
@@ -497,5 +502,5 @@ async function deleteBooking(id){
   showToast('Booking removed');
 }
 async function deleteHorse(id){if(!confirm('Remove this horse?'))return;try{await sb.from('horses').delete().eq('id',id);}catch(e){console.error('Delete horse:',e)}horses=horses.filter(h=>h.id!==id);renderHorses();renderDash();showToast('Horse removed');}
-async function deleteRider(id){if(!confirm('Remove this rider?'))return;try{await sb.from('riders').delete().eq('id',id);}catch(e){console.error('Delete rider:',e)}riders=riders.filter(r=>r.id!==id);renderRiders();renderDash();showToast('Rider removed');populateLoginDropdowns();}
+async function deleteRider(id){if(!confirm('Remove this rider?'))return;try{await sb.from('riders').delete().eq('id',id);}catch(e){console.error('Delete rider:',e)}riders=riders.filter(r=>r.id!==id);renderRiders();renderDash();showToast('Rider removed');}
 async function deleteOwner(id){if(!confirm('Remove this owner?'))return;try{await sb.from('owners').delete().eq('id',id);}catch(e){console.error('Delete owner:',e)}owners=owners.filter(o=>o.id!==id);renderOwners();renderDash();showToast('Owner removed');}

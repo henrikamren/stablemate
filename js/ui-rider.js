@@ -97,14 +97,36 @@ function showRiderPanel(name){
   const tab=document.getElementById('rnav-'+name);
   if(tab)tab.classList.add('active');
 
+  // Hide all content panels
+  ['rider-content','rider-horses-content','rider-riders-content','rider-shows-content','rider-detail-content'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.style.display='none';
+  });
+
   if(name==='home'){
-    showScreen('rider-app');
+    document.getElementById('rider-content').style.display='';
     renderRiderHome();
   } else if(name==='horses'){
-    showHorsesDash();
+    const el=document.getElementById('rider-horses-content');
+    el.style.display='';
+    renderInlineHorsesDash(el);
   } else if(name==='shows'){
-    showShowsDash();
+    const el=document.getElementById('rider-shows-content');
+    el.style.display='';
+    renderInlineShowsDash(el);
   } else if(name==='riders'){
-    showRidersDash();
+    const el=document.getElementById('rider-riders-content');
+    el.style.display='';
+    renderInlineRidersDash(el);
   }
+}
+
+/** Show detail content (horse schedule, rider schedule, show detail) inside rider app */
+function showRiderDetailPanel(html){
+  ['rider-content','rider-horses-content','rider-riders-content','rider-shows-content'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.style.display='none';
+  });
+  const el=document.getElementById('rider-detail-content');
+  el.innerHTML=html;
+  el.style.display='';
 }

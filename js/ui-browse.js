@@ -8,6 +8,24 @@ function getBackScreen(){
 }
 
 function showHorsesDash(){
+  const html=buildHorsesDashHtml();
+  // Staff uses separate screen; rider/parent use inline panels
+  if(currentRole==='staff'){
+    document.getElementById('horses-dash-content').innerHTML=html;
+    document.getElementById('horses-dash-back').onclick=()=>showScreen(getBackScreen());
+    showScreen('horses-dash');
+  } else if(currentRole==='rider'){
+    showRiderPanel('horses');
+  } else if(currentRole==='parent'){
+    showParentPanel('horses');
+  }
+}
+
+function renderInlineHorsesDash(el){
+  el.innerHTML=buildHorsesDashHtml();
+}
+
+function buildHorsesDashHtml(){
   const todayStr=fmtDate(today);
   let html=`<div class="rider-greeting">The Herd</div>
   <div class="rider-date-sub" style="margin-bottom:20px">${horses.length} horse${horses.length!==1?'s':''} at ${BARN_NAME}</div>`;
@@ -52,13 +70,27 @@ function showHorsesDash(){
       </div>`;
     });
   }
-
-  document.getElementById('horses-dash-content').innerHTML=html;
-  document.getElementById('horses-dash-back').onclick=()=>showScreen(getBackScreen());
-  showScreen('horses-dash');
+  return html;
 }
 
 function showRidersDash(){
+  const html=buildRidersDashHtml();
+  if(currentRole==='staff'){
+    document.getElementById('riders-dash-content').innerHTML=html;
+    document.getElementById('riders-dash-back').onclick=()=>showScreen(getBackScreen());
+    showScreen('riders-dash');
+  } else if(currentRole==='rider'){
+    showRiderPanel('riders');
+  } else if(currentRole==='parent'){
+    showParentPanel('riders');
+  }
+}
+
+function renderInlineRidersDash(el){
+  el.innerHTML=buildRidersDashHtml();
+}
+
+function buildRidersDashHtml(){
   const todayStr=fmtDate(today);
   let html=`<div class="rider-greeting">Riders</div>
   <div class="rider-date-sub" style="margin-bottom:20px">${riders.length} rider${riders.length!==1?'s':''} at ${BARN_NAME}</div>`;
@@ -99,13 +131,29 @@ function showRidersDash(){
       </div>`;
     });
   }
-
-  document.getElementById('riders-dash-content').innerHTML=html;
-  document.getElementById('riders-dash-back').onclick=()=>showScreen(getBackScreen());
-  showScreen('riders-dash');
+  return html;
 }
 
 function showShowsDash(){
+  const html=buildShowsDashHtml();
+  if(currentRole==='staff'){
+    document.getElementById('shows-dash-content').innerHTML=html;
+    document.getElementById('shows-dash-back').onclick=()=>showScreen(getBackScreen());
+    const fab=document.getElementById('shows-add-fab');
+    if(fab)fab.style.display='none';
+    showScreen('shows-dash');
+  } else if(currentRole==='rider'){
+    showRiderPanel('shows');
+  } else if(currentRole==='parent'){
+    showParentPanel('shows');
+  }
+}
+
+function renderInlineShowsDash(el){
+  el.innerHTML=buildShowsDashHtml();
+}
+
+function buildShowsDashHtml(){
   const todayStr=fmtDate(today);
   const upcoming=shows.filter(s=>s.date>=todayStr).sort((a,b)=>a.date.localeCompare(b.date));
   const past=shows.filter(s=>s.date<todayStr).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
@@ -153,12 +201,7 @@ function showShowsDash(){
     html+=`<div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin:20px 0 10px">Past Shows</div>`;
     html+=past.map(s=>browseShowCard(s,true)).join('');
   }
-
-  document.getElementById('shows-dash-content').innerHTML=html;
-  document.getElementById('shows-dash-back').onclick=()=>showScreen(getBackScreen());
-  const fab=document.getElementById('shows-add-fab');
-  if(fab)fab.style.display='none';
-  showScreen('shows-dash');
+  return html;
 }
 
 /* ===========================================================

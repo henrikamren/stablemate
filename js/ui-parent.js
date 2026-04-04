@@ -59,8 +59,7 @@ function showAllRiders(){
       html+=buildChildCard(r,{onclick:`showChildSchedule(${r.id},false)`});
     });
   }
-  document.getElementById('all-riders-content').innerHTML=html;
-  showScreen('all-riders');
+  showParentDetailPanel(html);
 }
 
 function showChildSchedule(riderId,canBook){
@@ -98,14 +97,12 @@ function showChildSchedule(riderId,canBook){
     html+='</div>';
   }
 
-  document.getElementById('child-schedule-content').innerHTML=html;
+  // Add inline book button for parents
+  if(canBook){
+    html+=`<button class="btn btn-primary" style="width:100%;margin-top:12px;padding:12px;font-size:13px" onclick="currentChildId=${child.id};openChildBooking()">+ Book for ${child.first}</button>`;
+  }
 
-  const fab=document.getElementById('child-book-fab');
-  const fabName=document.getElementById('child-book-name');
-  if(canBook){fab.style.display='block';if(fabName)fabName.textContent=child.first;}
-  else{fab.style.display='none';}
-
-  showScreen('child-schedule');
+  showParentDetailPanel(html);
 }
 
 function openChildBooking(){
@@ -135,14 +132,34 @@ function showParentPanel(name){
   const tab=document.getElementById('pnav-'+name);
   if(tab)tab.classList.add('active');
 
+  ['parent-content','parent-horses-content','parent-riders-content','parent-shows-content','parent-detail-content'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.style.display='none';
+  });
+
   if(name==='home'){
-    showScreen('parent-app');
+    document.getElementById('parent-content').style.display='';
     renderParentHome();
   } else if(name==='horses'){
-    showHorsesDash();
+    const el=document.getElementById('parent-horses-content');
+    el.style.display='';
+    renderInlineHorsesDash(el);
   } else if(name==='shows'){
-    showShowsDash();
+    const el=document.getElementById('parent-shows-content');
+    el.style.display='';
+    renderInlineShowsDash(el);
   } else if(name==='riders'){
-    showRidersDash();
+    const el=document.getElementById('parent-riders-content');
+    el.style.display='';
+    renderInlineRidersDash(el);
   }
+}
+
+/** Show detail content inside parent app */
+function showParentDetailPanel(html){
+  ['parent-content','parent-horses-content','parent-riders-content','parent-shows-content'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.style.display='none';
+  });
+  const el=document.getElementById('parent-detail-content');
+  el.innerHTML=html;
+  el.style.display='';
 }

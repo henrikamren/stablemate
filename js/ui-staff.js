@@ -251,17 +251,22 @@ function showHorseSchedule(horseId){
     </div>`;
   }
 
-  document.getElementById('child-schedule-content').innerHTML=html;
-  document.getElementById('child-book-fab').style.display='none';
-  document.getElementById('child-back-btn').onclick=()=>{
-    if(currentRole==='parent')showScreen('parent-app');
-    else if(currentRole==='staff')showScreen('app');
-    else showScreen('rider-app');
-  };
-  showScreen('child-schedule');
+  // Render detail view — inline for rider/parent, separate screen for staff
+  if(currentRole==='rider'){
+    showRiderDetailPanel(html);
+  } else if(currentRole==='parent'){
+    showParentDetailPanel(html);
+  } else {
+    document.getElementById('child-schedule-content').innerHTML=html;
+    document.getElementById('child-book-fab').style.display='none';
+    document.getElementById('child-back-btn').onclick=()=>{
+      if(currentRole==='parent')showScreen('parent-app');
+      else if(currentRole==='staff')showScreen('app');
+      else showScreen('rider-app');
+    };
+    showScreen('child-schedule');
+  }
 }
-
-function showRiderScheduleFromSearch(riderId){
   const r=getRider(parseInt(riderId));if(!r)return;
   const isMyChild=currentRole==='parent'&&r.parents&&r.parents.split(',').map(p=>p.trim().toLowerCase()).includes(currentUser.name.trim().toLowerCase());
   const todayStr=fmtDate(today);
@@ -314,24 +319,26 @@ function showRiderScheduleFromSearch(riderId){
   }
   html+='</div>';
 
-  document.getElementById('child-schedule-content').innerHTML=html;
-
-  const fab=document.getElementById('child-book-fab');
-  const fabName=document.getElementById('child-book-name');
-  if(isMyChild||currentRole==='staff'){
-    currentChildId=parseInt(r.id);
-    fab.style.display='block';
-    if(fabName)fabName.textContent=r.first;
+  if(currentRole==='rider'){
+    showRiderDetailPanel(html);
+  } else if(currentRole==='parent'){
+    showParentDetailPanel(html);
   } else {
-    fab.style.display='none';
+    document.getElementById('child-schedule-content').innerHTML=html;
+    const fab=document.getElementById('child-book-fab');
+    const fabName=document.getElementById('child-book-name');
+    if(isMyChild||currentRole==='staff'){
+      currentChildId=parseInt(r.id);
+      fab.style.display='block';
+      if(fabName)fabName.textContent=r.first;
+    } else {
+      fab.style.display='none';
+    }
+    document.getElementById('child-back-btn').onclick=()=>{
+      showScreen('app');
+    };
+    showScreen('child-schedule');
   }
-
-  document.getElementById('child-back-btn').onclick=()=>{
-    if(currentRole==='parent')showScreen('parent-app');
-    else if(currentRole==='staff')showScreen('app');
-    else showScreen('rider-app');
-  };
-  showScreen('child-schedule');
 }
 
 /* ===========================================================
