@@ -33,74 +33,73 @@
     <div class="splash-barn">Oasis Farm</div>
     <div class="splash-title">Stable<span>Mate</span></div>
     <div class="splash-sub">Your barn, organized.</div>
-    <button class="splash-btn" onclick="showScreen('login')">Sign In</button>
-    <button class="splash-btn" style="background:transparent;border:2px solid var(--white);margin-top:10px" onclick="showScreen('signup')">Create Account</button>
+    <button class="splash-btn" onclick="showScreen('role')">Get Started</button>
   </div>
 </div>
 
-<!-- SIGN IN -->
-<div class="screen" id="screen-login">
-  <div class="login-card">
-    <div class="login-logo">Stable<span>Mate</span></div>
-    <div class="login-barn">Oasis Farm</div>
-    <div class="form-group">
-      <label class="form-label">Email</label>
-      <input type="email" class="form-input" id="login-email" placeholder="you@example.com" autocomplete="email">
+<!-- ROLE SELECT -->
+<div class="screen" id="screen-role">
+  <div style="width:100%;max-width:340px;margin:0 auto;padding:32px 0">
+    <div class="role-logo">Stable<span>Mate</span></div>
+    <div class="role-barn">Oasis Farm</div>
+    <div class="role-sub">Who are you today?</div>
+    <div class="role-cards">
+      <div class="role-card" onclick="showScreen('login-rider')">
+        <div class="role-card-icon">🏇</div>
+        <div><div class="role-card-title">I am a Rider</div><div class="role-card-desc">Book a visit, see your schedule</div></div>
+      </div>
+      <div class="role-card" onclick="showScreen('login-parent')">
+        <div class="role-card-icon">👨‍👧</div>
+        <div><div class="role-card-title">I am a Parent or Guardian</div><div class="role-card-desc">View and book your child's lessons</div></div>
+      </div>
+      <div class="role-card" onclick="showScreen('login-staff')">
+        <div class="role-card-icon">🐴</div>
+        <div><div class="role-card-title">I am Staff</div><div class="role-card-desc">Manage the stable and bookings</div></div>
+      </div>
     </div>
-    <div class="form-group">
-      <label class="form-label">Password</label>
-      <input type="password" class="form-input" id="login-password" placeholder="••••••••" autocomplete="current-password">
-    </div>
-    <button class="login-btn auth-submit-btn" onclick="authSignIn()">Sign In</button>
-    <div style="display:flex;justify-content:space-between;margin-top:14px">
-      <button class="login-back" onclick="showScreen('reset-password')">Forgot password?</button>
-      <button class="login-back" onclick="showScreen('signup')">Create account →</button>
-    </div>
-    <button class="login-back" style="margin-top:10px" onclick="showScreen('splash')">← Back</button>
+    <button class="role-back" onclick="showScreen('splash')">← Back</button>
   </div>
 </div>
 
-<!-- SIGN UP -->
-<div class="screen" id="screen-signup">
+<!-- RIDER LOGIN -->
+<div class="screen" id="screen-login-rider">
   <div class="login-card">
     <div class="login-logo">Stable<span>Mate</span></div>
     <div class="login-barn">Oasis Farm</div>
-    <div class="form-group">
-      <label class="form-label">Your Name</label>
-      <input type="text" class="form-input" id="signup-name" placeholder="Riley" autocomplete="given-name">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Email</label>
-      <input type="email" class="form-input" id="signup-email" placeholder="you@example.com" autocomplete="email">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Password</label>
-      <input type="password" class="form-input" id="signup-password" placeholder="At least 6 characters" autocomplete="new-password">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Confirm Password</label>
-      <input type="password" class="form-input" id="signup-confirm" placeholder="••••••••" autocomplete="new-password">
-    </div>
-    <button class="login-btn auth-submit-btn" onclick="authSignUp()">Create Account</button>
-    <div style="text-align:center;margin-top:14px">
-      <button class="login-back" onclick="showScreen('login')">Already have an account? Sign in →</button>
-    </div>
-    <button class="login-back" style="margin-top:10px" onclick="showScreen('splash')">← Back</button>
+    <label class="login-label">Select your name</label>
+    <select class="login-select" id="rider-select"><option value="">— Select a rider —</option></select>
+    <div class="login-divider">or type your name</div>
+    <input type="text" class="login-input" id="rider-name-input" placeholder="Type your name...">
+    <button class="login-btn" onclick="enterRider()">Enter Stable</button>
+    <button class="login-back" onclick="showScreen('role')">← Back</button>
   </div>
 </div>
 
-<!-- PASSWORD RESET -->
-<div class="screen" id="screen-reset-password">
+<!-- PARENT LOGIN -->
+<div class="screen" id="screen-login-parent">
   <div class="login-card">
     <div class="login-logo">Stable<span>Mate</span></div>
     <div class="login-barn">Oasis Farm</div>
-    <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;text-align:center">Enter your email and we'll send you a reset link</div>
-    <div class="form-group">
-      <label class="form-label">Email</label>
-      <input type="email" class="form-input" id="reset-email" placeholder="you@example.com" autocomplete="email">
-    </div>
-    <button class="login-btn auth-submit-btn" onclick="authResetPassword()">Send Reset Link</button>
-    <button class="login-back" style="margin-top:14px" onclick="showScreen('login')">← Back to Sign In</button>
+    <label class="login-label">Select your name</label>
+    <select class="login-select" id="parent-select"><option value="">— Select your name —</option></select>
+    <div class="login-divider">or type your name</div>
+    <input type="text" class="login-input" id="parent-name-input" placeholder="Type your name...">
+    <button class="login-btn" onclick="enterParent()">View Schedule</button>
+    <button class="login-back" onclick="showScreen('role')">← Back</button>
+  </div>
+</div>
+
+<!-- STAFF LOGIN -->
+<div class="screen" id="screen-login-staff">
+  <div class="login-card">
+    <div class="login-logo">Stable<span>Mate</span></div>
+    <div class="login-barn">Oasis Farm</div>
+    <label class="login-label">Select your name</label>
+    <select class="login-select" id="staff-select"><option value="">— Select your name —</option></select>
+    <div class="login-divider">or type your name</div>
+    <input type="text" class="login-input" id="staff-name-input" placeholder="Your name...">
+    <button class="login-btn" onclick="enterStaff()">Enter Stable</button>
+    <button class="login-back" onclick="showScreen('role')">← Back</button>
   </div>
 </div>
 
