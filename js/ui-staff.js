@@ -35,12 +35,21 @@ function toggleSearchDropdown(id){
     dd.querySelectorAll('.search-dropdown-section-body').forEach(b=>{
       b.style.maxHeight=b.scrollHeight+'px';
     });
-    setTimeout(()=>document.addEventListener('click',closeAllDropdowns,{once:true}),10);
+    // Close when clicking outside the dropdown
+    setTimeout(()=>{
+      function closeHandler(e){
+        const wrap=dd.closest('.search-dropdown-wrap');
+        if(wrap&&wrap.contains(e.target))return; // click inside — keep open
+        closeAllDropdowns();
+        document.removeEventListener('click',closeHandler);
+      }
+      document.addEventListener('click',closeHandler);
+    },10);
   }
 }
 
-function toggleDDSection(bodyId){
-  event.stopPropagation();
+function toggleDDSection(bodyId, evt){
+  if(evt)evt.stopPropagation();
   const body=document.getElementById(bodyId);
   if(!body)return;
   const isCollapsed=body.classList.contains('collapsed');

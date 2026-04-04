@@ -88,3 +88,23 @@ function renderRiderHome(){
     calEl.scrollTop=Math.max(0,scrollTo);
   }
 }
+
+// ── Rider bottom nav panel switcher ──────────────────────────
+
+function showRiderPanel(name){
+  // Update active tab
+  document.querySelectorAll('#rider-bottom-nav .nav-tab').forEach(t=>t.classList.remove('active'));
+  const tab=document.getElementById('rnav-'+name);
+  if(tab)tab.classList.add('active');
+
+  if(name==='home'){
+    showScreen('rider-app');
+    renderRiderHome();
+  } else if(name==='horses'){
+    showHorsesDash();
+  } else if(name==='shows'){
+    showShowsDash();
+  } else if(name==='riders'){
+    showRidersDash();
+  }
+}

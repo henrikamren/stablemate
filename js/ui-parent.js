@@ -126,3 +126,23 @@ function openChildBooking(){
     }
   }
 }
+
+// ── Parent bottom nav panel switcher ─────────────────────────
+
+function showParentPanel(name){
+  // Update active tab
+  document.querySelectorAll('#parent-bottom-nav .nav-tab').forEach(t=>t.classList.remove('active'));
+  const tab=document.getElementById('pnav-'+name);
+  if(tab)tab.classList.add('active');
+
+  if(name==='home'){
+    showScreen('parent-app');
+    renderParentHome();
+  } else if(name==='horses'){
+    showHorsesDash();
+  } else if(name==='shows'){
+    showShowsDash();
+  } else if(name==='riders'){
+    showRidersDash();
+  }
+}

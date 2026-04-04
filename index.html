@@ -108,31 +108,9 @@
 <!-- ══════════════════════════════════ -->
 <div class="screen large-font" id="screen-rider-app">
   <div class="simple-topbar">
-    <div class="search-dropdown-wrap">
-      <button class="search-btn" onclick="toggleSearchDropdown('rider-dd')">🔍 Browse <span style="font-size:10px">▾</span></button>
-      <div class="search-dropdown" id="rider-dd">
-        <div class="search-dropdown-section" style="justify-content:space-between" onclick="toggleDDSection('rider-dd-horses-body')">
-          <span onclick="event.stopPropagation();showHorsesDash();closeAllDropdowns()" style="flex:1;cursor:pointer">🐴 Horses</span>
-          <span class="search-dropdown-section-arrow" id="rider-dd-horses-arrow" onclick="event.stopPropagation();toggleDDSection('rider-dd-horses-body')">▾</span>
-        </div>
-        <div class="search-dropdown-section-body" id="rider-dd-horses-body">
-          <div id="rider-dd-horses"></div>
-        </div>
-        <div class="search-dropdown-section" style="justify-content:space-between" onclick="toggleDDSection('rider-dd-riders-body')">
-          <span onclick="event.stopPropagation();showRidersDash();closeAllDropdowns()" style="flex:1;cursor:pointer">🏇 Riders</span>
-          <span class="search-dropdown-section-arrow" id="rider-dd-riders-arrow" onclick="event.stopPropagation();toggleDDSection('rider-dd-riders-body')">▾</span>
-        </div>
-        <div class="search-dropdown-section-body" id="rider-dd-riders-body">
-          <div id="rider-dd-riders"></div>
-        </div>
-        <div class="search-dropdown-section" style="justify-content:space-between" onclick="toggleDDSection('rider-dd-shows-body')">
-          <span onclick="event.stopPropagation();showShowsDash();closeAllDropdowns()" style="flex:1;cursor:pointer">🏆 Shows</span>
-          <span class="search-dropdown-section-arrow" id="rider-dd-shows-arrow" onclick="event.stopPropagation();toggleDDSection('rider-dd-shows-body')">▾</span>
-        </div>
-        <div class="search-dropdown-section-body" id="rider-dd-shows-body">
-          <div id="rider-dd-shows"></div>
-        </div>
-      </div>
+    <div>
+      <div class="topbar-logo">Stable<span>Mate</span></div>
+      <div class="topbar-barn">Oasis Farm</div>
     </div>
     <div class="topbar-user">
       <div class="topbar-avatar" id="rider-avatar">?</div>
@@ -140,8 +118,24 @@
       <button class="logout-btn" onclick="signOut()">Sign out</button>
     </div>
   </div>
-  <div class="simple-content" id="rider-content"></div>
-  <button class="book-fab" onclick="openSheet('rider-booking')">+ Book a Visit</button>
+  <div class="simple-content" id="rider-content" style="padding-bottom:70px"></div>
+  <div class="bottom-nav" id="rider-bottom-nav">
+    <button class="nav-tab active" id="rnav-home" onclick="showRiderPanel('home')">
+      <div class="nav-tab-icon">⌂</div><div class="nav-tab-label">Home</div><div class="nav-indicator"></div>
+    </button>
+    <button class="nav-tab" id="rnav-horses" onclick="showRiderPanel('horses')">
+      <div class="nav-tab-icon">◈</div><div class="nav-tab-label">Herd</div><div class="nav-indicator"></div>
+    </button>
+    <button class="nav-tab" id="rnav-book" onclick="openSheet('rider-booking')">
+      <div class="nav-tab-icon">＋</div><div class="nav-tab-label">Book</div><div class="nav-indicator"></div>
+    </button>
+    <button class="nav-tab" id="rnav-shows" onclick="showRiderPanel('shows')">
+      <div class="nav-tab-icon">🏆</div><div class="nav-tab-label">Shows</div><div class="nav-indicator"></div>
+    </button>
+    <button class="nav-tab" id="rnav-riders" onclick="showRiderPanel('riders')">
+      <div class="nav-tab-icon">🏇</div><div class="nav-tab-label">Riders</div><div class="nav-indicator"></div>
+    </button>
+  </div>
 </div>
 
 <!-- ══════════════════════════════════ -->
@@ -149,31 +143,9 @@
 <!-- ══════════════════════════════════ -->
 <div class="screen xl-font" id="screen-parent-app">
   <div class="simple-topbar">
-    <div class="search-dropdown-wrap">
-      <button class="search-btn" onclick="toggleSearchDropdown('parent-dd')">🔍 Browse <span style="font-size:10px">▾</span></button>
-      <div class="search-dropdown" id="parent-dd">
-        <div class="search-dropdown-section" style="justify-content:space-between" onclick="toggleDDSection('parent-dd-horses-body')">
-          <span onclick="event.stopPropagation();showHorsesDash();closeAllDropdowns()" style="flex:1;cursor:pointer">🐴 Horses</span>
-          <span class="search-dropdown-section-arrow" id="parent-dd-horses-arrow" onclick="event.stopPropagation();toggleDDSection('parent-dd-horses-body')">▾</span>
-        </div>
-        <div class="search-dropdown-section-body" id="parent-dd-horses-body">
-          <div id="parent-dd-horses"></div>
-        </div>
-        <div class="search-dropdown-section" style="justify-content:space-between" onclick="toggleDDSection('parent-dd-riders-body')">
-          <span onclick="event.stopPropagation();showRidersDash();closeAllDropdowns()" style="flex:1;cursor:pointer">🏇 Riders</span>
-          <span class="search-dropdown-section-arrow" id="parent-dd-riders-arrow" onclick="event.stopPropagation();toggleDDSection('parent-dd-riders-body')">▾</span>
-        </div>
-        <div class="search-dropdown-section-body" id="parent-dd-riders-body">
-          <div id="parent-dd-riders"></div>
-        </div>
-        <div class="search-dropdown-section" style="justify-content:space-between" onclick="toggleDDSection('parent-dd-shows-body')">
-          <span onclick="event.stopPropagation();showShowsDash();closeAllDropdowns()" style="flex:1;cursor:pointer">🏆 Shows</span>
-          <span class="search-dropdown-section-arrow" id="parent-dd-shows-arrow" onclick="event.stopPropagation();toggleDDSection('parent-dd-shows-body')">▾</span>
-        </div>
-        <div class="search-dropdown-section-body" id="parent-dd-shows-body">
-          <div id="parent-dd-shows"></div>
-        </div>
-      </div>
+    <div>
+      <div class="topbar-logo">Stable<span>Mate</span></div>
+      <div class="topbar-barn">Oasis Farm</div>
     </div>
     <div class="topbar-user">
       <div class="topbar-avatar" id="parent-avatar">?</div>
@@ -181,7 +153,24 @@
       <button class="logout-btn" onclick="signOut()">Sign out</button>
     </div>
   </div>
-  <div class="simple-content" id="parent-content"></div>
+  <div class="simple-content" id="parent-content" style="padding-bottom:70px"></div>
+  <div class="bottom-nav" id="parent-bottom-nav">
+    <button class="nav-tab active" id="pnav-home" onclick="showParentPanel('home')">
+      <div class="nav-tab-icon">⌂</div><div class="nav-tab-label">Home</div><div class="nav-indicator"></div>
+    </button>
+    <button class="nav-tab" id="pnav-horses" onclick="showParentPanel('horses')">
+      <div class="nav-tab-icon">◈</div><div class="nav-tab-label">Herd</div><div class="nav-indicator"></div>
+    </button>
+    <button class="nav-tab" id="pnav-book" onclick="openSheet('rider-booking')">
+      <div class="nav-tab-icon">＋</div><div class="nav-tab-label">Book</div><div class="nav-indicator"></div>
+    </button>
+    <button class="nav-tab" id="pnav-shows" onclick="showParentPanel('shows')">
+      <div class="nav-tab-icon">🏆</div><div class="nav-tab-label">Shows</div><div class="nav-indicator"></div>
+    </button>
+    <button class="nav-tab" id="pnav-riders" onclick="showParentPanel('riders')">
+      <div class="nav-tab-icon">🏇</div><div class="nav-tab-label">Riders</div><div class="nav-indicator"></div>
+    </button>
+  </div>
 </div>
 
 <!-- CHILD SCHEDULE -->
@@ -255,26 +244,14 @@
     <div class="search-dropdown-wrap">
       <button class="search-btn" onclick="toggleSearchDropdown('staff-dd')">🔍 Browse <span style="font-size:10px">▾</span></button>
       <div class="search-dropdown" id="staff-dd">
-        <div class="search-dropdown-section" style="justify-content:space-between" onclick="toggleDDSection('staff-dd-horses-body')">
-          <span onclick="event.stopPropagation();showHorsesDash();closeAllDropdowns()" style="flex:1;cursor:pointer">🐴 Horses</span>
-          <span class="search-dropdown-section-arrow" id="staff-dd-horses-arrow" onclick="event.stopPropagation();toggleDDSection('staff-dd-horses-body')">▾</span>
+        <div class="search-dropdown-section" onclick="showHorsesDash();closeAllDropdowns()">
+          <span style="flex:1;cursor:pointer">🐴 Horses</span>
         </div>
-        <div class="search-dropdown-section-body" id="staff-dd-horses-body">
-          <div id="staff-dd-horses"></div>
+        <div class="search-dropdown-section" onclick="showRidersDash();closeAllDropdowns()">
+          <span style="flex:1;cursor:pointer">🏇 Riders</span>
         </div>
-        <div class="search-dropdown-section" style="justify-content:space-between" onclick="toggleDDSection('staff-dd-riders-body')">
-          <span onclick="event.stopPropagation();showRidersDash();closeAllDropdowns()" style="flex:1;cursor:pointer">🏇 Riders</span>
-          <span class="search-dropdown-section-arrow" id="staff-dd-riders-arrow" onclick="event.stopPropagation();toggleDDSection('staff-dd-riders-body')">▾</span>
-        </div>
-        <div class="search-dropdown-section-body" id="staff-dd-riders-body">
-          <div id="staff-dd-riders"></div>
-        </div>
-        <div class="search-dropdown-section" style="justify-content:space-between" onclick="toggleDDSection('staff-dd-shows-body')">
-          <span onclick="event.stopPropagation();showShowsDash();closeAllDropdowns()" style="flex:1;cursor:pointer">🏆 Shows</span>
-          <span class="search-dropdown-section-arrow" id="staff-dd-shows-arrow" onclick="event.stopPropagation();toggleDDSection('staff-dd-shows-body')">▾</span>
-        </div>
-        <div class="search-dropdown-section-body" id="staff-dd-shows-body">
-          <div id="staff-dd-shows"></div>
+        <div class="search-dropdown-section" onclick="showShowsDash();closeAllDropdowns()">
+          <span style="flex:1;cursor:pointer">🏆 Shows</span>
         </div>
       </div>
     </div>
