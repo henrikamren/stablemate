@@ -17,6 +17,38 @@ function isHorseDoubleBooked(horseId, date, time, duration, excludeId){
   });
 }
 
+function isRiderDoubleBooked(riderId, date, time, duration, excludeId){
+  if(!riderId)return false;
+  const dur=parseInt(duration)||60;
+  const [h,m]=time.split(':').map(Number);
+  const startMin=h*60+m;
+  const endMin=startMin+dur;
+  return bookings.some(b=>{
+    if(excludeId&&b.id===excludeId)return false;
+    if(parseInt(b.rider_id)!==parseInt(riderId)||b.date!==date)return false;
+    const [bh,bm]=b.time.split(':').map(Number);
+    const bStart=bh*60+bm;
+    const bEnd=bStart+(parseInt(b.duration)||60);
+    return startMin<bEnd&&endMin>bStart;
+  });
+}
+
+/**
+ * Unified double-booking check. Returns {ok:true} or {ok:false, message:string}.
+ * Checks both horse AND rider for time overlap on the given date.
+ */
+function checkDoubleBooking(horseId, riderId, date, time, duration, excludeId){
+  if(isHorseDoubleBooked(horseId, date, time, duration, excludeId)){
+    const h=horseId?getHorse(horseId):null;
+    return {ok:false, message:`${h?h.name:'This horse'} is already booked at that time`};
+  }
+  if(isRiderDoubleBooked(riderId, date, time, duration, excludeId)){
+    const r=riderId?getRider(riderId):null;
+    return {ok:false, message:`${r?r.first:'This rider'} already has a booking at that time`};
+  }
+  return {ok:true};
+}
+
 function editBookingFromRider(bookingId){
   const b=bookings.find(x=>x.id===bookingId);
   if(!b)return;
@@ -49,7 +81,9 @@ async function saveBooking(){
   const notes=document.getElementById('b-notes').value;
   if(!date){showToast('Please select a date');return;}
   const editId=document.getElementById('sheet-booking')?.dataset.editId?parseInt(document.getElementById('sheet-booking').dataset.editId):null;
-  if(isHorseDoubleBooked(horseId,date,time,duration,editId)){showToast('This horse is already booked at that time');return;}
+  // Double-booking check — horse AND rider
+  const dbCheck=checkDoubleBooking(horseId,riderId,date,time,duration,editId);
+  if(!dbCheck.ok){showToast(dbCheck.message);return;}
   // Check AFB/HNR conflicts
   if(typeof checkBookingConflicts==='function'){
     const{warnings,canProceed}=checkBookingConflicts(riderId,horseId,date,time);
@@ -97,7 +131,7 @@ async function saveRiderBooking(){
   const editId=sheetEl?.dataset.editId?parseInt(sheetEl.dataset.editId):null;
 
   // Double-booking check
-  if(isHorseDoubleBooked(horseId,date,time,duration,editId)){showToast('This horse is already booked at that time');return;}
+  // (moved after riderId resolution below so we can check both horse AND rider)
 
   // Check AFB/HNR conflicts
   let riderId=null;
@@ -114,6 +148,10 @@ async function saveRiderBooking(){
     const rider=riders.find(r=>r.first===currentUser.name||r.first+' '+(r.last||'').trim()===currentUser.name);
     riderId=rider?rider.id:null;
   }
+
+  // Double-booking check — horse AND rider
+  const dbCheck=checkDoubleBooking(horseId,riderId,date,time,duration,editId);
+  if(!dbCheck.ok){showToast(dbCheck.message);return;}
 
   // AFB/HNR conflict check (now that riderId is known)
   if(typeof checkBookingConflicts==='function'){
@@ -139,7 +177,11 @@ async function saveRiderBooking(){
   }
 
   let saved=0;
+  let skipped=0;
   for(const d of dates){
+    // Check double-booking for each date in the series
+    const perDateCheck=checkDoubleBooking(horseId,riderId,d,time,duration,editId);
+    if(!perDateCheck.ok){skipped++;continue;}
     const nb={id:Date.now()+saved,horse_id:horseId,rider_id:riderId,date:d,time,duration,type,arena,notes};
     try{
       const{data,error}=await sb.from('bookings').insert({horse_id:horseId,rider_id:riderId,date:d,time,duration,type,arena,notes}).select().single();
@@ -168,7 +210,7 @@ async function saveRiderBooking(){
     renderRiderHome();
   }
   renderCalendar();
-  showToast(editId?'Booking updated':saved===1?'Visit booked!':saved+' visits booked!');
+  showToast(editId?'Booking updated':saved===1?'Visit booked!':`${saved} visits booked!${skipped>0?' ('+skipped+' skipped — conflicts)':''}`);
 }
 
 async function saveHorse(){

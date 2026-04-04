@@ -504,17 +504,37 @@ function updateBookingConflictWarnings(prefix){
 
   if(!dateStr){warningEl.innerHTML='';return;}
 
+  // Get duration and editId for double-booking check
+  const durEl=document.getElementById(prefix==='b'?'b-duration':'rb-duration');
+  const duration=parseInt(durEl?.value)||60;
+  const sheetEl=document.getElementById(prefix==='b'?'sheet-booking':'sheet-rider-booking');
+  const editId=sheetEl?.dataset?.editId?parseInt(sheetEl.dataset.editId):null;
+
+  let allWarnings=[];
+
+  // Double-booking check (horse + rider)
+  if(typeof checkDoubleBooking==='function'&&dateStr&&timeStr){
+    const dbCheck=checkDoubleBooking(horseId,riderId,dateStr,timeStr,duration,editId);
+    if(!dbCheck.ok){
+      allWarnings.push({type:'double',message:dbCheck.message});
+    }
+  }
+
+  // AFB/HNR conflict check
   const{warnings}=checkBookingConflicts(riderId,horseId,dateStr,timeStr);
-  if(warnings.length===0){
+  allWarnings=allWarnings.concat(warnings);
+
+  if(allWarnings.length===0){
     warningEl.innerHTML='';
     return;
   }
 
-  warningEl.innerHTML=warnings.map(w=>{
-    const bg=w.type==='afb'?'rgba(139,90,43,0.1)':'rgba(192,57,43,0.1)';
-    const border=w.type==='afb'?'rgba(139,90,43,0.3)':'rgba(192,57,43,0.3)';
-    const color=w.type==='afb'?'var(--earth)':'#c0392b';
-    const icon=w.type==='afb'?'🏠':'🚫';
+  warningEl.innerHTML=allWarnings.map(w=>{
+    const isDouble=w.type==='double';
+    const bg=isDouble?'rgba(231,76,60,0.1)':w.type==='afb'?'rgba(139,90,43,0.1)':'rgba(192,57,43,0.1)';
+    const border=isDouble?'rgba(231,76,60,0.3)':w.type==='afb'?'rgba(139,90,43,0.3)':'rgba(192,57,43,0.3)';
+    const color=isDouble?'#e74c3c':w.type==='afb'?'var(--earth)':'#c0392b';
+    const icon=isDouble?'⚠️':w.type==='afb'?'🏠':'🚫';
     return `<div style="background:${bg};border:1px solid ${border};border-radius:8px;padding:8px 12px;margin-top:6px;font-size:12px;color:${color}">
       ${icon} ${w.message}
     </div>`;
