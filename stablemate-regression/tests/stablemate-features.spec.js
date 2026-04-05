@@ -201,7 +201,7 @@ test.describe('Authentication & session', () => {
     await bootApp(page);
     await page.locator('.splash-btn').click();
     await expect(page.locator('#screen-role')).toHaveClass(/active/);
-    await expect(page.locator('.role-card')).toHaveCount(3);
+    await expect(page.locator('.role-card')).toHaveCount(4);
   });
 
   test('rider login via typed name', async ({ page }) => {
