@@ -394,7 +394,9 @@ function buildWeekCalendar(highlightRiderIds, weekOffset){
     const allBookings=bookings.filter(b=>b.date===ds);
     const trainerColor=hasTrainer?(TRAINER_COLORS[trainerNames[0]]||TRAINER_COLORS.default):'transparent';
 
-    html+=`<div style="background:var(--white);border-radius:8px;border:1px solid ${isToday?'var(--earth)':'var(--sand)'};overflow:hidden;${isToday?'box-shadow:0 0 0 2px var(--earth)':''}cursor:pointer" onclick="showWeekDayDetail('${ds}')" onmouseenter="showCalTooltip('${ds}',this)" onmouseleave="hideCalTooltip()">
+    const dayPast=ds<todayStr;
+    const nowStr=nowTimeStr();
+    html+=`<div style="background:var(--white);border-radius:8px;border:1px solid ${isToday?'var(--earth)':'var(--sand)'};overflow:hidden;${isToday?'box-shadow:0 0 0 2px var(--earth)':''}cursor:pointer;${dayPast?'opacity:0.45;filter:grayscale(30%)':''}" onclick="showWeekDayDetail('${ds}')" onmouseenter="showCalTooltip('${ds}',this)" onmouseleave="hideCalTooltip()">
       <div style="height:4px;background:${trainerColor};opacity:${hasTrainer?0.85:0}"></div>
       <div style="padding:4px 4px 2px;text-align:center">
         <div style="font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:${isToday?'var(--earth)':'var(--text-muted)'};font-weight:${isToday?'500':'400'}">${days7[d.getDay()]}</div>
@@ -404,10 +406,12 @@ function buildWeekCalendar(highlightRiderIds, weekOffset){
         ${typeof buildAfbIndicator==='function'?buildAfbIndicator(ds,highlightRiderIds):''}
         ${typeof buildHnrIndicator==='function'?buildHnrIndicator(ds,[]):''}
         ${myBookings.map(b=>{
-          const rColor=getRiderColor(b.rider_id);
+          const bPast=dayPast||(isToday&&bookingEndTime(b)<=nowStr);
+          const rColor=bPast?'var(--sand)':getRiderColor(b.rider_id);
+          const textColor=bPast?'var(--text-muted)':'white';
           const r=getRider(b.rider_id);
           const h=getHorse(b.horse_id);
-          return`<div style="background:${rColor};border-radius:3px;padding:2px 3px;font-size:9px;color:white;line-height:1.3">
+          return`<div style="background:${rColor};border-radius:3px;padding:2px 3px;font-size:9px;color:${textColor};line-height:1.3;${bPast?'text-decoration:line-through':''}">
             <div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r?r.first:b.time}</div>
             ${h?`<div style="opacity:0.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${h.name}</div>`:''}
           </div>`;
@@ -463,6 +467,7 @@ function buildDayCalendar(dateStr, myBookingIds){
     }
   });
 
+  const nowStr=nowTimeStr();
   let bookingBlocks='';
   dayBookings.forEach(b=>{
     const [bh,bm]=b.time.split(':').map(Number);
@@ -472,11 +477,12 @@ function buildDayCalendar(dateStr, myBookingIds){
     const h=getHorse(b.horse_id);const r=getRider(b.rider_id);const t=typeConfig[b.type]||{dot:'#888',label:b.type};
     const isMe=myBookingIds.includes(b.id);
     const canAct=currentRole==='staff'||isMe;
-    const bg=isMe?t.dot:'var(--sand)';
-    const textColor=isMe?'white':'var(--text-muted)';
-    bookingBlocks+=`<div onclick="${canAct?`showBookingPopup(${b.id},event)`:''}" style="position:absolute;left:44px;right:4px;top:${top}px;height:${Math.max(height-2,20)}px;background:${bg};border-radius:6px;padding:3px 6px;overflow:hidden;z-index:1;display:flex;align-items:flex-start;justify-content:space-between;${canAct?'cursor:pointer':''}">
+    const passed=b.date<dateStr||(b.date===dateStr&&bookingEndTime(b)<=nowStr);
+    const bg=passed?'var(--sand)':(isMe?t.dot:'var(--cream-dark)');
+    const textColor=passed?'var(--text-muted)':(isMe?'white':'var(--text-muted)');
+    bookingBlocks+=`<div onclick="${canAct?`showBookingPopup(${b.id},event)`:''}" style="position:absolute;left:44px;right:4px;top:${top}px;height:${Math.max(height-2,20)}px;background:${bg};border-radius:6px;padding:3px 6px;overflow:hidden;z-index:1;display:flex;align-items:flex-start;justify-content:space-between;${canAct?'cursor:pointer':''};${passed?'opacity:0.5':''}">
       <div style="min-width:0;overflow:hidden">
-        <div style="font-size:11px;font-weight:500;color:${textColor};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${h?h.name:(r?r.first:'Booking')}</div>
+        <div style="font-size:11px;font-weight:500;color:${textColor};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;${passed?'text-decoration:line-through':''}">${h?h.name:(r?r.first:'Booking')}</div>
         ${height>30?`<div style="font-size:10px;color:${textColor};opacity:0.85">${t.label}${r?' · '+r.first:''}</div>`:''}
       </div>
     </div>`;
