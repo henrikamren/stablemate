@@ -20,10 +20,41 @@ function renderOwnerHome(){
   const me=getOwnerRecord();
   const myHorses=getMyHorses();
   const todayStr=fmtDate(today);
+  const nameLower=currentUser.name.trim().toLowerCase();
+  const now=nowTimeStr();
 
-  let html=`<div class="rider-greeting">Hi, ${currentUser.name.split(' ')[0]} 👋</div>
+  // Rider identity (owner may also be a rider)
+  const meRider=riders.find(r=>r.first.toLowerCase()===nameLower||(r.first+' '+(r.last||'')).trim().toLowerCase()===nameLower);
+  // Children (owner may also be a parent)
+  const myChildren=riders.filter(r=>r.parents&&r.parents.split(',').map(p=>p.trim().toLowerCase()).includes(nameLower));
+
+  let html=`<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:2px">
+    <div class="rider-greeting">Hi, ${currentUser.name.split(' ')[0]} 👋</div>
+    <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.06em">Oasis Farm</div>
+  </div>
   <div class="rider-date-sub">${today.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</div>
+  <div class="trainer-avail-row">${buildTrainerChips(todayStr)}</div>
   <div id="owner-weather"></div>`;
+
+  // Own upcoming bookings (rider perspective)
+  if(meRider){
+    const myB=bookings.filter(b=>b.rider_id===meRider.id&&(b.date>todayStr||(b.date===todayStr&&bookingEndTime(b)>now))).sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date));
+    const next=myB[0];
+    if(next){html+=buildNextUpFromBooking(next,{label:'Next Visit'});}
+    // AFB entries and quick-add
+    if(typeof buildRiderAfbList==='function')html+=buildRiderAfbList(meRider.id);
+    html+=`<button class="btn btn-secondary" style="width:100%;margin-bottom:16px;font-size:12px;padding:10px;display:flex;align-items:center;justify-content:center;gap:6px" onclick="openAfbSheet()">
+      🏠 Mark Away From Barn
+    </button>`;
+  }
+
+  // Children (parent perspective)
+  if(myChildren.length>0){
+    html+=`<div class="section-label">Your Children</div>`;
+    myChildren.forEach(child=>{
+      html+=buildChildCard(child,{onclick:`showChildSchedule(${child.id},true)`});
+    });
+  }
 
   if(myHorses.length===0){
     html+='<div class="empty"><div class="empty-icon">🐴</div><div class="empty-text">No horses linked to your account</div></div>';
@@ -118,22 +149,30 @@ function showOwnerPanel(name){
   const tab=document.getElementById('onav-'+name);
   if(tab)tab.classList.add('active');
 
-  ['owner-content','owner-shows-content','owner-detail-content'].forEach(id=>{
+  ['owner-content','owner-horses-content','owner-shows-content','owner-riders-content','owner-detail-content'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.style.display='none';
   });
 
   if(name==='home'){
     document.getElementById('owner-content').style.display='';
     renderOwnerHome();
+  } else if(name==='horses'){
+    const el=document.getElementById('owner-horses-content');
+    el.style.display='';
+    renderInlineHorsesDash(el);
   } else if(name==='shows'){
     const el=document.getElementById('owner-shows-content');
     el.style.display='';
     renderInlineShowsDash(el);
+  } else if(name==='riders'){
+    const el=document.getElementById('owner-riders-content');
+    el.style.display='';
+    renderInlineRidersDash(el);
   }
 }
 
 function showOwnerDetailPanel(html){
-  ['owner-content','owner-shows-content'].forEach(id=>{
+  ['owner-content','owner-horses-content','owner-shows-content','owner-riders-content'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.style.display='none';
   });
   const el=document.getElementById('owner-detail-content');

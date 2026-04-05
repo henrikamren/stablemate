@@ -173,13 +173,18 @@ function openSheet(name){
     const childGroup=document.getElementById('rb-child-group');
     const childSel=document.getElementById('rb-child');
     const titleEl=document.getElementById('rb-sheet-title');
-    if(currentRole==='parent'){
+    if(currentRole==='parent'||currentRole==='owner'){
       const myChildren=riders.filter(r=>r.parents&&r.parents.split(',').map(p=>p.trim().toLowerCase()).includes(currentUser.name.trim().toLowerCase()));
-      if(childSel){
-        childSel.innerHTML='<option value="">— Select child —</option>'+myChildren.map(r=>`<option value="${r.id}">${r.first}</option>`).join('');
-        if(currentChildId)childSel.value=currentChildId;
+      if(myChildren.length>0){
+        if(childSel){
+          const selfOpt=currentRole==='owner'?'<option value="">— Book for myself —</option>':'<option value="">— Select child —</option>';
+          childSel.innerHTML=selfOpt+myChildren.map(r=>`<option value="${r.id}">${r.first}</option>`).join('');
+          if(currentChildId)childSel.value=currentChildId;
+        }
+        if(childGroup)childGroup.style.display='block';
+      } else {
+        if(childGroup)childGroup.style.display='none';
       }
-      if(childGroup)childGroup.style.display='block';
       if(titleEl)titleEl.textContent='Book a Visit';
     } else {
       if(childGroup)childGroup.style.display='none';

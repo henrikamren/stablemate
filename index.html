@@ -220,14 +220,25 @@
     </div>
   </div>
   <div class="simple-content" id="owner-content" style="padding-bottom:70px"></div>
+  <div class="simple-content" id="owner-horses-content" style="padding-bottom:70px;display:none"></div>
   <div class="simple-content" id="owner-shows-content" style="padding-bottom:70px;display:none"></div>
+  <div class="simple-content" id="owner-riders-content" style="padding-bottom:70px;display:none"></div>
   <div class="simple-content" id="owner-detail-content" style="padding-bottom:70px;display:none"></div>
   <div class="bottom-nav" id="owner-bottom-nav">
     <button class="nav-tab active" id="onav-home" onclick="showOwnerPanel('home')">
-      <div class="nav-tab-icon">◈</div><div class="nav-tab-label">My Horses</div><div class="nav-indicator"></div>
+      <div class="nav-tab-icon">⌂</div><div class="nav-tab-label">Home</div><div class="nav-indicator"></div>
+    </button>
+    <button class="nav-tab" id="onav-horses" onclick="showOwnerPanel('horses')">
+      <div class="nav-tab-icon">◈</div><div class="nav-tab-label">Herd</div><div class="nav-indicator"></div>
+    </button>
+    <button class="nav-tab" id="onav-book" onclick="openSheet('rider-booking')">
+      <div class="nav-tab-icon">＋</div><div class="nav-tab-label">Book</div><div class="nav-indicator"></div>
     </button>
     <button class="nav-tab" id="onav-shows" onclick="showOwnerPanel('shows')">
       <div class="nav-tab-icon">🏆</div><div class="nav-tab-label">Shows</div><div class="nav-indicator"></div>
+    </button>
+    <button class="nav-tab" id="onav-riders" onclick="showOwnerPanel('riders')">
+      <div class="nav-tab-icon">🏇</div><div class="nav-tab-label">Riders</div><div class="nav-indicator"></div>
     </button>
   </div>
 </div>

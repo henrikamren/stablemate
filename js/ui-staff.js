@@ -252,11 +252,13 @@ function showHorseSchedule(horseId){
     </div>`;
   }
 
-  // Render detail view — inline for rider/parent, separate screen for staff
+  // Render detail view — inline for rider/parent/owner, separate screen for staff
   if(currentRole==='rider'){
     showRiderDetailPanel(html);
   } else if(currentRole==='parent'){
     showParentDetailPanel(html);
+  } else if(currentRole==='owner'){
+    showOwnerDetailPanel(html);
   } else {
     document.getElementById('child-schedule-content').innerHTML=html;
     document.getElementById('child-book-fab').style.display='none';
@@ -271,7 +273,7 @@ function showHorseSchedule(horseId){
 
 function showRiderSchedule(riderId){
   const r=getRider(parseInt(riderId));if(!r)return;
-  const isMyChild=currentRole==='parent'&&r.parents&&r.parents.split(',').map(p=>p.trim().toLowerCase()).includes(currentUser.name.trim().toLowerCase());
+  const isMyChild=(currentRole==='parent'||currentRole==='owner')&&r.parents&&r.parents.split(',').map(p=>p.trim().toLowerCase()).includes(currentUser.name.trim().toLowerCase());
   const todayStr=fmtDate(today);
   const myBookings=bookings.filter(b=>parseInt(b.rider_id)===parseInt(r.id)&&isFutureBooking(b))
     .sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date));
@@ -326,6 +328,8 @@ function showRiderSchedule(riderId){
     showRiderDetailPanel(html);
   } else if(currentRole==='parent'){
     showParentDetailPanel(html);
+  } else if(currentRole==='owner'){
+    showOwnerDetailPanel(html);
   } else {
     document.getElementById('child-schedule-content').innerHTML=html;
     const fab=document.getElementById('child-book-fab');

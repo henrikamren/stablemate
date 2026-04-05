@@ -59,7 +59,11 @@ function showAllRiders(){
       html+=buildChildCard(r,{onclick:`showChildSchedule(${r.id},false)`});
     });
   }
-  showParentDetailPanel(html);
+  if(currentRole==='owner'&&typeof showOwnerDetailPanel==='function'){
+    showOwnerDetailPanel(html);
+  } else {
+    showParentDetailPanel(html);
+  }
 }
 
 function showChildSchedule(riderId,canBook){
@@ -102,7 +106,11 @@ function showChildSchedule(riderId,canBook){
     html+=`<button class="btn btn-primary" style="width:100%;margin-top:12px;padding:12px;font-size:13px" onclick="currentChildId=${child.id};openChildBooking()">+ Book for ${child.first}</button>`;
   }
 
-  showParentDetailPanel(html);
+  if(currentRole==='owner'&&typeof showOwnerDetailPanel==='function'){
+    showOwnerDetailPanel(html);
+  } else {
+    showParentDetailPanel(html);
+  }
 }
 
 function openChildBooking(){

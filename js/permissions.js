@@ -16,10 +16,19 @@ function canDeleteBooking(bookingId){
     return myChildren.some(ch=>parseInt(ch.id)===parseInt(b.rider_id));
   }
   if(currentRole==='owner'){
-    const me=owners.find(o=>o.first.toLowerCase()===currentUser.name.trim().toLowerCase()||((o.first+' '+(o.last||'')).trim().toLowerCase()===currentUser.name.trim().toLowerCase()));
-    if(!me)return false;
-    const myHorses=horses.filter(h=>parseInt(h.owner_id)===parseInt(me.id));
-    return myHorses.some(h=>parseInt(h.id)===parseInt(b.horse_id));
+    const nameLower=currentUser.name.trim().toLowerCase();
+    // Horse owner: can delete bookings on their horses
+    const me=owners.find(o=>o.first.toLowerCase()===nameLower||((o.first+' '+(o.last||'')).trim().toLowerCase()===nameLower));
+    if(me){
+      const myHorses=horses.filter(h=>parseInt(h.owner_id)===parseInt(me.id));
+      if(myHorses.some(h=>parseInt(h.id)===parseInt(b.horse_id)))return true;
+    }
+    // Rider identity: can delete own bookings
+    const meRider=riders.find(r=>r.first.toLowerCase()===nameLower||(r.first+' '+(r.last||'')).trim().toLowerCase()===nameLower);
+    if(meRider&&parseInt(b.rider_id)===parseInt(meRider.id))return true;
+    // Parent identity: can delete children's bookings
+    const myChildren=riders.filter(r=>r.parents&&r.parents.split(',').map(p=>p.trim().toLowerCase()).includes(nameLower));
+    return myChildren.some(ch=>parseInt(ch.id)===parseInt(b.rider_id));
   }
   return false;
 }

@@ -142,6 +142,18 @@ async function saveRiderBooking(){
     riderId=selChildId||currentChildId||null;
     if(!riderId){showToast('Please select a child');return;}
     currentChildId=riderId;
+  } else if(currentRole==='owner'){
+    // Check if booking for a child or for self
+    const childSel=document.getElementById('rb-child');
+    const selChildId=parseInt(childSel?.value)||null;
+    if(selChildId){
+      riderId=selChildId;
+      currentChildId=riderId;
+    } else {
+      currentChildId=null;
+      const rider=riders.find(r=>r.first===currentUser.name||r.first+' '+(r.last||'').trim()===currentUser.name);
+      riderId=rider?rider.id:null;
+    }
   } else if(currentChildId){
     riderId=currentChildId;
   } else {
@@ -206,6 +218,8 @@ async function saveRiderBooking(){
     const child=getRider(currentChildId);
     if(child)showChildSchedule(currentChildId,true);
     currentChildId=null;
+  } else if(currentRole==='owner'){
+    renderOwnerHome();
   } else {
     renderRiderHome();
   }
@@ -374,10 +388,10 @@ async function rsvpShow(showId, response){
 
   // Find the current rider
   let riderKey=currentUser.name;
-  if(currentRole==='parent'&&currentChildId){
+  if((currentRole==='parent'||currentRole==='owner')&&currentChildId){
     const child=getRider(currentChildId);
     if(child)riderKey=child.first+'_'+child.id;
-  } else if(currentRole==='rider'){
+  } else if(currentRole==='rider'||currentRole==='owner'){
     const me=riders.find(r=>r.first.toLowerCase()===currentUser.name.toLowerCase());
     if(me)riderKey=me.first+'_'+me.id;
   }
@@ -393,10 +407,10 @@ async function rsvpShow(showId, response){
 function getRsvpStatus(show){
   if(!show.rsvps)return null;
   let riderKey=null;
-  if(currentRole==='parent'&&currentChildId){
+  if((currentRole==='parent'||currentRole==='owner')&&currentChildId){
     const child=getRider(currentChildId);
     if(child)riderKey=child.first+'_'+child.id;
-  } else if(currentRole==='rider'){
+  } else if(currentRole==='rider'||currentRole==='owner'){
     const me=riders.find(r=>r.first.toLowerCase()===currentUser.name.toLowerCase());
     if(me)riderKey=me.first+'_'+me.id;
   }
@@ -430,10 +444,10 @@ function showShowDetail(showId){
     <span style="background:var(--earth);color:var(--white);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500">${countdown}</span>
   </div>`;
 
-  // -- RSVP section for riders/parents --
-  if((currentRole==='rider'||currentRole==='parent')&&isFuture){
+  // -- RSVP section for riders/parents/owners --
+  if((currentRole==='rider'||currentRole==='parent'||currentRole==='owner')&&isFuture){
     const myStatus=getRsvpStatus(show);
-    const riderName=currentRole==='parent'&&currentChildId?getRider(currentChildId)?.first:currentUser.name;
+    const riderName=(currentRole==='parent'||currentRole==='owner')&&currentChildId?getRider(currentChildId)?.first:currentUser.name;
     html+=`<div style="background:var(--white);border-radius:10px;border:1px solid var(--sand);padding:14px 16px;margin-bottom:14px">
       <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">
         ${riderName?riderName+"'s RSVP":'Your RSVP'}
@@ -494,11 +508,13 @@ function showShowDetail(showId){
     html+=`<button class="btn btn-secondary" style="width:100%;margin-top:4px" onclick="deleteShow(${show.id});showScreen('app')">Remove Show</button>`;
   }
 
-  // Render detail — inline for rider/parent, separate screen for staff
+  // Render detail — inline for rider/parent/owner, separate screen for staff
   if(currentRole==='rider'&&typeof showRiderDetailPanel==='function'){
     showRiderDetailPanel(html);
   } else if(currentRole==='parent'&&typeof showParentDetailPanel==='function'){
     showParentDetailPanel(html);
+  } else if(currentRole==='owner'&&typeof showOwnerDetailPanel==='function'){
+    showOwnerDetailPanel(html);
   } else {
     document.getElementById('shows-dash').innerHTML=html;
     showPanel('shows');

@@ -10,7 +10,7 @@ function getBackScreen(){
 
 function showHorsesDash(){
   const html=buildHorsesDashHtml();
-  // Staff uses separate screen; rider/parent use inline panels
+  // Staff uses separate screen; rider/parent/owner use inline panels
   if(currentRole==='staff'){
     document.getElementById('horses-dash-content').innerHTML=html;
     document.getElementById('horses-dash-back').onclick=()=>showScreen(getBackScreen());
@@ -19,6 +19,8 @@ function showHorsesDash(){
     showRiderPanel('horses');
   } else if(currentRole==='parent'){
     showParentPanel('horses');
+  } else if(currentRole==='owner'){
+    showOwnerPanel('horses');
   }
 }
 
@@ -84,6 +86,8 @@ function showRidersDash(){
     showRiderPanel('riders');
   } else if(currentRole==='parent'){
     showParentPanel('riders');
+  } else if(currentRole==='owner'){
+    showOwnerPanel('riders');
   }
 }
 
@@ -147,6 +151,8 @@ function showShowsDash(){
     showRiderPanel('shows');
   } else if(currentRole==='parent'){
     showParentPanel('shows');
+  } else if(currentRole==='owner'){
+    showOwnerPanel('shows');
   }
 }
 
