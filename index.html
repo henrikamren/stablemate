@@ -57,6 +57,10 @@
         <div class="role-card-icon">🐴</div>
         <div><div class="role-card-title">I am Staff</div><div class="role-card-desc">Manage the stable and bookings</div></div>
       </div>
+      <div class="role-card" onclick="showScreen('login-owner')">
+        <div class="role-card-icon">🗝️</div>
+        <div><div class="role-card-title">I am an Owner / Lessee</div><div class="role-card-desc">View your horse's schedule and care</div></div>
+      </div>
     </div>
     <button class="role-back" onclick="showScreen('splash')">← Back</button>
   </div>
@@ -86,6 +90,20 @@
     <div class="login-divider">or type your name</div>
     <input type="text" class="login-input" id="parent-name-input" placeholder="Type your name...">
     <button class="login-btn" onclick="enterParent()">View Schedule</button>
+    <button class="login-back" onclick="showScreen('role')">← Back</button>
+  </div>
+</div>
+
+<!-- OWNER LOGIN -->
+<div class="screen" id="screen-login-owner">
+  <div class="login-card">
+    <div class="login-logo">Stable<span>Mate</span></div>
+    <div class="login-barn">Oasis Farm</div>
+    <label class="login-label">Select your name</label>
+    <select class="login-select" id="owner-select"><option value="">— Select your name —</option></select>
+    <div class="login-divider">or type your name</div>
+    <input type="text" class="login-input" id="owner-name-input" placeholder="Type your name...">
+    <button class="login-btn" onclick="enterOwner()">View My Horse</button>
     <button class="login-back" onclick="showScreen('role')">← Back</button>
   </div>
 </div>
@@ -181,6 +199,35 @@
     </button>
     <button class="nav-tab" id="pnav-riders" onclick="showParentPanel('riders')">
       <div class="nav-tab-icon">🏇</div><div class="nav-tab-label">Riders</div><div class="nav-indicator"></div>
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ -->
+<!--           OWNER APP               -->
+<!-- ══════════════════════════════════ -->
+<div class="screen large-font" id="screen-owner-app">
+  <div class="simple-topbar" id="owner-topbar">
+    <div id="owner-topbar-logo">
+      <div class="topbar-logo">Stable<span>Mate</span></div>
+      <div class="topbar-barn">Oasis Farm</div>
+    </div>
+    <button id="owner-back-btn" class="btn btn-secondary btn-sm" style="display:none;font-size:13px">← Back</button>
+    <div class="topbar-user">
+      <div class="topbar-avatar" id="owner-avatar">?</div>
+      <div class="topbar-name" id="owner-topbar-name"></div>
+      <button class="logout-btn" onclick="signOut()">Sign out</button>
+    </div>
+  </div>
+  <div class="simple-content" id="owner-content" style="padding-bottom:70px"></div>
+  <div class="simple-content" id="owner-shows-content" style="padding-bottom:70px;display:none"></div>
+  <div class="simple-content" id="owner-detail-content" style="padding-bottom:70px;display:none"></div>
+  <div class="bottom-nav" id="owner-bottom-nav">
+    <button class="nav-tab active" id="onav-home" onclick="showOwnerPanel('home')">
+      <div class="nav-tab-icon">◈</div><div class="nav-tab-label">My Horses</div><div class="nav-indicator"></div>
+    </button>
+    <button class="nav-tab" id="onav-shows" onclick="showOwnerPanel('shows')">
+      <div class="nav-tab-icon">🏆</div><div class="nav-tab-label">Shows</div><div class="nav-indicator"></div>
     </button>
   </div>
 </div>
@@ -699,6 +746,7 @@
 <script src="js/afb-ui.js"></script>
 <script src="js/ui-rider.js"></script>
 <script src="js/ui-parent.js"></script>
+<script src="js/ui-owner.js"></script>
 <script src="js/ui-browse.js"></script>
 <script src="js/ui-staff.js"></script>
 <script src="js/sheets.js"></script>

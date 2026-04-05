@@ -15,6 +15,12 @@ function canDeleteBooking(bookingId){
     const myChildren=riders.filter(r=>r.parents&&r.parents.split(',').map(p=>p.trim().toLowerCase()).includes(currentUser.name.trim().toLowerCase()));
     return myChildren.some(ch=>parseInt(ch.id)===parseInt(b.rider_id));
   }
+  if(currentRole==='owner'){
+    const me=owners.find(o=>o.first.toLowerCase()===currentUser.name.trim().toLowerCase()||((o.first+' '+(o.last||'')).trim().toLowerCase()===currentUser.name.trim().toLowerCase()));
+    if(!me)return false;
+    const myHorses=horses.filter(h=>parseInt(h.owner_id)===parseInt(me.id));
+    return myHorses.some(h=>parseInt(h.id)===parseInt(b.horse_id));
+  }
   return false;
 }
 
@@ -35,6 +41,7 @@ async function deleteAnyBooking(id){
   // Re-render whichever screen is active
   if(currentRole==='staff'){renderDash();renderBookings();}
   else if(currentRole==='rider'){renderRiderHome();}
+  else if(currentRole==='owner'){renderOwnerHome();}
   else if(currentRole==='parent'){
     if(currentChildId){showChildSchedule(currentChildId,true);}
     else{renderParentHome();}

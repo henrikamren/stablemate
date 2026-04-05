@@ -56,6 +56,7 @@ function populateLoginDropdowns(){
   const rSel=document.getElementById('rider-select');
   const pSel=document.getElementById('parent-select');
   const sSel=document.getElementById('staff-select');
+  const oSel=document.getElementById('owner-select');
   if(!rSel||!pSel)return;
   while(rSel.options.length>1)rSel.remove(1);
   while(pSel.options.length>1)pSel.remove(1);
@@ -69,5 +70,9 @@ function populateLoginDropdowns(){
   if(sSel){
     const staffNames=[...new Set(schedules.map(s=>s.trainer_name))].sort();
     staffNames.forEach(name=>{const o=document.createElement('option');o.value=name;o.textContent=name;sSel.appendChild(o);});
+  }
+  if(oSel){
+    while(oSel.options.length>1)oSel.remove(1);
+    owners.forEach(o=>{const opt=document.createElement('option');opt.value=o.first;opt.textContent=o.first+(o.last?' '+o.last:'');oSel.appendChild(opt);});
   }
 }

@@ -4,6 +4,7 @@
 function getBackScreen(){
   if(currentRole==='parent')return'parent-app';
   if(currentRole==='staff')return'app';
+  if(currentRole==='owner')return'owner-app';
   return'rider-app';
 }
 
