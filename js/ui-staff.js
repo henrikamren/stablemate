@@ -171,9 +171,12 @@ function showHorseSchedule(horseId){
   <!-- Header -->
   <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
     <div style="width:56px;height:56px;border-radius:50%;background:var(--cream-dark);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--earth);flex-shrink:0">${horse.name[0]}</div>
-    <div>
-      <div class="rider-greeting" style="margin-bottom:2px">${horse.name}</div>
-      <div style="font-size:13px;color:var(--text-muted)">${horse.breed||'Unknown breed'}${horse.age?' · '+horse.age+' yrs':''}${o?' · '+o.first:' · Barn horse'}</div>
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="rider-greeting" style="margin-bottom:2px">${horse.name}</div>
+        ${currentRole==='staff'?`<button class="btn btn-secondary btn-sm" style="font-size:11px;padding:3px 10px" onclick="openEditHorse(${horse.id})">Edit</button>`:''}
+      </div>
+      <div style="font-size:13px;color:var(--text-muted)">${horse.breed||'Unknown breed'}${horse.age?' · '+horse.age+' yrs':''}${o?' · '+o.first:' · Oasis Farm'}</div>
       <div style="margin-top:4px"><span style="font-size:10px;padding:2px 8px;border-radius:10px;background:var(--cream-dark);color:var(--text-muted)">${aMap[horse.access]||'Barn'}</span></div>
     </div>
   </div>`;

@@ -209,7 +209,14 @@ function openSheet(name){
     const recurSel=document.getElementById('rb-recur');
     if(recurSel){recurSel.value='none';document.getElementById('rb-recur-until-group').style.display='none';}
   }
-  if(name==='horse'){populateOwnerSelect('h-owner');}
+  if(name==='horse'){
+    populateOwnerSelect('h-owner');
+    const sheetEl=document.getElementById('sheet-horse');
+    if(!sheetEl?.dataset.editId){
+      document.getElementById('horse-sheet-title').textContent='Add Horse';
+      document.getElementById('horse-save-btn').textContent='Add Horse';
+    }
+  }
   if(name==='rider-form'){
     const sheetEl=document.getElementById('sheet-rider-form');
     if(!sheetEl?.dataset.editId){

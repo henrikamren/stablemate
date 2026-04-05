@@ -213,6 +213,20 @@ async function saveRiderBooking(){
   showToast(editId?'Booking updated':saved===1?'Visit booked!':`${saved} visits booked!${skipped>0?' ('+skipped+' skipped — conflicts)':''}`);
 }
 
+function openEditHorse(horseId){
+  const h=getHorse(parseInt(horseId));if(!h)return;
+  populateOwnerSelect('h-owner');
+  document.getElementById('horse-sheet-title').textContent='Edit Horse';
+  document.getElementById('horse-save-btn').textContent='Save Changes';
+  document.getElementById('h-name').value=h.name||'';
+  document.getElementById('h-breed').value=h.breed||'';
+  document.getElementById('h-age').value=h.age||'';
+  document.getElementById('h-owner').value=h.owner_id||'';
+  document.getElementById('h-access').value=h.access||'barn';
+  document.getElementById('h-notes').value=h.notes||'';
+  document.getElementById('sheet-horse').dataset.editId=horseId;
+  openSheet('horse');
+}
 async function saveHorse(){
   const name=document.getElementById('h-name').value.trim();
   const breed=document.getElementById('h-breed').value.trim();
@@ -221,10 +235,23 @@ async function saveHorse(){
   const access=document.getElementById('h-access').value;
   const notes=document.getElementById('h-notes').value.trim();
   if(!name){showToast('Please enter a horse name');return;}
-  const nh={id:Date.now(),name,breed,age,owner_id,access,notes,services:{}};
-  try{const{data,error}=await sb.from('horses').insert({name,breed,age,owner_id,access,notes}).select().single();if(!error&&data)horses.push({...data,services:{}});else horses.push(nh);}catch(e){horses.push(nh);}
-  closeSheet('horse');['h-name','h-breed','h-age','h-notes'].forEach(id=>document.getElementById(id).value='');
-  renderHorses();renderDash();showToast(name+' added');
+  const sheetEl=document.getElementById('sheet-horse');
+  const editId=sheetEl?.dataset.editId?parseInt(sheetEl.dataset.editId):null;
+  if(editId){
+    const patch={name,breed,age,owner_id,access,notes};
+    try{await sb.from('horses').update(patch).eq('id',editId);}catch(e){console.error('Update horse:',e);}
+    const idx=horses.findIndex(h=>parseInt(h.id)===editId);
+    if(idx>=0)horses[idx]={...horses[idx],...patch};
+    delete sheetEl.dataset.editId;
+    closeSheet('horse');
+    renderHorses();renderDash();showToast(name+' updated');
+  } else {
+    const nh={id:Date.now(),name,breed,age,owner_id,access,notes,services:{}};
+    try{const{data,error}=await sb.from('horses').insert({name,breed,age,owner_id,access,notes}).select().single();if(!error&&data)horses.push({...data,services:{}});else horses.push(nh);}catch(e){horses.push(nh);}
+    closeSheet('horse');
+    renderHorses();renderDash();showToast(name+' added');
+  }
+  ['h-name','h-breed','h-age','h-notes'].forEach(id=>document.getElementById(id).value='');
 }
 
 function populateRiderHorseSelect(selectedIds){
