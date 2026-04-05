@@ -188,21 +188,19 @@ function showHorseSchedule(horseId){
   html+=`<div style="margin-bottom:16px">${buildWeekCalendar(upcomingRiderIds)}</div>`;
 
   // Services
+  const _svcs=[{key:'lunge',icon:'🔄',label:'Lunge'},{key:'turnout',icon:'🌿',label:'Turnout'},{key:'walker',icon:'⭕',label:'Walker'}];
   html+=`<div class="schedule-card" style="margin-bottom:14px">
-    <div class="schedule-header"><div class="schedule-title">Services</div></div>
+    <div class="schedule-header"><div class="schedule-title">Services</div>${currentRole==='staff'?'<div class="schedule-meta">Tap to book</div>':''}</div>
     <div style="display:flex;gap:8px;padding:12px 16px">
-      <div style="flex:1;text-align:center;padding:8px;border-radius:8px;background:${sv.lunge?'var(--hay-light)':'var(--cream)'};border:1px solid ${sv.lunge?'var(--hay)':'var(--sand)'}">
-        <div style="font-size:18px">🔄</div><div style="font-size:11px;color:var(--text-mid);margin-top:2px">Lunge</div>
-        <div style="font-size:10px;color:${sv.lunge?'var(--earth-light)':'var(--text-muted)'};margin-top:2px">${sv.lunge?'Requested':'—'}</div>
-      </div>
-      <div style="flex:1;text-align:center;padding:8px;border-radius:8px;background:${sv.turnout?'var(--hay-light)':'var(--cream)'};border:1px solid ${sv.turnout?'var(--hay)':'var(--sand)'}">
-        <div style="font-size:18px">🌿</div><div style="font-size:11px;color:var(--text-mid);margin-top:2px">Turnout</div>
-        <div style="font-size:10px;color:${sv.turnout?'var(--earth-light)':'var(--text-muted)'};margin-top:2px">${sv.turnout?'Requested':'—'}</div>
-      </div>
-      <div style="flex:1;text-align:center;padding:8px;border-radius:8px;background:${sv.walker?'var(--hay-light)':'var(--cream)'};border:1px solid ${sv.walker?'var(--hay)':'var(--sand)'}">
-        <div style="font-size:18px">⭕</div><div style="font-size:11px;color:var(--text-mid);margin-top:2px">Walker</div>
-        <div style="font-size:10px;color:${sv.walker?'var(--earth-light)':'var(--text-muted)'};margin-top:2px">${sv.walker?'Requested':'—'}</div>
-      </div>
+      ${_svcs.map(s=>{
+        const active=sv[s.key];
+        const click=currentRole==='staff'?`onclick="quickBook(${horse.id},'${s.key}')" style="cursor:pointer"`:'';
+        return`<div style="flex:1;text-align:center;padding:8px;border-radius:8px;background:${active?'var(--hay-light)':'var(--cream)'};border:1px solid ${active?'var(--hay)':'var(--sand)'}" ${click}>
+          <div style="font-size:18px">${s.icon}</div>
+          <div style="font-size:11px;color:var(--text-mid);margin-top:2px">${s.label}</div>
+          <div style="font-size:10px;color:${active?'var(--earth-light)':'var(--text-muted)'};margin-top:2px">${active?'Requested':'—'}</div>
+        </div>`;
+      }).join('')}
     </div>
   </div>`;
 

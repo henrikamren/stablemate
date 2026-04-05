@@ -4,10 +4,11 @@
 function populateHorseSelect(){const el=document.getElementById('b-horse');if(!el)return;el.innerHTML='<option value="">— No horse —</option>'+horses.map(h=>`<option value="${h.id}">${h.name}</option>`).join('');}
 function populateRiderSelect(){const el=document.getElementById('b-rider');if(!el)return;el.innerHTML='<option value="">— Unassigned —</option>'+riders.map(r=>`<option value="${r.id}">${r.first}</option>`).join('');}
 function populateOwnerSelect(id){const el=document.getElementById(id);if(!el)return;el.innerHTML='<option value="">Barn owned</option>'+owners.map(o=>`<option value="${o.id}">${o.first}</option>`).join('');}
-function quickBook(horseId){
+function quickBook(horseId,type){
   populateHorseSelect();populateRiderSelect();populateTimeSelect('b-time');
   document.getElementById('b-horse').value=horseId;
   const bd=document.getElementById('b-date');if(bd)bd.value=fmtDate(today);
+  if(type){const bt=document.getElementById('b-type');if(bt)bt.value=type;}
   const warn=document.getElementById('trainer-warning');if(warn)warn.className='trainer-warning';
   document.getElementById('sheet-booking').classList.add('open');
 }
