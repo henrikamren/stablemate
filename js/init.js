@@ -7,7 +7,7 @@ function populateOwnerSelect(id){const el=document.getElementById(id);if(!el)ret
 function quickBook(horseId,type){
   populateHorseSelect();populateRiderSelect();populateTimeSelect('b-time');
   document.getElementById('b-horse').value=horseId;
-  const bd=document.getElementById('b-date');if(bd)bd.value=fmtDate(today);
+  const bd=document.getElementById('b-date');if(bd){bd.value=fmtDate(today);bd.min=fmtDate(today);}
   if(type){const bt=document.getElementById('b-type');if(bt)bt.value=type;}
   const warn=document.getElementById('trainer-warning');if(warn)warn.className='trainer-warning';
   document.getElementById('sheet-booking').classList.add('open');

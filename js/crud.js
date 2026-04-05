@@ -80,6 +80,8 @@ async function saveBooking(){
   const arena=document.getElementById('b-arena').value||'covered';
   const notes=document.getElementById('b-notes').value;
   if(!date){showToast('Please select a date');return;}
+  const todayStr=fmtDate(today);
+  if(date<todayStr||(date===todayStr&&time<nowTimeStr())){showToast('Cannot book in the past');return;}
   const editId=document.getElementById('sheet-booking')?.dataset.editId?parseInt(document.getElementById('sheet-booking').dataset.editId):null;
   // Double-booking check — horse AND rider
   const dbCheck=checkDoubleBooking(horseId,riderId,date,time,duration,editId);
@@ -125,6 +127,8 @@ async function saveRiderBooking(){
   const recur=document.getElementById('rb-recur').value;
   const recurUntil=document.getElementById('rb-recur-until').value;
   if(!date){showToast('Please select a date');return;}
+  const todayStr2=fmtDate(today);
+  if(date<todayStr2||(date===todayStr2&&time<nowTimeStr())){showToast('Cannot book in the past');return;}
 
   // Check for edit mode
   const sheetEl=document.getElementById('sheet-rider-booking');

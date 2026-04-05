@@ -218,7 +218,7 @@ function openLungeRequest(horseId){
   const h=getHorse(horseId);if(!h)return;
   document.getElementById('lr-horse-id').value=horseId;
   document.getElementById('lr-horse-name').textContent='🔄 Lunge request for '+h.name;
-  const ld=document.getElementById('lr-date');if(ld)ld.value=fmtDate(addDays(today,1));
+  const ld=document.getElementById('lr-date');if(ld){ld.value=fmtDate(addDays(today,1));ld.min=fmtDate(today);}
   populateTimeSelect('lr-time',getDefaultTimeForDate(fmtDate(addDays(today,1))));
   document.getElementById('lr-notes').value='';
   document.getElementById('sheet-lunge-request').classList.add('open');

@@ -134,7 +134,7 @@ function openBookingAtTime(dateStr, timeStr){
 function openSheet(name){
   if(name==='booking'){
     populateHorseSelect();populateRiderSelect();
-    const bd=document.getElementById('b-date');if(bd)bd.value=fmtDate(today);
+    const bd=document.getElementById('b-date');if(bd){bd.value=fmtDate(today);bd.min=fmtDate(today);}
     populateTimeSelect('b-time',getDefaultTimeForDate(fmtDate(today)));
     const warn=document.getElementById('trainer-warning');if(warn)warn.className='trainer-warning';
     const saveBtn=document.getElementById('b-save-btn');if(saveBtn){saveBtn.style.opacity='1';saveBtn.style.filter='';}
@@ -154,7 +154,7 @@ function openSheet(name){
     const cw=document.getElementById('b-conflict-warning');if(cw)cw.innerHTML='';
   }
   if(name==='rider-booking'){
-    const bd=document.getElementById('rb-date');if(bd)bd.value=fmtDate(today);
+    const bd=document.getElementById('rb-date');if(bd){bd.value=fmtDate(today);bd.min=fmtDate(today);}
     populateTimeSelect('rb-time',getDefaultTimeForDate(fmtDate(today)));
     const rdateEl=document.getElementById('rb-date');
     if(rdateEl){
