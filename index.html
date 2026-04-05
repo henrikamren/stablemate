@@ -191,7 +191,7 @@
     <div class="search-dropdown-wrap">
       <button class="search-btn" onclick="toggleSearchDropdown('staff-dd')">🔍 Browse <span style="font-size:10px">▾</span></button>
       <div class="search-dropdown" id="staff-dd">
-        <div class="search-dropdown-section" onclick="showHorsesDash();closeAllDropdowns()">
+        <div class="search-dropdown-section" id="staff-dd-horses" onclick="showHorsesDash();closeAllDropdowns()">
           <span style="flex:1;cursor:pointer">🐴 Horses</span>
         </div>
         <div class="search-dropdown-section" onclick="showRidersDash();closeAllDropdowns()">
@@ -324,6 +324,49 @@
       <div class="nav-tab-icon">🔄</div><div class="nav-tab-label">Lunge</div><div class="nav-indicator"></div>
     </button>
   </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!--     STAFF HORSE/RIDER DETAIL SCREEN      -->
+<!-- ══════════════════════════════════════════ -->
+<div class="screen" id="screen-child-schedule">
+  <div class="simple-topbar">
+    <button id="child-back-btn" class="btn btn-secondary btn-sm" style="font-size:13px">← Back</button>
+    <div></div>
+  </div>
+  <div class="simple-content" id="child-schedule-content" style="padding-bottom:80px"></div>
+  <div id="child-book-fab" style="display:none;position:fixed;bottom:20px;right:20px;z-index:100">
+    <button class="btn btn-primary" onclick="openSheet('booking')" style="border-radius:24px;padding:12px 20px;font-size:14px">+ Book <span id="child-book-name"></span></button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!--        STAFF BROWSE SCREENS               -->
+<!-- ══════════════════════════════════════════ -->
+<div class="screen" id="screen-horses-dash">
+  <div class="simple-topbar">
+    <button id="horses-dash-back" class="btn btn-secondary btn-sm" style="font-size:13px">← Back</button>
+    <div></div>
+  </div>
+  <div class="simple-content" id="horses-dash-content" style="padding-bottom:20px"></div>
+</div>
+
+<div class="screen" id="screen-riders-dash">
+  <div class="simple-topbar">
+    <button id="riders-dash-back" class="btn btn-secondary btn-sm" style="font-size:13px">← Back</button>
+    <div></div>
+  </div>
+  <div class="simple-content" id="riders-dash-content" style="padding-bottom:20px"></div>
+</div>
+
+<div class="screen" id="screen-shows-dash">
+  <div class="simple-topbar">
+    <button id="shows-dash-back" class="btn btn-secondary btn-sm" style="font-size:13px">← Back</button>
+    <div id="shows-add-fab" style="display:none">
+      <button class="btn btn-secondary btn-sm" onclick="openShowSheet()">+ Add</button>
+    </div>
+  </div>
+  <div class="simple-content" id="shows-dash-content" style="padding-bottom:20px"></div>
 </div>
 
 <!-- ══════════════════════ SHEETS ══════════════════════ -->

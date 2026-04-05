@@ -343,6 +343,10 @@ function showRiderSchedule(riderId){
   }
 }
 
+function showRiderScheduleFromSearch(riderId){
+  showRiderSchedule(riderId);
+}
+
 /* ===========================================================
    [17] TRAINER AVAILABILITY CHECKS
    =========================================================== */

@@ -61,9 +61,15 @@ function showWeekDayDetail(dateStr){
     container=document.createElement('div');
     container.id='week-day-detail';
     container.style.cssText='background:var(--cream-dark);border-radius:10px;border:1px solid var(--sand);padding:14px 16px;margin-bottom:16px';
-    const contentEl=currentRole==='rider'?document.getElementById('rider-content')
-      :currentRole==='parent'?document.getElementById('parent-content')
-      :document.getElementById('panel-home');
+    let contentEl;
+    if(currentRole==='rider') contentEl=document.getElementById('rider-content');
+    else if(currentRole==='parent') contentEl=document.getElementById('parent-content');
+    else {
+      const childScr=document.getElementById('screen-child-schedule');
+      contentEl=(childScr&&childScr.classList.contains('active'))
+        ?document.getElementById('child-schedule-content')
+        :document.getElementById('panel-home');
+    }
     if(contentEl){
       const existing=contentEl.querySelector('#week-day-detail');
       if(existing){existing.innerHTML=html;return;}

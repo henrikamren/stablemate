@@ -477,7 +477,7 @@ test.describe('Parent view', () => {
       const cards = document.querySelectorAll('#screen-parent-app .child-card');
       for (const c of cards) { if (c.textContent.includes('Ava') || c.textContent.includes('Mia')) { c.click(); break; } }
     });
-    await expect(page.locator('#screen-child-schedule')).toHaveClass(/active/);
+    await expect(page.locator('#parent-detail-content')).toBeVisible();
   });
 
   test('Taylor only sees Noah', async ({ page }) => {
@@ -506,17 +506,17 @@ test.describe('Rider view', () => {
     expect(count).toBeGreaterThan(0);
   });
 
-  test('rider browse dropdown exists', async ({ page }) => {
+  test('rider herd tab exists', async ({ page }) => {
     await bootApp(page, { session: { user: { name: 'Ava' }, role: 'rider' } });
-    await page.locator('#screen-rider-app button:has-text("Browse")').click();
-    await expect(page.locator('#rider-dd')).toHaveClass(/open/);
+    await page.locator('#rnav-horses').click();
+    await expect(page.locator('#rider-horses-content')).toBeVisible();
   });
 
-  test('Book a Visit button exists', async ({ page }) => {
+  test('Book tab exists in bottom nav', async ({ page }) => {
     await bootApp(page, { session: { user: { name: 'Ava' }, role: 'rider' } });
-    const fab = page.locator('#screen-rider-app .book-fab');
-    await expect(fab).toBeVisible();
-    await expect(fab).toContainText('Book');
+    const bookTab = page.locator('#rnav-book');
+    await expect(bookTab).toBeVisible();
+    await expect(bookTab).toContainText('Book');
   });
 
   test('weekly calendar renders 7 days', async ({ page }) => {
@@ -659,7 +659,7 @@ test.describe('Shows & events', () => {
   test('show detail view displays entered horses and riders', async ({ page }) => {
     await bootApp(page, { session: { user: { name: 'Megan' }, role: 'staff' } });
     await page.evaluate(() => showShowDetail(801));
-    const content = await page.locator('#child-schedule-content').textContent();
+    const content = await page.locator('#shows-dash').textContent();
     expect(content).toContain('Spring Classic');
     expect(content).toContain('Atlas');
     expect(content).toContain('Ava');

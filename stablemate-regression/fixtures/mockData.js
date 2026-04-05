@@ -65,5 +65,13 @@ export const mockData = {
   lunge_requests: [
     { id: 701, rider_id: 101, horse_id: 1, date: '2026-04-02', time: '10:00', status: 'pending', notes: 'Before my lesson', created_at: '2026-03-29T10:00:00Z' },
     { id: 702, rider_id: 103, horse_id: 3, date: '2026-04-03', time: '09:00', status: 'accepted', notes: '', created_at: '2026-03-28T14:00:00Z' }
+  ],
+  away_from_barn: [
+    { id: 601, rider_id: 101, start_date: '2026-04-10', end_date: '2026-04-10', all_day: true, start_time: null, end_time: null, reason: 'Vacation', show_id: null, created_by: 'Megan', created_at: '2026-03-30T10:00:00Z' },
+    { id: 602, rider_id: 103, start_date: '2026-04-05', end_date: '2026-04-05', all_day: false, start_time: '09:00', end_time: '12:00', reason: 'Doctor', show_id: null, created_by: 'Megan', created_at: '2026-03-30T10:00:00Z' }
+  ],
+  horse_unavailable: [
+    { id: 651, horse_id: 1, start_date: '2026-04-08', end_date: '2026-04-08', all_day: true, start_time: null, end_time: null, reason: 'Vet visit', created_by: 'Megan', created_at: '2026-03-30T10:00:00Z' },
+    { id: 652, horse_id: 3, start_date: '2026-04-06', end_date: '2026-04-06', all_day: false, start_time: '10:00', end_time: '14:00', reason: 'Shoeing', created_by: 'Megan', created_at: '2026-03-30T10:00:00Z' }
   ]
 };

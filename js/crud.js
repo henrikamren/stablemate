@@ -473,12 +473,8 @@ function showShowDetail(showId){
   } else if(currentRole==='parent'&&typeof showParentDetailPanel==='function'){
     showParentDetailPanel(html);
   } else {
-    document.getElementById('child-schedule-content').innerHTML=html;
-    document.getElementById('child-book-fab').style.display='none';
-    document.getElementById('child-back-btn').onclick=()=>{
-      showScreen('app');
-    };
-    showScreen('child-schedule');
+    document.getElementById('shows-dash').innerHTML=html;
+    showPanel('shows');
   }
 }
 
