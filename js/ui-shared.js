@@ -183,6 +183,78 @@ function buildStaffScheduleItem(b){
 
 // ── Mini 7-day week strip ─────────────────────────────────────
 
+// ── Calendar day hover tooltip ────────────────────────────────
+
+let _calTipTimer=null;
+
+function showCalTooltip(dateStr,el){
+  clearTimeout(_calTipTimer);
+  const tip=document.getElementById('cal-tooltip');if(!tip)return;
+  const dayB=bookings.filter(b=>b.date===dateStr).sort((a,b)=>a.time.localeCompare(b.time));
+  const trainers=getTrainersForDate(dateStr);
+  const label=friendlyDateLong(dateStr);
+
+  let html=`<div style="font-size:12px;font-weight:600;color:var(--earth);margin-bottom:6px">${label}</div>`;
+  if(trainers.length>0){
+    const names=[...new Set(trainers.map(s=>s.trainer_name))];
+    html+=`<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;display:flex;align-items:center;gap:5px">
+      <div style="width:8px;height:8px;border-radius:50%;background:${TRAINER_COLORS[names[0]]||TRAINER_COLORS.default};flex-shrink:0"></div>
+      ${names.join(', ')}
+    </div>`;
+  }
+  if(typeof buildAfbDayDetail==='function'){
+    const afbHtml=buildAfbTooltipLine(dateStr);
+    if(afbHtml)html+=afbHtml;
+  }
+  if(dayB.length===0){
+    html+=`<div style="font-size:11px;color:var(--text-muted);font-style:italic">No bookings</div>`;
+  } else {
+    html+=dayB.map(b=>{
+      const h=getHorse(b.horse_id);
+      const r=getRider(b.rider_id);
+      const t=typeConfig[b.type]||{label:b.type};
+      const rColor=r?getRiderColor(r.id):'var(--sand)';
+      return`<div style="display:flex;align-items:flex-start;gap:6px;padding:4px 0;border-top:1px solid var(--cream-dark)">
+        <div style="width:3px;border-radius:2px;background:${rColor};flex-shrink:0;align-self:stretch;min-height:30px"></div>
+        <div>
+          <div style="font-size:11px;font-weight:500;color:var(--earth-light)">${b.time} · ${t.label}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${h?h.name:'No horse'}${r?' · '+r.first:''}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  tip.innerHTML=html;
+  tip.style.display='block';
+  // Position: prefer right of element, fall back to left
+  const rect=el.getBoundingClientRect();
+  const tipW=200;
+  let left=rect.right+10;
+  if(left+tipW>window.innerWidth-8)left=rect.left-tipW-10;
+  let top=rect.top;
+  if(top+tip.offsetHeight>window.innerHeight-8)top=window.innerHeight-tip.offsetHeight-8;
+  tip.style.left=Math.max(8,left)+'px';
+  tip.style.top=Math.max(8,top)+'px';
+}
+
+function hideCalTooltip(){
+  _calTipTimer=setTimeout(()=>{
+    const tip=document.getElementById('cal-tooltip');
+    if(tip)tip.style.display='none';
+  },80);
+}
+
+/** Compact AFB line for tooltip — returns html string or '' */
+function buildAfbTooltipLine(dateStr){
+  if(typeof afbEntries==='undefined')return'';
+  const active=afbEntries.filter(a=>{
+    if(a.start_date>dateStr||a.end_date<dateStr)return false;
+    return true;
+  });
+  if(active.length===0)return'';
+  const names=active.map(a=>{const r=getRider(a.rider_id);return r?r.first:'?';}).filter(Boolean);
+  return`<div style="font-size:11px;color:var(--earth-light);margin-bottom:4px">✈ Away: ${names.join(', ')}</div>`;
+}
+
 /**
  * Renders a compact 7-day strip showing bookings for a single entity.
  * @param {object} opts
@@ -214,7 +286,7 @@ function buildMiniWeek(opts){
     const dayBs=bookings.filter(b=>filterFn(b,ds));
     const hasTrainer=getTrainersForDate(ds).length>0;
     const trColor=hasTrainer?(TRAINER_COLORS[getTrainersForDate(ds)[0]?.trainer_name]||TRAINER_COLORS.default):'transparent';
-    html+=`<div style="text-align:center">
+    html+=`<div style="text-align:center" onmouseenter="showCalTooltip('${ds}',this)" onmouseleave="hideCalTooltip()">
       <div style="font-size:8px;color:var(--text-muted);margin-bottom:1px">${days7[d.getDay()]}</div>
       <div style="width:${cellSz}px;height:${cellSz}px;border-radius:${cellSz>24?6:5}px;margin:${cellSz>24?'2px':'0'} auto;background:${isToday?'var(--cream-dark)':'var(--cream)'};border:1px solid ${isToday?'var(--earth)':'var(--sand)'};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;overflow:hidden;position:relative${cellSz>24?';padding:2px 1px':''}">
         ${hasTrainer?`<div style="position:absolute;top:0;left:0;right:0;height:${trBar}px;background:${trColor};opacity:0.8"></div>`:''}
@@ -322,7 +394,7 @@ function buildWeekCalendar(highlightRiderIds, weekOffset){
     const allBookings=bookings.filter(b=>b.date===ds);
     const trainerColor=hasTrainer?(TRAINER_COLORS[trainerNames[0]]||TRAINER_COLORS.default):'transparent';
 
-    html+=`<div style="background:var(--white);border-radius:8px;border:1px solid ${isToday?'var(--earth)':'var(--sand)'};overflow:hidden;${isToday?'box-shadow:0 0 0 2px var(--earth)':''}cursor:pointer" onclick="showWeekDayDetail('${ds}')">
+    html+=`<div style="background:var(--white);border-radius:8px;border:1px solid ${isToday?'var(--earth)':'var(--sand)'};overflow:hidden;${isToday?'box-shadow:0 0 0 2px var(--earth)':''}cursor:pointer" onclick="showWeekDayDetail('${ds}')" onmouseenter="showCalTooltip('${ds}',this)" onmouseleave="hideCalTooltip()">
       <div style="height:4px;background:${trainerColor};opacity:${hasTrainer?0.85:0}"></div>
       <div style="padding:4px 4px 2px;text-align:center">
         <div style="font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:${isToday?'var(--earth)':'var(--text-muted)'};font-weight:${isToday?'500':'400'}">${days7[d.getDay()]}</div>

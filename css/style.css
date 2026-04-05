@@ -240,6 +240,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--earth);c
 /* TOAST */
 .toast{position:fixed;bottom:calc(var(--nav-h) + var(--safe-bottom) + 12px);left:16px;right:16px;background:var(--earth);color:var(--white);padding:14px 18px;border-radius:10px;font-size:13px;z-index:200;transform:translateY(20px);opacity:0;transition:all 0.3s;text-align:center;pointer-events:none}
 .toast.show{transform:translateY(0);opacity:1}
+#cal-tooltip{display:none;position:fixed;z-index:300;background:var(--white);border:1px solid var(--sand);border-radius:10px;padding:10px 14px;box-shadow:0 4px 20px rgba(0,0,0,0.13);width:200px;pointer-events:none}
 
 /* ═══ LOADING SCREEN ═══ */
 .loading-screen{position:fixed;inset:0;background:var(--cream);display:flex;align-items:center;justify-content:center;z-index:300;transition:opacity 0.4s;flex-direction:column;gap:6px}

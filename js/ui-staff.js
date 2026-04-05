@@ -494,7 +494,7 @@ function renderCalendar(){
       bandHtml=`<div class="trainer-band"><div style="height:6px"></div></div>`;
     }
 
-    html+=`<div class="cal-day${isT?' today':''}" onclick="showCalDay('${ds}')">
+    html+=`<div class="cal-day${isT?' today':''}" onclick="showCalDay('${ds}')" onmouseenter="showCalTooltip('${ds}',this)" onmouseleave="hideCalTooltip()">
       ${bandHtml}
       <div class="cal-day-num">${d}</div>
       <div class="cal-dot-row">${dots}</div>
