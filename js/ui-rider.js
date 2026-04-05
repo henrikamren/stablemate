@@ -91,7 +91,16 @@ function renderRiderHome(){
 
 // ── Rider bottom nav panel switcher ──────────────────────────
 
+let _lastRiderPanel='home';
+
 function showRiderPanel(name){
+  _lastRiderPanel=name;
+  // Hide back button, show logo
+  const backBtn=document.getElementById('rider-back-btn');
+  const logo=document.getElementById('rider-topbar-logo');
+  if(backBtn)backBtn.style.display='none';
+  if(logo)logo.style.display='';
+
   // Update active tab
   document.querySelectorAll('#rider-bottom-nav .nav-tab').forEach(t=>t.classList.remove('active'));
   const tab=document.getElementById('rnav-'+name);
@@ -129,4 +138,12 @@ function showRiderDetailPanel(html){
   const el=document.getElementById('rider-detail-content');
   el.innerHTML=html;
   el.style.display='';
+  // Show back button, hide logo
+  const backBtn=document.getElementById('rider-back-btn');
+  const logo=document.getElementById('rider-topbar-logo');
+  if(logo)logo.style.display='none';
+  if(backBtn){
+    backBtn.style.display='';
+    backBtn.onclick=()=>showRiderPanel(_lastRiderPanel||'home');
+  }
 }

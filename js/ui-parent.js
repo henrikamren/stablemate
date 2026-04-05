@@ -126,7 +126,16 @@ function openChildBooking(){
 
 // ── Parent bottom nav panel switcher ─────────────────────────
 
+let _lastParentPanel='home';
+
 function showParentPanel(name){
+  _lastParentPanel=name;
+  // Hide back button, show logo
+  const backBtn=document.getElementById('parent-back-btn');
+  const logo=document.getElementById('parent-topbar-logo');
+  if(backBtn)backBtn.style.display='none';
+  if(logo)logo.style.display='';
+
   // Update active tab
   document.querySelectorAll('#parent-bottom-nav .nav-tab').forEach(t=>t.classList.remove('active'));
   const tab=document.getElementById('pnav-'+name);
@@ -162,4 +171,12 @@ function showParentDetailPanel(html){
   const el=document.getElementById('parent-detail-content');
   el.innerHTML=html;
   el.style.display='';
+  // Show back button, hide logo
+  const backBtn=document.getElementById('parent-back-btn');
+  const logo=document.getElementById('parent-topbar-logo');
+  if(logo)logo.style.display='none';
+  if(backBtn){
+    backBtn.style.display='';
+    backBtn.onclick=()=>showParentPanel(_lastParentPanel||'home');
+  }
 }
